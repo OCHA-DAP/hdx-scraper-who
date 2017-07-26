@@ -1,0 +1,207 @@
+MDG_0000000006	AFG	Unmet need for family planning (%)
+MDG_0000000011	AFG	Median consumer price ratio of selected generic medicines - Public
+MDG_0000000014	AFG	Children aged <5 years with fever who received treatment with any antimalarial (%)
+MDG_0000000015	AFG	Prevalence of condom use by adults during higher-risk sex (15-49) (%)
+MDG_0000000021	AFG	Population aged 15-24 years with comprehensive correct knowledge of HIV/AIDS (%)
+WHS3_47	AFG	Meningitis - number of reported cases
+WHS3_51	AFG	H5N1 influenza - number of reported cases
+WHS3_52	AFG	Plague - number of reported cases
+WHOSIS_000005	AFG	Low-birth-weight newborns (%)
+WHS9_85	AFG	Literacy rate among adults aged >= 15 years (%)
+WHS9_90	AFG	Population living on <$1 (PPP int. $) a day (%)
+WHS9_97	AFG	Annual population growth rate (%)
+WHS6_116	AFG	Median consumer price ratio of selected generic medicines - Private
+WHS6_136	AFG	Number of physicians
+WHS6_140	AFG	Number of community health workers
+WHS6_150	AFG	Community health workers density (per 10 000 population)
+WHS2_162	AFG	Age-standardized mortality rate by cause (per 100 000 population) - Injuries
+WHS2_163	AFG	Age-standardized mortality rate by cause (per 100 000 population) - Noncommunicable
+WHS2_172	AFG	Distribution of years of life lost by broader causes (%) - Communicable
+WHS2_173	AFG	Distribution of years of life lost by broader causes (%) - Noncommunicable
+TOBACCO_0000000192	AFG	Prevalence of smoking any tobacco product among persons aged >= 15 years
+WHS2_513	AFG	Age-standardized mortality rate by cause (per 100 000 population) - Communicable
+WHS6_518	AFG	Number of environment and public health workers
+WHS6_520	AFG	Density of environment and public health workers (per 10 000 population)
+MDG_0000000034	AFG	Antiretroviral therapy coverage among people with advanced HIV infection (%), WHO 2006 guidelines
+MENING_1	AFG	Number of suspected meningitis deaths reported
+MENING_2	AFG	Number of suspected meningitis cases reported
+MENING_3	AFG	Number of meningitis epidemic districts
+MDG_0000000006_AGE1519	AFG	Unmet need for family planning, among girls aged 15-19 (%)
+WHS4_2530	AFG	Postnatal care visit within two days of birth (%)
+WHS2_3070_all	AFG	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - All causes
+WHS2_3070_cancer	AFG	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cancer
+WHS2_3070_cdd	AFG	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cardiovasular disease and diabetes
+WHS2_3070_chronic	AFG	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Chronic respiratory conditions
+WHS10_1	AFG	Most recent census (year)
+WHS10_8	AFG	Civil registration coverage of cause-of-death (%)
+WHS10_9	AFG	Ill-defined causes in cause-of-death registration (%)
+anc13	AFG	Antenatal care coverage - at least one visit (in the three years preceding the survey) (%)
+anc43	AFG	Antenatal care coverage - at least four visits (in the three years preceding the survey) (%)
+sba3	AFG	Births attended by skilled health personnel (in the three years preceding the survey) (%)
+reating dataset: WHO data for Albania
+MDG_0000000010	ALB	Median availability of selected generic medicines (%) - Public
+MDG_0000000011	ALB	Median consumer price ratio of selected generic medicines - Public
+MDG_0000000013	ALB	Children aged <5 years sleeping under insecticide-treated nets (%)
+MDG_0000000014	ALB	Children aged <5 years with fever who received treatment with any antimalarial (%)
+MDG_0000000015	ALB	Prevalence of condom use by adults during higher-risk sex (15-49) (%)
+WHS3_40	ALB	Cholera - number of reported cases
+WHS3_47	ALB	Meningitis - number of reported cases
+WHS3_48	ALB	Malaria - number of reported confirmed cases
+WHS3_51	ALB	H5N1 influenza - number of reported cases
+WHS3_52	ALB	Plague - number of reported cases
+WHS9_97	ALB	Annual population growth rate (%)
+WHS6_101	ALB	Median availability of selected generic medicines (%) - Private
+WHS6_116	ALB	Median consumer price ratio of selected generic medicines - Private
+WHS4_124	ALB	Children aged 6-59 months who received vitamin A supplementation (%)
+WHS6_136	ALB	Number of physicians
+WHS2_138	ALB	Deaths due to HIV/AIDS (per 100 000 population)
+WHS6_140	ALB	Number of community health workers
+WHS6_150	ALB	Community health workers density (per 10 000 population)
+WHS2_162	ALB	Age-standardized mortality rate by cause (per 100 000 population) - Injuries
+WHS2_163	ALB	Age-standardized mortality rate by cause (per 100 000 population) - Noncommunicable
+WHS2_172	ALB	Distribution of years of life lost by broader causes (%) - Communicable
+WHS2_173	ALB	Distribution of years of life lost by broader causes (%) - Noncommunicable
+WHS2_513	ALB	Age-standardized mortality rate by cause (per 100 000 population) - Communicable
+WHS6_518	ALB	Number of environment and public health workers
+WHS6_520	ALB	Density of environment and public health workers (per 10 000 population)
+MDG_0000000034	ALB	Antiretroviral therapy coverage among people with advanced HIV infection (%), WHO 2006 guidelines
+MENING_1	ALB	Number of suspected meningitis deaths reported
+MENING_2	ALB	Number of suspected meningitis cases reported
+MENING_3	ALB	Number of meningitis epidemic districts
+MALARIA001	ALB	Malaria - number of reported deaths
+MALARIA002	ALB	Estimated number of malaria cases
+MALARIA003	ALB	Estimated number of malaria deaths
+WHS4_2530	ALB	Postnatal care visit within two days of birth (%)
+WHS2_3070_all	ALB	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - All causes
+WHS2_3070_cancer	ALB	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cancer
+WHS2_3070_cdd	ALB	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cardiovasular disease and diabetes
+WHS2_3070_chronic	ALB	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Chronic respiratory conditions
+WHS10_9	ALB	Ill-defined causes in cause-of-death registration (%)
+anc13	ALB	Antenatal care coverage - at least one visit (in the three years preceding the survey) (%)
+anc43	ALB	Antenatal care coverage - at least four visits (in the three years preceding the survey) (%)
+sba3	ALB	Births attended by skilled health personnel (in the three years preceding the survey) (%)
+reating dataset: WHO data for Algeria
+MDG_0000000006	DZA	Unmet need for family planning (%)
+MDG_0000000010	DZA	Median availability of selected generic medicines (%) - Public
+MDG_0000000011	DZA	Median consumer price ratio of selected generic medicines - Public
+MDG_0000000013	DZA	Children aged <5 years sleeping under insecticide-treated nets (%)
+MDG_0000000014	DZA	Children aged <5 years with fever who received treatment with any antimalarial (%)
+MDG_0000000015	DZA	Prevalence of condom use by adults during higher-risk sex (15-49) (%)
+MDG_0000000021	DZA	Population aged 15-24 years with comprehensive correct knowledge of HIV/AIDS (%)
+WHS3_40	DZA	Cholera - number of reported cases
+WHS3_51	DZA	H5N1 influenza - number of reported cases
+WHS3_52	DZA	Plague - number of reported cases
+WHS9_85	DZA	Literacy rate among adults aged >= 15 years (%)
+WHS9_90	DZA	Population living on <$1 (PPP int. $) a day (%)
+WHS9_97	DZA	Annual population growth rate (%)
+WHS6_101	DZA	Median availability of selected generic medicines (%) - Private
+WHS6_116	DZA	Median consumer price ratio of selected generic medicines - Private
+WHS4_124	DZA	Children aged 6-59 months who received vitamin A supplementation (%)
+WHS6_136	DZA	Number of physicians
+WHS2_138	DZA	Deaths due to HIV/AIDS (per 100 000 population)
+WHS6_140	DZA	Number of community health workers
+WHS6_150	DZA	Community health workers density (per 10 000 population)
+WHS2_162	DZA	Age-standardized mortality rate by cause (per 100 000 population) - Injuries
+WHS2_163	DZA	Age-standardized mortality rate by cause (per 100 000 population) - Noncommunicable
+WHS2_172	DZA	Distribution of years of life lost by broader causes (%) - Communicable
+WHS2_173	DZA	Distribution of years of life lost by broader causes (%) - Noncommunicable
+TOBACCO_0000000192	DZA	Prevalence of smoking any tobacco product among persons aged >= 15 years
+WHS2_513	DZA	Age-standardized mortality rate by cause (per 100 000 population) - Communicable
+MENING_2	DZA	Number of suspected meningitis cases reported
+MENING_3	DZA	Number of meningitis epidemic districts
+MDG_0000000005_AGE1519	DZA	Contraceptive prevalence, among girls aged 15-19 (%)
+MDG_0000000006_AGE1519	DZA	Unmet need for family planning, among girls aged 15-19 (%)
+MDG_0000000025_AGE1519	DZA	Births attended by skilled health personnel, among girls aged 15-19 (%)
+WHS4_111_AGE1519	DZA	Antenatal care coverage - at least one visit, among girls aged 15-19 (%)
+DEVICES09	DZA	Total density per million population: Computed tomography units
+WHS4_2530	DZA	Postnatal care visit within two days of birth (%)
+WHS2_3070_all	DZA	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - All causes
+WHS2_3070_cancer	DZA	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cancer
+WHS2_3070_cdd	DZA	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cardiovasular disease and diabetes
+WHS2_3070_chronic	DZA	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Chronic respiratory conditions
+WHS10_8	DZA	Civil registration coverage of cause-of-death (%)
+WHS10_9	DZA	Ill-defined causes in cause-of-death registration (%)
+anc1	DZA	Antenatal care coverage - at least one visit (in the two or three years preceding the survey) (%)
+sba	DZA	Births attended by skilled health personnel (in the two or three years preceding the survey) (%)
+anc13	DZA	Antenatal care coverage - at least one visit (in the three years preceding the survey) (%)
+anc43	DZA	Antenatal care coverage - at least four visits (in the three years preceding the survey) (%)
+anc45	DZA	Antenatal care coverage - at least four visits (in the five years preceding the survey) (%)
+sba3	DZA	Births attended by skilled health personnel (in the three years preceding the survey) (%)
+sba5	DZA	Births attended by skilled health personnel (in the five years preceding the survey) (%)
+anc4	DZA	Antenatal care coverage - at least four visits (in the two or three years preceding the survey) (%)
+reating dataset: WHO data for Andorra
+MDG_0000000005	AND	Contraceptive prevalence (%)
+MDG_0000000006	AND	Unmet need for family planning (%)
+MDG_0000000010	AND	Median availability of selected generic medicines (%) - Public
+MDG_0000000011	AND	Median consumer price ratio of selected generic medicines - Public
+MDG_0000000013	AND	Children aged <5 years sleeping under insecticide-treated nets (%)
+MDG_0000000014	AND	Children aged <5 years with fever who received treatment with any antimalarial (%)
+MDG_0000000015	AND	Prevalence of condom use by adults during higher-risk sex (15-49) (%)
+MDG_0000000021	AND	Population aged 15-24 years with comprehensive correct knowledge of HIV/AIDS (%)
+MDG_0000000025	AND	Births attended by skilled health personnel (%)
+MDG_0000000026	AND	Maternal mortality ratio (per 100 000 live births)
+MDG_0000000027	AND	Children aged <5 years stunted (%)
+WHS3_40	AND	Cholera - number of reported cases
+WHS3_42	AND	Japanese encephalitis - number of reported cases
+WHS3_47	AND	Meningitis - number of reported cases
+WHS3_48	AND	Malaria - number of reported confirmed cases
+WHS3_51	AND	H5N1 influenza - number of reported cases
+WHS3_52	AND	Plague - number of reported cases
+WHOSIS_000001	AND	Life expectancy at birth (years)
+WHOSIS_000005	AND	Low-birth-weight newborns (%)
+WHOSIS_000009	AND	Children aged <5 years overweight (%)
+WHS9_85	AND	Literacy rate among adults aged >= 15 years (%)
+WHS9_88	AND	Population median age (years)
+WHS9_90	AND	Population living on <$1 (PPP int. $) a day (%)
+WHS9_93	AND	Gross national income per capita (PPP int. $)
+WHS9_97	AND	Annual population growth rate (%)
+WHS6_101	AND	Median availability of selected generic medicines (%) - Private
+WHS4_106	AND	Children aged < 5 years with pneumonia symptoms taken to a healthcare provider (%)
+WHS4_107	AND	Children aged <5 years with diarrhoea receiving ORT (%)
+WHS4_111	AND	Antenatal care coverage - at least one visit (%)
+WHS4_115	AND	Births by caesarean section (%)
+WHS6_116	AND	Median consumer price ratio of selected generic medicines - Private
+WHS4_124	AND	Children aged 6-59 months who received vitamin A supplementation (%)
+WHS4_128	AND	Neonates protected at birth against neonatal tetanus (PAB) (%)
+WHS6_136	AND	Number of physicians
+WHS2_138	AND	Deaths due to HIV/AIDS (per 100 000 population)
+WHS6_140	AND	Number of community health workers
+WHS6_150	AND	Community health workers density (per 10 000 population)
+WHS4_154	AND	Antenatal care coverage - at least four visits (%)
+WHS2_162	AND	Age-standardized mortality rate by cause (per 100 000 population) - Injuries
+WHS2_163	AND	Age-standardized mortality rate by cause (per 100 000 population) - Noncommunicable
+WHS2_172	AND	Distribution of years of life lost by broader causes (%) - Communicable
+WHS2_173	AND	Distribution of years of life lost by broader causes (%) - Noncommunicable
+CHOLERA_0000000001	AND	Number of reported cases of cholera
+CHOLERA_0000000003	AND	Cholera case fatality rate
+WHS2_513	AND	Age-standardized mortality rate by cause (per 100 000 population) - Communicable
+WHS6_518	AND	Number of environment and public health workers
+WHS6_520	AND	Density of environment and public health workers (per 10 000 population)
+NUTRITION_564	AND	Children aged <5 years wasted for age (%)
+MDG_0000000034	AND	Antiretroviral therapy coverage among people with advanced HIV infection (%), WHO 2006 guidelines
+MENING_1	AND	Number of suspected meningitis deaths reported
+MENING_2	AND	Number of suspected meningitis cases reported
+MENING_3	AND	Number of meningitis epidemic districts
+MDG_0000000005_AGE1519	AND	Contraceptive prevalence, among girls aged 15-19 (%)
+MDG_0000000006_AGE1519	AND	Unmet need for family planning, among girls aged 15-19 (%)
+MDG_0000000025_AGE1519	AND	Births attended by skilled health personnel, among girls aged 15-19 (%)
+WHS4_111_AGE1519	AND	Antenatal care coverage - at least one visit, among girls aged 15-19 (%)
+WHS4_108	AND	Children aged <5 years with ARI symptoms who took antibiotic treatment (%)
+MALARIA001	AND	Malaria - number of reported deaths
+MALARIA002	AND	Estimated number of malaria cases
+MALARIA003	AND	Estimated number of malaria deaths
+DEVICES09	AND	Total density per million population: Computed tomography units
+DEVICES22	AND	Total density per million population: Radiotherapy units
+WHS4_2530	AND	Postnatal care visit within two days of birth (%)
+WHS2_3070_all	AND	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - All causes
+WHS2_3070_cancer	AND	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cancer
+WHS2_3070_cdd	AND	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Cardiovasular disease and diabetes
+WHS2_3070_chronic	AND	Age-standardized mortality rate by cause (ages 30-70, per 100 000 population) - Chronic respiratory conditions
+anc1	AND	Antenatal care coverage - at least one visit (in the two or three years preceding the survey) (%)
+sba	AND	Births attended by skilled health personnel (in the two or three years preceding the survey) (%)
+anc13	AND	Antenatal care coverage - at least one visit (in the three years preceding the survey) (%)
+anc43	AND	Antenatal care coverage - at least four visits (in the three years preceding the survey) (%)
+anc45	AND	Antenatal care coverage - at least four visits (in the five years preceding the survey) (%)
+sba3	AND	Births attended by skilled health personnel (in the three years preceding the survey) (%)
+sba5	AND	Births attended by skilled health personnel (in the five years preceding the survey) (%)
+anc4	AND	Antenatal care coverage - at least four visits (in the two or three years preceding the survey) (%)
