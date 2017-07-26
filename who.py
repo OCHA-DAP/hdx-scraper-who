@@ -79,10 +79,6 @@ def generate_dataset(base_url, downloader, countrydata, indicators):
     earliest_year = 10000
     latest_year = 0
     for indicator_code, indicator_name, indicator_url in indicators:
-        if countryiso != 'AFG':
-            continue
-        if indicator_code != 'WHOSIS_000001':
-            continue
         url = '%sGHO/%s.csv?filter=COUNTRY:%s&profile=verbose' % (base_url, indicator_code, countryiso)
         response = downloader.download(url)
         decoded_content = response.content.decode('utf-8')
