@@ -27,10 +27,10 @@ def main():
     logger.info('Number of datasets to upload: %d' % len(countriesdata))
     for countrydata in countriesdata:
         dataset = generate_dataset(base_url, downloader, countrydata, indicators)
-        # if dataset:
-        #      dataset.add_tags(tags)
-        #      dataset.update_from_yaml()
-        #      dataset.create_in_hdx()
+        if dataset:
+             dataset.add_tags(tags)
+             dataset.update_from_yaml()
+             dataset.create_in_hdx()
 
 if __name__ == '__main__':
     facade(main, hdx_site='feature', project_config_yaml=join('config', 'project_configuration.yml'))
