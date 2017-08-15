@@ -83,7 +83,8 @@ class TestWHO:
         assert dataset == {'groups': [{'name': 'afg'}], 'title': 'WHO data for Afghanistan',
                            'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
                            'data_update_frequency': '365', 'dataset_date': '01/01/1992-12/31/2015',
-                           'name': 'who-data-for-afghanistan'}
+                           'name': 'who-data-for-afghanistan', 'maintainer': '196196be-6037-4488-8b71-d786adf4c081',
+                           'owner_org': 'hdx'}
 
         resources = dataset.get_resources()
         assert resources == [{'format': 'csv', 'name': 'Life expectancy at birth (years)',

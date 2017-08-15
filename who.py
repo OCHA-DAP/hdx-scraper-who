@@ -68,6 +68,8 @@ def generate_dataset(base_url, downloader, countrydata, indicators):
         'name': slugified_name,
         'title': title,
     })
+    dataset.set_maintainer('196196be-6037-4488-8b71-d786adf4c081')
+    dataset.set_organization('hdx')
     dataset.set_expected_update_frequency('Every year')
     try:
         dataset.add_country_location(countryiso)

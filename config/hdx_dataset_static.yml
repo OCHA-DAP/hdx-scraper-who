@@ -1,6 +1,3 @@
-owner_org: "hdx"
-maintainer: "mcarans"
-maintainer_email: "rans@un.org"
 license_id: "cc-by-igo"
 subnational: 1  # has to be 0 or 1
 notes: "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering various indicators (one per resource)."
