@@ -6,5 +6,3 @@ methodology: "Registry"
 dataset_source: "World Health Organization"
 package_creator: "mcarans"
 private: False  # has to be True or False
-url: ~
-state: "active"  # always "active".
