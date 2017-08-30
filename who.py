@@ -7,11 +7,11 @@ WHO:
 Reads WHO JSON and creates datasets.
 
 """
-import csv
 import logging
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
+from hdx.utilities.downloader import DownloadError
 from slugify import slugify
 
 logger = logging.getLogger(__name__)
@@ -82,12 +82,10 @@ def generate_dataset(base_url, downloader, countrydata, indicators):
     latest_year = 0
     for indicator_code, indicator_name, indicator_url in indicators:
         url = '%sGHO/%s.csv?filter=COUNTRY:%s&profile=verbose' % (base_url, indicator_code, countryiso)
-        response = downloader.download(url)
-        decoded_content = response.content.decode('utf-8')
-        lines = decoded_content.splitlines()
-        if len(lines) < 2:
+        try:
+            reader = downloader.download_csv_with_header(url)
+        except DownloadError:
             continue
-        reader = csv.DictReader(lines, delimiter=',')
         for row in reader:
             year = row['YEAR (CODE)']
             if '-' in year:
