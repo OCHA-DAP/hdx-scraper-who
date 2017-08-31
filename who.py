@@ -11,8 +11,8 @@ import logging
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
-from hdx.utilities.downloader import DownloadError
 from slugify import slugify
+from tabulator.exceptions import TabulatorException
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def get_countriesdata(base_url, downloader):
     return json['dimension'][0]['code']
 
 
-def generate_dataset(base_url, downloader, countrydata, indicators):
+def generate_dataset(base_url, streamcls, countrydata, indicators):
     """
     # http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
@@ -81,23 +81,29 @@ def generate_dataset(base_url, downloader, countrydata, indicators):
     earliest_year = 10000
     latest_year = 0
     for indicator_code, indicator_name, indicator_url in indicators:
+        no_rows = 0
         url = '%sGHO/%s.csv?filter=COUNTRY:%s&profile=verbose' % (base_url, indicator_code, countryiso)
         try:
-            reader = downloader.download_csv_with_header(url)
-        except DownloadError:
+            stream = streamcls(url, headers=1)
+            stream.open()
+            for row in stream.iter(keyed=True):
+                no_rows += 1
+                year = row['YEAR (CODE)']
+                if '-' in year:
+                    years = year.split('-')
+                else:
+                    years = [year]
+                for year in years:
+                    year = int(year)
+                    if year < earliest_year:
+                        earliest_year = year
+                    if year > latest_year:
+                        latest_year = year
+            stream.close()
+        except TabulatorException:
             continue
-        for row in reader:
-            year = row['YEAR (CODE)']
-            if '-' in year:
-                years = year.split('-')
-            else:
-                years = [year]
-            for year in years:
-                year = int(year)
-                if year < earliest_year:
-                    earliest_year = year
-                if year > latest_year:
-                    latest_year = year
+        if no_rows == 0:
+            continue
         resource = {
             'name': indicator_name,
             'description': '[Indicator metadata](%s)' % indicator_url,

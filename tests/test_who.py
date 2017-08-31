@@ -9,6 +9,7 @@ from os.path import join
 import pytest
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import DownloadError
+from tabulator.exceptions import TabulatorException
 
 from who import generate_dataset, get_countriesdata, get_indicators_and_tags
 
@@ -40,7 +41,8 @@ class TestWHO:
     @pytest.fixture(scope='function')
     def downloader(self):
         class Response:
-            def json(self):
+            @staticmethod
+            def json():
                 pass
 
         class Download:
@@ -64,16 +66,28 @@ class TestWHO:
                         return {'dimension': [{'code': [TestWHO.countrydata]}]}
                     response.json = fn
                 return response
+        return Download()
 
-            @staticmethod
-            def download_csv_with_header(url):
-                if url == 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose':
+    @pytest.fixture(scope='function')
+    def streamcls(self):
+        class Stream:
+            def __init__(stream_self, url, headers):
+                stream_self.url = url
+
+            def open(stream_self):
+                stream_self.row = 0
+
+            def iter(stream_self, keyed):
+                if stream_self.url == 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose':
                     return [{'header1': 'val11', 'header2': 'val21', 'YEAR (CODE)': '1992'},
                             {'header1': 'val12', 'header2': 'val22', 'YEAR (CODE)': '2015'}]
-                elif url == 'http://papa/GHO/lala.csv?filter=COUNTRY:AFG&profile=verbose':
-                    raise DownloadError('Less than 2 rows!')
+                elif stream_self.url == 'http://papa/GHO/lala.csv?filter=COUNTRY:AFG&profile=verbose':
+                    raise TabulatorException('Error!')
 
-        return Download()
+            def close(stream_self):
+                pass
+
+        return Stream
 
     def test_get_indicators_and_tags(self, downloader):
         indicators, tags = get_indicators_and_tags('http://lala/', downloader, ['WHOSIS_000001'])
@@ -84,9 +98,9 @@ class TestWHO:
         countriesdata = get_countriesdata('http://haha/', downloader)
         assert countriesdata == [TestWHO.countrydata]
 
-    def test_generate_dataset(self, configuration, downloader):
+    def test_generate_dataset(self, configuration, streamcls):
         base_url = Configuration.read()['base_url']
-        dataset = generate_dataset(base_url, downloader, TestWHO.countrydata, TestWHO.indicators)
+        dataset = generate_dataset(base_url, streamcls, TestWHO.countrydata, TestWHO.indicators)
         assert dataset == {'groups': [{'name': 'afg'}], 'title': 'WHO data for Afghanistan',
                            'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
                            'data_update_frequency': '365', 'dataset_date': '01/01/1992-12/31/2015',
@@ -97,9 +111,9 @@ class TestWHO:
         assert resources == [{'format': 'csv', 'name': 'Life expectancy at birth (years)',
                               'description': '[Indicator metadata](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)',
                               'url': 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose'}]
-        dataset = generate_dataset(base_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
+        dataset = generate_dataset(base_url, streamcls, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
         assert dataset is None
-        dataset = generate_dataset(base_url, downloader, TestWHO.countrydata,
+        dataset = generate_dataset(base_url, streamcls, TestWHO.countrydata,
                                    [('lala', 'Life expectancy at birth (years)',
                                      'http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65')])
         assert dataset is None
