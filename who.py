@@ -57,9 +57,9 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
     # http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
     countryname = countrydata['display']
-    title = 'WHO data for %s' % countryname
+    title = '%s - Health Indicators' % countryname
     logger.info('Creating dataset: %s' % title)
-    slugified_name = slugify(title).lower()
+    slugified_name = slugify('WHO data for %s' % countryname).lower()
     countryiso = countrydata['label']
     for attr in countrydata['attr']:
         if attr['category'] == 'ISO':

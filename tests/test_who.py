@@ -101,7 +101,7 @@ class TestWHO:
     def test_generate_dataset(self, configuration, streamcls):
         base_url = Configuration.read()['base_url']
         dataset = generate_dataset(base_url, streamcls, TestWHO.countrydata, TestWHO.indicators)
-        assert dataset == {'groups': [{'name': 'afg'}], 'title': 'WHO data for Afghanistan',
+        assert dataset == {'groups': [{'name': 'afg'}], 'title': 'Afghanistan - Health Indicators',
                            'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
                            'data_update_frequency': '365', 'dataset_date': '01/01/1992-12/31/2015',
                            'name': 'who-data-for-afghanistan', 'maintainer': '196196be-6037-4488-8b71-d786adf4c081',
