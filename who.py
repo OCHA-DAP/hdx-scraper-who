@@ -112,6 +112,7 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
         }
         dataset.add_update_resource(resource)
     if len(dataset.get_resources()) == 0:
+        logger.exception('%s has no data!' % countryname)
         return None
     dataset.set_dataset_year_range(earliest_year, latest_year)
     return dataset
