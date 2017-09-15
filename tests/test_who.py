@@ -8,6 +8,7 @@ from os.path import join
 
 import pytest
 from hdx.hdx_configuration import Configuration
+from hdx.hdx_locations import Locations
 from hdx.utilities.downloader import DownloadError
 from tabulator.exceptions import TabulatorException
 
@@ -37,6 +38,7 @@ class TestWHO:
     def configuration(self):
         Configuration._create(hdx_read_only=True,
                              project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
+        Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
 
     @pytest.fixture(scope='function')
     def downloader(self):
