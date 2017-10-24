@@ -22,16 +22,17 @@ def main():
     """Generate dataset and create it in HDX"""
 
     base_url = Configuration.read()['base_url']
-    downloader = Download()
-    indicators, tags = get_indicators_and_tags(base_url, downloader, Configuration.read()['indicator_list'])
-    countriesdata = get_countriesdata(base_url, downloader)
-    logger.info('Number of datasets to upload: %d' % len(countriesdata))
-    for countrydata in countriesdata:
-        dataset = generate_dataset(base_url, Stream, countrydata, indicators)
-        if dataset:
-             dataset.add_tags(tags)
-             dataset.update_from_yaml()
-             dataset.create_in_hdx()
+    with Download() as downloader:
+        indicators, tags = get_indicators_and_tags(base_url, downloader, Configuration.read()['indicator_list'])
+        countriesdata = get_countriesdata(base_url, downloader)
+        logger.info('Number of datasets to upload: %d' % len(countriesdata))
+        for countrydata in countriesdata:
+            dataset = generate_dataset(base_url, Stream, countrydata, indicators)
+            if dataset:
+                 dataset.add_tags(tags)
+                 dataset.update_from_yaml()
+                 dataset.create_in_hdx()
+
 
 if __name__ == '__main__':
     facade(main, hdx_site='feature', project_config_yaml=join('config', 'project_configuration.yml'))

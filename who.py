@@ -54,7 +54,7 @@ def get_countriesdata(base_url, downloader):
 
 def generate_dataset(base_url, streamcls, countrydata, indicators):
     """
-    # http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
+    http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
     countryname = countrydata['display']
     title = '%s - Health Indicators' % countryname
