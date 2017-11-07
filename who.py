@@ -11,8 +11,8 @@ import logging
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
+from hdx.data.showcase import Showcase
 from slugify import slugify
-from tabulator.exceptions import TabulatorException
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def get_countriesdata(base_url, downloader):
     return json['dimension'][0]['code']
 
 
-def generate_dataset(base_url, streamcls, countrydata, indicators):
+def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators):
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
@@ -76,7 +76,8 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
     except HDXError as e:
         logger.exception('%s has a problem! %s' % (countryname, e))
         return None
-    dataset.add_tags(['indicators', 'World Health Organization'])
+    tags = ['indicators', 'World Health Organization']
+    dataset.add_tags(tags)
 
     earliest_year = 10000
     latest_year = 0
@@ -84,9 +85,7 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
         no_rows = 0
         url = '%sGHO/%s.csv?filter=COUNTRY:%s&profile=verbose' % (base_url, indicator_code, countryiso)
         try:
-            stream = streamcls(url, headers=1)
-            stream.open()
-            for row in stream.iter(keyed=True):
+            for row in downloader.get_tabular_rows(url, dict_rows=True, headers=1):
                 no_rows += 1
                 year = row['YEAR (CODE)']
                 if '-' in year:
@@ -99,8 +98,7 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
                         earliest_year = year
                     if year > latest_year:
                         latest_year = year
-            stream.close()
-        except TabulatorException:
+        except Exception:
             continue
         if no_rows == 0:
             continue
@@ -115,4 +113,14 @@ def generate_dataset(base_url, streamcls, countrydata, indicators):
         logger.exception('%s has no data!' % countryname)
         return None
     dataset.set_dataset_year_range(earliest_year, latest_year)
-    return dataset
+
+    isolower = countryiso.lower()
+    showcase = Showcase({
+        'name': '%s-showcase' % slugified_name,
+        'title': 'Indicators for %s' % countryname,
+        'notes': 'Health indicators for %s' % countryname,
+        'url': 'http://www.who.int/countries/%s/en/' % isolower,
+        'image_url': 'http://www.who.int/sysmedia/images/countries/%s.gif' % isolower
+    })
+    showcase.add_tags(tags)
+    return dataset, showcase

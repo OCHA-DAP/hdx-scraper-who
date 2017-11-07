@@ -11,7 +11,7 @@ from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 from tabulator import Stream
 
-from who import generate_dataset, get_countriesdata, get_indicators_and_tags
+from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags
 
 from hdx.facades.hdx_scraperwiki import facade
 
@@ -27,11 +27,13 @@ def main():
         countriesdata = get_countriesdata(base_url, downloader)
         logger.info('Number of datasets to upload: %d' % len(countriesdata))
         for countrydata in countriesdata:
-            dataset = generate_dataset(base_url, Stream, countrydata, indicators)
+            dataset, showcase = generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
             if dataset:
                  dataset.add_tags(tags)
                  dataset.update_from_yaml()
                  dataset.create_in_hdx()
+                 showcase.create_in_hdx()
+                 showcase.add_dataset(dataset)
 
 
 if __name__ == '__main__':
