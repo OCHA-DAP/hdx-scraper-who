@@ -7,12 +7,13 @@ Top level script. Calls other functions that generate datasets that this script 
 import logging
 from os.path import join
 
+from hdx.facades import logging_kwargs
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
-from tabulator import Stream
 
 from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags
 
+logging_kwargs['smtp_config_yaml'] = join('config', 'smtp_configuration.yml')
 from hdx.facades.hdx_scraperwiki import facade
 
 logger = logging.getLogger(__name__)
