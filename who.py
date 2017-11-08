@@ -75,7 +75,7 @@ def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
         dataset.add_country_location(countryiso)
     except HDXError as e:
         logger.exception('%s has a problem! %s' % (countryname, e))
-        return None
+        return None, None
     tags = ['indicators', 'World Health Organization']
     dataset.add_tags(tags)
 
@@ -111,7 +111,7 @@ def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
         dataset.add_update_resource(resource)
     if len(dataset.get_resources()) == 0:
         logger.exception('%s has no data!' % countryname)
-        return None
+        return None, None
     dataset.set_dataset_year_range(earliest_year, latest_year)
 
     isolower = countryiso.lower()
