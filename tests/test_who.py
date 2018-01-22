@@ -37,6 +37,7 @@ class TestWHO:
         Configuration._create(hdx_read_only=True,
                               project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
+        Country.countriesdata(use_live=False)
 
     @pytest.fixture(scope='function')
     def downloader(self):
