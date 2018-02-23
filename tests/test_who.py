@@ -9,6 +9,7 @@ from os.path import join
 import pytest
 from hdx.hdx_configuration import Configuration
 from hdx.hdx_locations import Locations
+from hdx.location.country import Country
 
 from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags
 
@@ -34,7 +35,7 @@ class TestWHO:
 
     @pytest.fixture(scope='function')
     def configuration(self):
-        Configuration._create(hdx_read_only=True,
+        Configuration._create(hdx_read_only=True, user_agent='test',
                               project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
         Country.countriesdata(use_live=False)
@@ -105,10 +106,10 @@ class TestWHO:
                             'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
                             'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
                             'title': 'Indicators for Afghanistan'}
-        dataset = generate_dataset_and_showcase(base_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
-        assert dataset is None
-        dataset = generate_dataset_and_showcase(base_url, downloader, TestWHO.countrydata,
+        datasetshowcase = generate_dataset_and_showcase(base_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
+        assert datasetshowcase == (None, None)
+        datasetshowcase = generate_dataset_and_showcase(base_url, downloader, TestWHO.countrydata,
                                    [('lala', 'Life expectancy at birth (years)',
                                      'http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65')])
-        assert dataset is None
+        assert datasetshowcase == (None, None)
 
