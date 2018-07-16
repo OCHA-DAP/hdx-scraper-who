@@ -71,12 +71,13 @@ def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
     dataset.set_maintainer('196196be-6037-4488-8b71-d786adf4c081')
     dataset.set_organization('hdx')
     dataset.set_expected_update_frequency('Every year')
+    dataset.set_subnational(False)
     try:
         dataset.add_country_location(countryiso)
     except HDXError as e:
         logger.exception('%s has a problem! %s' % (countryname, e))
         return None, None
-    tags = ['indicators', 'World Health Organization']
+    tags = ['indicators']
     dataset.add_tags(tags)
 
     earliest_year = 10000

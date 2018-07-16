@@ -92,10 +92,10 @@ class TestWHO:
         base_url = Configuration.read()['base_url']
         dataset, showcase = generate_dataset_and_showcase(base_url, downloader, TestWHO.countrydata, TestWHO.indicators)
         assert dataset == {'groups': [{'name': 'afg'}], 'title': 'Afghanistan - Health Indicators',
-                           'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
+                           'tags': [{'name': 'indicators'}],
                            'data_update_frequency': '365', 'dataset_date': '01/01/1992-12/31/2015',
                            'name': 'who-data-for-afghanistan', 'maintainer': '196196be-6037-4488-8b71-d786adf4c081',
-                           'owner_org': 'hdx'}
+                           'owner_org': 'hdx', 'subnational': '0'}
 
         resources = dataset.get_resources()
         assert resources == [{'format': 'csv', 'name': 'Life expectancy at birth (years)',
@@ -103,7 +103,7 @@ class TestWHO:
                               'url': 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose'}]
         assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                             'url': 'http://www.who.int/countries/afg/en/',
-                            'tags': [{'name': 'indicators'}, {'name': 'World Health Organization'}],
+                            'tags': [{'name': 'indicators'}],
                             'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
                             'title': 'Indicators for Afghanistan'}
         datasetshowcase = generate_dataset_and_showcase(base_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)

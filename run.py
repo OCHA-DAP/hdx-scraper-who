@@ -32,6 +32,7 @@ def main():
             dataset, showcase = generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
             if dataset:
                  dataset.add_tags(tags)
+                 dataset.clean_dataset_tags()
                  dataset.update_from_yaml()
                  dataset.create_in_hdx()
                  showcase.create_in_hdx()
