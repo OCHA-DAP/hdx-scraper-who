@@ -1,7 +1,7 @@
 Collector designed to collect WHO datasets from the [World Health Organization](http://apps.who.int/gho/data/node.resources.api) website.
 
 ### Collector for WHO's Datasets
-[![Build Status](https://travis-ci.org/OCHA-DAP/hdxscraper-who.svg?branch=master&ts=1)](https://travis-ci.org/OCHA-DAP/hdxscraper-who) [![Coverage Status](https://coveralls.io/repos/github/OCHA-DAP/hdxscraper-who/badge.svg?branch=master&ts=1)](https://coveralls.io/github/OCHA-DAP/hdxscraper-who?branch=master)
+[![Build Status](https://travis-ci.org/OCHA-DAP/hdx-scraper-who.svg?branch=master&ts=1)](https://travis-ci.org/OCHA-DAP/hdx-scraper-who) [![Coverage Status](https://coveralls.io/repos/github/OCHA-DAP/hdx-scraper-who/badge.svg?branch=master&ts=1)](https://coveralls.io/github/OCHA-DAP/hdx-scraper-who?branch=master)
 
 ### Usage
 python run.py
