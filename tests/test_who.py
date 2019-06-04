@@ -100,7 +100,9 @@ class TestWHO:
         resources = dataset.get_resources()
         assert resources == [{'format': 'csv', 'name': 'Life expectancy at birth (years)',
                               'description': '[Indicator metadata](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)',
-                              'url': 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose'}]
+                              'url': 'http://papa/GHO/WHOSIS_000001.csv?filter=COUNTRY:AFG&profile=verbose',
+                              'resource_type': 'api',
+                              'url_type': 'api'}]
         assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                             'url': 'http://www.who.int/countries/afg/en/',
                             'tags': [{'name': 'indicators'}],
