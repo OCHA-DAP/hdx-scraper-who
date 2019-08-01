@@ -34,9 +34,9 @@ def main():
             dataset, showcase = generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
             if dataset:
                  dataset.add_tags(tags)
-                 dataset.clean_dataset_tags()
                  dataset.update_from_yaml()
                  dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
+                 showcase.add_tags(tags)
                  showcase.create_in_hdx()
                  showcase.add_dataset(dataset)
 

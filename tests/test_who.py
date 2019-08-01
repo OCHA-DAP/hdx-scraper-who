@@ -7,6 +7,7 @@ Unit tests for scrapername.
 from os.path import join
 
 import pytest
+from hdx.data.vocabulary import Vocabulary
 from hdx.hdx_configuration import Configuration
 from hdx.hdx_locations import Locations
 from hdx.location.country import Country
@@ -39,6 +40,8 @@ class TestWHO:
                               project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
         Country.countriesdata(use_live=False)
+        Vocabulary._tags_dict = True
+        Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'health'}, {'name': 'demographics'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
 
     @pytest.fixture(scope='function')
     def downloader(self):
@@ -92,7 +95,6 @@ class TestWHO:
         base_url = Configuration.read()['base_url']
         dataset, showcase = generate_dataset_and_showcase(base_url, downloader, TestWHO.countrydata, TestWHO.indicators)
         assert dataset == {'groups': [{'name': 'afg'}], 'title': 'Afghanistan - Health Indicators',
-                           'tags': [{'name': 'indicators'}],
                            'data_update_frequency': '365', 'dataset_date': '01/01/1992-12/31/2015',
                            'name': 'who-data-for-afghanistan', 'maintainer': '196196be-6037-4488-8b71-d786adf4c081',
                            'owner_org': 'hdx', 'subnational': '0'}
@@ -105,7 +107,6 @@ class TestWHO:
                               'url_type': 'api'}]
         assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                             'url': 'http://www.who.int/countries/afg/en/',
-                            'tags': [{'name': 'indicators'}],
                             'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
                             'title': 'Indicators for Afghanistan'}
         datasetshowcase = generate_dataset_and_showcase(base_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)

@@ -77,8 +77,6 @@ def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
     except HDXError as e:
         logger.exception('%s has a problem! %s' % (countryname, e))
         return None, None
-    tags = ['indicators']
-    dataset.add_tags(tags)
 
     earliest_year = 10000
     latest_year = 0
@@ -123,5 +121,4 @@ def generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
         'url': 'http://www.who.int/countries/%s/en/' % isolower,
         'image_url': 'http://www.who.int/sysmedia/images/countries/%s.gif' % isolower
     })
-    showcase.add_tags(tags)
     return dataset, showcase
