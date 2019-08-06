@@ -1,5 +1,6 @@
 # Collector specific configuration
 base_url: "http://apps.who.int/gho/athena/api/"
+hxlproxy_url: "https://proxy.hxlstandard.org/data.csv?"
 indicator_list:
   -  "anc1"
   -  "anc13"
