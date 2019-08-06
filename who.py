@@ -8,10 +8,12 @@ Reads WHO JSON and creates datasets.
 
 """
 import logging
+from collections import OrderedDict
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
 from hdx.data.showcase import Showcase
+from hdx.data.vocabulary import Vocabulary
 from slugify import slugify
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,9 @@ def get_indicators_and_tags(base_url, downloader, indicator_list):
                             tags.append(clean_tag(tag_name.strip()))
                     else:
                         tags.append(clean_tag(tag_name.strip()))
+    indicators = list(OrderedDict.fromkeys(indicators).keys())
+    tags = list(OrderedDict.fromkeys(tags).keys())
+    tags, _ = Vocabulary.get_mapped_tags(tags)
     return indicators, tags
 
 
