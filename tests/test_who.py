@@ -40,8 +40,8 @@ class TestWHO:
                               project_config_yaml=join('tests', 'config', 'project_configuration.yml'))
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
         Country.countriesdata(use_live=False)
-        Vocabulary._tags_dict = True
-        Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'health'}, {'name': 'demographics'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
+        Vocabulary._tags_dict = {'sustainable development goals': {'Action to Take': 'merge', 'New Tag(s)': 'sustainable development goals - sdg'}}
+        Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'health'}, {'name': 'demographics'}, {'name': 'sustainable development goals - sdg'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
 
     @pytest.fixture(scope='function')
     def downloader(self):
@@ -62,7 +62,7 @@ class TestWHO:
                                                                   {'category': 'DISPLAY_ES', 'value': 'Esperanza de vida al nacer'},
                                                                   {'category': 'DEFINITION_XML', 'value': 'http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65'},
                                                                   {'category': 'CATEGORY', 'value': 'Sustainable development goals'},
-                                                                  {'category': 'CATEGORY', 'value': 'something and another'},
+                                                                  {'category': 'CATEGORY', 'value': 'health and demographics'},
                                                                   {'category': 'RENDERER_ID', 'value': 'RENDER_2'}],
                                                          'display_sequence': 10, 'label': 'WHOSIS_000001'}]}]}
                     response.json = fn
@@ -82,10 +82,10 @@ class TestWHO:
 
         return Download()
 
-    def test_get_indicators_and_tags(self, downloader):
+    def test_get_indicators_and_tags(self, configuration, downloader):
         indicators, tags = get_indicators_and_tags('http://lala/', downloader, ['WHOSIS_000001'])
         assert indicators == TestWHO.indicators
-        assert tags == ['Sustainable development goals', 'something', 'another']
+        assert tags == ['sustainable development goals - sdg', 'health', 'demographics']
 
     def test_get_countriesdata(self, downloader):
         countriesdata = get_countriesdata('http://haha/', downloader)
