@@ -82,7 +82,7 @@ class TestWHO:
 
         return Download()
 
-    def test_get_indicators_and_tags(self, downloader):
+    def test_get_indicators_and_tags(self, configuration, downloader):
         indicators, tags = get_indicators_and_tags('http://lala/', downloader, ['WHOSIS_000001'])
         assert indicators == TestWHO.indicators
         assert tags == ['Sustainable development goals', 'something', 'another']
