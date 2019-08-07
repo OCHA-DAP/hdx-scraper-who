@@ -25,13 +25,15 @@ lookup = 'hdx-scraper-who'
 def main():
     """Generate dataset and create it in HDX"""
 
-    base_url = Configuration.read()['base_url']
+    configuration = Configuration.read()
+    base_url = configuration['base_url']
+    hxlproxy_url = configuration['hxlproxy_url']
     with Download() as downloader:
         indicators, tags = get_indicators_and_tags(base_url, downloader, Configuration.read()['indicator_list'])
         countriesdata = get_countriesdata(base_url, downloader)
         logger.info('Number of datasets to upload: %d' % len(countriesdata))
         for countrydata in countriesdata:
-            dataset, showcase = generate_dataset_and_showcase(base_url, downloader, countrydata, indicators)
+            dataset, showcase = generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydata, indicators)
             if dataset:
                  dataset.add_tags(tags)
                  dataset.update_from_yaml()

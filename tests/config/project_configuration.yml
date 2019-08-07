@@ -1,3 +1,4 @@
 # Collector specific configuration
 base_url: "http://papa/"
+hxlproxy_url: "https://proxy.hxlstandard.org/data.csv?"
 
