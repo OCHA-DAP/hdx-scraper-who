@@ -61,10 +61,8 @@ class TestWHO:
                                                          'attr': [{'category': 'DISPLAY_FR', 'value': 'Esperance de vie a la naissance (ans)'},
                                                                   {'category': 'DISPLAY_ES', 'value': 'Esperanza de vida al nacer'},
                                                                   {'category': 'DEFINITION_XML', 'value': 'http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65'},
-                                                                  {'category': 'CATEGORY',
-                                                                   'value': 'Sustainable development goals'},
-                                                                  {'category': 'CATEGORY',
-                                                                   'value': 'health and demographics'},
+                                                                  {'category': 'CATEGORY', 'value': 'Sustainable development goals'},
+                                                                  {'category': 'CATEGORY', 'value': 'health and demographics'},
                                                                   {'category': 'RENDERER_ID', 'value': 'RENDER_2'}],
                                                          'display_sequence': 10, 'label': 'WHOSIS_000001'}]}]}
                     response.json = fn
