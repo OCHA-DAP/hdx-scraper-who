@@ -13,19 +13,22 @@ from urllib.parse import quote_plus
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
+from hdx.data.resource_view import ResourceView
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
 from slugify import slugify
 
 logger = logging.getLogger(__name__)
 
-hxlate = '&tagger-match-all=on&tagger-01-header=gho+%28code%29&tagger-01-tag=%23indicator%2Bcode&tagger-02-header=gho+%28display%29&tagger-02-tag=%23indicator%2Bname&tagger-03-header=gho+%28url%29&tagger-03-tag=%23indicator%2Burl&tagger-05-header=datasource+%28display%29&tagger-05-tag=%23meta%2Bsource&tagger-07-header=publishstate+%28code%29&tagger-07-tag=%23status%2Bcode&tagger-08-header=publishstate+%28display%29&tagger-08-tag=%23status%2Bname&tagger-11-header=year+%28display%29&tagger-11-tag=%23date%2Byear&tagger-13-header=region+%28code%29&tagger-13-tag=%23region%2Bcode&tagger-14-header=region+%28display%29&tagger-14-tag=%23region%2Bname&tagger-16-header=country+%28code%29&tagger-16-tag=%23country%2Bcode&tagger-17-header=country+%28display%29&tagger-17-tag=%23country%2Bname&tagger-19-header=sex+%28code%29&tagger-19-tag=%23sex%2Bcode&tagger-20-header=sex+%28display%29&tagger-20-tag=%23sex%2Bname&tagger-23-header=numeric&tagger-23-tag=%23indicator%2Bvalue%2Bnum&header-row=1'
+hxlate = '&header-row=1&tagger-match-all=on&tagger-01-header=gho+%28code%29&tagger-01-tag=%23indicator%2Bcode&tagger-02-header=gho+%28display%29&tagger-02-tag=%23indicator%2Bname&tagger-03-header=gho+%28url%29&tagger-03-tag=%23indicator%2Burl&tagger-05-header=datasource+%28display%29&tagger-05-tag=%23meta%2Bsource&tagger-07-header=publishstate+%28code%29&tagger-07-tag=%23status%2Bcode&tagger-08-header=publishstate+%28display%29&tagger-08-tag=%23status%2Bname&tagger-11-header=year+%28display%29&tagger-11-tag=%23date%2Byear&tagger-13-header=region+%28code%29&tagger-13-tag=%23region%2Bcode&tagger-14-header=region+%28display%29&tagger-14-tag=%23region%2Bname&tagger-16-header=country+%28code%29&tagger-16-tag=%23country%2Bcode&tagger-17-header=country+%28display%29&tagger-17-tag=%23country%2Bname&tagger-19-header=sex+%28code%29&tagger-19-tag=%23sex%2Bcode&tagger-20-header=sex+%28display%29&tagger-20-tag=%23sex%2Bname&tagger-23-header=numeric&tagger-23-tag=%23indicator%2Bvalue%2Bnum&filter01=sort&sort-tags01=%23indicator%2Bcode%2C%23date%2Byear%2C%23sex%2Bcode'
+resource_name = 'Health Indicators for %s'
+quickchart_resourceno = 1
 
 
 def get_indicators_and_tags(base_url, downloader, indicator_list):
     indicators = list()
     tags = list()
-    response = downloader.download('%sGHO?format=json' % base_url)
+    response = downloader.download('%sapi/GHO?format=json' % base_url)
     json = response.json()
     result = json['dimension'][0]['code']
 
@@ -55,7 +58,7 @@ def get_indicators_and_tags(base_url, downloader, indicator_list):
 
 
 def get_countriesdata(base_url, downloader):
-    response = downloader.download('%sCOUNTRY?format=json' % base_url)
+    response = downloader.download('%sapi/COUNTRY?format=json' % base_url)
     json = response.json()
     return json['dimension'][0]['code']
 
@@ -72,8 +75,13 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     for attr in countrydata['attr']:
         if attr['category'] == 'ISO':
             countryiso = attr['value']
+    description = "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following indicators:  \n%s"
+    indicator_links = list()
+    for _, indicator_name, indicator_url in indicators:
+        indicator_links.append('[%s](%s)' % (indicator_name, indicator_url))
     dataset = Dataset({
         'name': slugified_name,
+        'notes': description % (', '.join(indicator_links)),
         'title': title,
     })
     try:
@@ -89,40 +97,45 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     dataset.add_tags(tags)
     earliest_year = 10000
     latest_year = 0
-    for indicator_code, indicator_name, indicator_url in indicators:
-        no_rows = 0
-        who_url = '%sGHO/%s.csv?filter=COUNTRY:%s&profile=verbose' % (base_url, indicator_code, countryiso)
-
-        try:
-            for row in downloader.get_tabular_rows(who_url, dict_rows=True, headers=1):
-                no_rows += 1
-                year = row['YEAR (CODE)']
-                if '-' in year:
-                    years = year.split('-')
-                else:
-                    years = [year]
-                for year in years:
-                    year = int(year)
-                    if year < earliest_year:
-                        earliest_year = year
-                    if year > latest_year:
-                        latest_year = year
-        except Exception:
-            continue
-        if no_rows == 0:
-            continue
-        url = '%surl=%s%s' % (hxlproxy_url, quote_plus(who_url), hxlate)
-        resource = {
-            'name': indicator_name,
-            'description': '[Indicator metadata](%s)' % indicator_url,
-            'format': 'csv',
-            'url': url
-        }
-        dataset.add_update_resource(resource)
-    if len(dataset.get_resources()) == 0:
-        logger.exception('%s has no data!' % countryname)
+    who_url = '%sdata/data-verbose.csv?target=GHO/%s&filter=COUNTRY:%s&profile=verbose' % (base_url, ','.join([x[0] for x in indicators]), countryiso)
+    url = '%s%s.csv?url=%s%s' % (hxlproxy_url, resource_name % countryname, quote_plus(who_url), hxlate)
+    no_rows = 0
+    try:
+        for row in downloader.get_tabular_rows(who_url, dict_rows=True, headers=1):
+            no_rows += 1
+            year = row['YEAR (CODE)']
+            if '-' in year:
+                years = year.split('-')
+            else:
+                years = [year]
+            for year in years:
+                year = int(year)
+                if year < earliest_year:
+                    earliest_year = year
+                if year > latest_year:
+                    latest_year = year
+    except:
+        pass
+    if no_rows == 0:
         return None, None
+    resource = {
+        'name': resource_name % countryname,
+        'description': 'See dataset description for links to indicator metadata',
+        'format': 'csv',
+        'url': url
+    }
+    dataset.add_update_resource(resource)
+    who_url = '%sdata/data-verbose.csv?target=GHO/%s&filter=COUNTRY:%s&profile=verbose' % (base_url, ','.join(['MDG_0000000001', 'WHOSIS_000001', 'WHS7_104']), countryiso)
+    url = '%s%s.csv?url=%s%s' % (hxlproxy_url, resource_name % countryname, quote_plus(who_url), hxlate)
+    resource = {
+        'name': 'QuickCharts %s' % (resource_name % countryname),
+        'description': 'QuickCharts resource',
+        'format': 'csv',
+        'url': url
+    }
+    dataset.add_update_resource(resource)
     dataset.set_dataset_year_range(earliest_year, latest_year)
+    dataset.set_quickchart_resource(quickchart_resourceno)
 
     isolower = countryiso.lower()
     showcase = Showcase({
@@ -134,3 +147,9 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     })
     showcase.add_tags(tags)
     return dataset, showcase
+
+
+def generate_resource_view(dataset):
+    resourceview = ResourceView({'resource_id': dataset.get_resource(quickchart_resourceno)['id']})
+    resourceview.update_from_yaml()
+    return resourceview

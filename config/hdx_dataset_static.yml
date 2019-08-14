@@ -1,6 +1,5 @@
 license_id: "cc-by-igo"
-notes: "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering various indicators (one per resource)."
-caveats: "More details about the indicators are available in the links in the resource descriptions."
+caveats: "More details about the indicators are available in the links in the dataset description."
 methodology: "Registry"
 dataset_source: "World Health Organization"
 package_creator: "mcarans"
