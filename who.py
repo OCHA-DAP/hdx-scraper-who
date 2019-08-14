@@ -100,19 +100,22 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     who_url = '%sdata/data-verbose.csv?target=GHO/%s&filter=COUNTRY:%s&profile=verbose' % (base_url, ','.join([x[0] for x in indicators]), countryiso)
     url = '%s%s.csv?url=%s%s' % (hxlproxy_url, resource_name % countryname, quote_plus(who_url), hxlate)
     no_rows = 0
-    for row in downloader.get_tabular_rows(who_url, dict_rows=True, headers=1):
-        no_rows += 1
-        year = row['YEAR (CODE)']
-        if '-' in year:
-            years = year.split('-')
-        else:
-            years = [year]
-        for year in years:
-            year = int(year)
-            if year < earliest_year:
-                earliest_year = year
-            if year > latest_year:
-                latest_year = year
+    try:
+        for row in downloader.get_tabular_rows(who_url, dict_rows=True, headers=1):
+            no_rows += 1
+            year = row['YEAR (CODE)']
+            if '-' in year:
+                years = year.split('-')
+            else:
+                years = [year]
+            for year in years:
+                year = int(year)
+                if year < earliest_year:
+                    earliest_year = year
+                if year > latest_year:
+                    latest_year = year
+    except:
+        pass
     if no_rows == 0:
         return None, None
     resource = {
