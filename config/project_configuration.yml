@@ -1,6 +1,6 @@
 # Collector specific configuration
 base_url: "http://apps.who.int/gho/athena/"
-hxlproxy_url: "https://tools.humdata.org/hxlproxy/data/download/"
+hxlproxy_url: "https://proxy.hxlstandard.org/data/download/"
 indicator_list:
   -  "anc1"
   -  "anc13"
