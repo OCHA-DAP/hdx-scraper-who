@@ -10,11 +10,7 @@ from os.path import join, expanduser
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 
-from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags, resource_name, \
-    generate_resource_view
-
-from hdx.facades import logging_kwargs
-logging_kwargs['smtp_config_yaml'] = join('config', 'smtp_configuration.yml')
+from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags, generate_resource_view
 
 from hdx.facades.simple import facade
 
