@@ -10,7 +10,7 @@ from os.path import join, expanduser
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
 
-from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags, generate_resource_view
+from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags
 
 from hdx.facades.simple import facade
 
@@ -35,8 +35,7 @@ def main():
                 dataset.add_tags(tags)
                 dataset.update_from_yaml()
                 dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
-                resource_view = generate_resource_view(dataset)
-                resource_view.create_in_hdx()
+                dataset.generate_resource_view(1)
                 showcase.add_tags(tags)
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)

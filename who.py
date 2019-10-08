@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 hxlate = '&header-row=1&tagger-match-all=on&tagger-01-header=gho+%28code%29&tagger-01-tag=%23indicator%2Bcode&tagger-02-header=gho+%28display%29&tagger-02-tag=%23indicator%2Bname&tagger-03-header=gho+%28url%29&tagger-03-tag=%23indicator%2Burl&tagger-05-header=datasource+%28display%29&tagger-05-tag=%23meta%2Bsource&tagger-07-header=publishstate+%28code%29&tagger-07-tag=%23status%2Bcode&tagger-08-header=publishstate+%28display%29&tagger-08-tag=%23status%2Bname&tagger-11-header=year+%28display%29&tagger-11-tag=%23date%2Byear&tagger-13-header=region+%28code%29&tagger-13-tag=%23region%2Bcode&tagger-14-header=region+%28display%29&tagger-14-tag=%23region%2Bname&tagger-16-header=country+%28code%29&tagger-16-tag=%23country%2Bcode&tagger-17-header=country+%28display%29&tagger-17-tag=%23country%2Bname&tagger-19-header=sex+%28code%29&tagger-19-tag=%23sex%2Bcode&tagger-20-header=sex+%28display%29&tagger-20-tag=%23sex%2Bname&tagger-23-header=numeric&tagger-23-tag=%23indicator%2Bvalue%2Bnum&filter01=sort&sort-tags01=%23indicator%2Bcode%2C%23date%2Byear%2C%23sex%2Bcode'
 resource_name = 'Health Indicators for %s'
-quickchart_resourceno = 1
 
 
 def get_indicators_and_tags(base_url, downloader, indicator_list):
@@ -135,7 +134,6 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     }
     dataset.add_update_resource(resource)
     dataset.set_dataset_year_range(earliest_year, latest_year)
-    dataset.set_quickchart_resource(quickchart_resourceno)
 
     isolower = countryiso.lower()
     showcase = Showcase({
@@ -147,9 +145,3 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     })
     showcase.add_tags(tags)
     return dataset, showcase
-
-
-def generate_resource_view(dataset):
-    resourceview = ResourceView({'resource_id': dataset.get_resource(quickchart_resourceno)['id']})
-    resourceview.update_from_yaml()
-    return resourceview
