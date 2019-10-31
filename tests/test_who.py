@@ -41,7 +41,7 @@ class TestWHO:
         Locations.set_validlocations([{'name': 'afg', 'title': 'Afghanistan'}])
         Country.countriesdata(use_live=False)
         Vocabulary._tags_dict = {'sustainable development goals': {'Action to Take': 'merge', 'New Tag(s)': 'sustainable development goals - sdg'}}
-        Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'health'}, {'name': 'demographics'}, {'name': 'sustainable development goals - sdg'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
+        Vocabulary._approved_vocabulary = {'tags': [{'name': 'hxl'}, {'name': 'indicators'}, {'name': 'health'}, {'name': 'demographics'}, {'name': 'sustainable development goals - sdg'}], 'id': '4e61d464-4943-4e97-973a-84673c1aaa87', 'name': 'approved'}
 
     @pytest.fixture(scope='function')
     def downloader(self):
@@ -101,7 +101,7 @@ class TestWHO:
                            'title': 'Afghanistan - Health Indicators', 'groups': [{'name': 'afg'}],
                            'maintainer': '196196be-6037-4488-8b71-d786adf4c081', 'owner_org': 'hdx',
                            'data_update_frequency': '365', 'subnational': '0',
-                           'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
+                           'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                            'dataset_date': '01/01/1992-12/31/2015'}
 
         resources = dataset.get_resources()
@@ -116,7 +116,7 @@ class TestWHO:
         assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                             'url': 'http://www.who.int/countries/afg/en/',
                             'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
-                            'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
+                            'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                             'title': 'Indicators for Afghanistan'}
         datasetshowcase = generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
         assert datasetshowcase == (None, None)

@@ -92,7 +92,7 @@ def generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydat
     dataset.set_organization('hdx')
     dataset.set_expected_update_frequency('Every year')
     dataset.set_subnational(False)
-    tags = ['hxl']
+    tags = ['hxl', 'indicators']
     dataset.add_tags(tags)
     earliest_year = 10000
     latest_year = 0
