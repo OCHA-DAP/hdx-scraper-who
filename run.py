@@ -9,8 +9,9 @@ from os.path import join, expanduser
 
 from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download
+from hdx.utilities.path import progress_storing_tempdir
 
-from who import generate_dataset_and_showcase, get_countriesdata, get_indicators_and_tags
+from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
 
 from hdx.facades.simple import facade
 
@@ -24,18 +25,17 @@ def main():
 
     configuration = Configuration.read()
     base_url = configuration['base_url']
-    hxlproxy_url = configuration['hxlproxy_url']
     with Download() as downloader:
         indicators, tags = get_indicators_and_tags(base_url, downloader, Configuration.read()['indicator_list'])
-        countriesdata = get_countriesdata(base_url, downloader)
-        logger.info('Number of datasets to upload: %d' % len(countriesdata))
-        for countrydata in countriesdata:
-            dataset, showcase = generate_dataset_and_showcase(base_url, hxlproxy_url, downloader, countrydata, indicators)
+        countries = get_countries(base_url, downloader)
+        logger.info('Number of datasets to upload: %d' % len(countries))
+        for folder, country in progress_storing_tempdir('WHO', countries, 'label'):
+            dataset, showcase = generate_dataset_and_showcase(base_url, downloader, folder, country, indicators)
             if dataset:
                 dataset.add_tags(tags)
                 dataset.update_from_yaml()
-                dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False)
-                dataset.generate_resource_view(1)
+                dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False, updated_by_script='HDX Scraper: WHO')
+                dataset.generate_resource_view(0)
                 showcase.add_tags(tags)
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
