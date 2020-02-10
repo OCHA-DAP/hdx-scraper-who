@@ -106,12 +106,13 @@ def generate_dataset_and_showcase(base_url, downloader, folder, country, indicat
         no_rows += 1
         rows.append(row)
         year = row['YEAR (CODE)']
-        if '-' in year:
-            yearrange = year.split('-')
-            years.add(int(yearrange[0]))
-            years.add(int(yearrange[1]))
-        else:
-            years.add(int(year))
+        if year:
+            if '-' in year:
+                yearrange = year.split('-')
+                years.add(int(yearrange[0]))
+                years.add(int(yearrange[1]))
+            else:
+                years.add(int(year))
     if no_rows == 0:
         logger.error('Could not download data for %s!' % countryname)
         return None, None
