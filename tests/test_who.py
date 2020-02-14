@@ -76,11 +76,9 @@ class TestWHO:
             @staticmethod
             def get_tabular_rows(url, **kwargs):
                 if url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000001&filter=COUNTRY:AFG&profile=verbose':
-                    return ['header1', 'header2', 'YEAR (CODE)'], \
-                           [{'header1': 'val11', 'header2': 'val21', 'YEAR (CODE)': '1992'},
-                            {'header1': 'val12', 'header2': 'val22', 'YEAR (CODE)': '2015'}]
-                elif url == 'http://papa/data/data-verbose.csv?target=GHO/lala&filter=COUNTRY:AFG&profile=verbose':
-                    raise Exception('Error!')
+                    return ['GHO (CODE)', 'header2', 'YEAR (CODE)'], \
+                           [{'GHO (CODE)': 'WHS7_104', 'header2': 'val21', 'YEAR (CODE)': '1992'},
+                            {'GHO (CODE)': 'MDG_0000000001', 'header2': 'val22', 'YEAR (CODE)': '2015'}]
 
             @staticmethod
             def hxl_row(headers, hxltags, dict_form):
@@ -89,7 +87,7 @@ class TestWHO:
         return Download()
 
     def test_get_indicators_and_tags(self, configuration, downloader):
-        indicators, tags = get_indicators_and_tags('http://lala/', downloader, ['WHOSIS_000001'])
+        indicators, tags = get_indicators_and_tags('http://lala/', downloader)
         assert indicators == TestWHO.indicators
         assert tags == ['sustainable development goals - sdg', 'health', 'demographics']
 
@@ -101,7 +99,8 @@ class TestWHO:
         configuration = Configuration.read()
         base_url = configuration['base_url']
         with temp_dir('WHO') as folder:
-            dataset, showcase = generate_dataset_and_showcase(base_url, downloader, folder, TestWHO.country, TestWHO.indicators)
+            dataset, showcase, bites_disabled = generate_dataset_and_showcase(base_url, downloader, folder,
+                                                                              TestWHO.country, TestWHO.indicators)
             assert dataset == {'name': 'who-data-for-afghanistan',
                                'notes': "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following indicators:  \n[Life expectancy at birth (years)](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)",
                                'title': 'Afghanistan - Health Indicators', 'groups': [{'name': 'afg'}],
@@ -119,10 +118,7 @@ class TestWHO:
                                 'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
                                 'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                                 'title': 'Indicators for Afghanistan'}
+            assert bites_disabled == [True, False, False]
             datasetshowcase = generate_dataset_and_showcase(base_url, downloader, folder, {'label': 'xxx', 'display': 'Unknown', 'attr': []}, TestWHO.indicators)
-            assert datasetshowcase == (None, None)
-            # datasetshowcase = generate_dataset_and_showcase(base_url, downloader, folder, TestWHO.country,
-            #                                                 [('lala', 'Life expectancy at birth (years)',
-            #                              'http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65')])
-            # assert datasetshowcase == (None, None)
+            assert datasetshowcase == (None, None, None)
 
