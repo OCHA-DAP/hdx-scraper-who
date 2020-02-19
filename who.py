@@ -91,7 +91,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
         return None, None, None
     dataset.set_maintainer('35f7bb2c-4ab6-4796-8334-525b30a94c89')
     dataset.set_organization('c021f6be-3598-418e-8f7f-c7a799194dba')
-    dataset.set_expected_update_frequency('Every year')
+    dataset.set_expected_update_frequency('Every week')
     dataset.set_subnational(False)
     alltags = ['hxl', 'indicators']
     alltags.extend(tags)
