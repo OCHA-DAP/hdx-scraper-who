@@ -124,7 +124,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
     qc_all_rows = list()
     insertions = [(13, 'ENDYEAR'), (13, 'STARTYEAR')]
     quickcharts = {'hashtag': '#indicator+code', 'values': ['WHOSIS_000001', 'WHS7_104', 'MDG_0000000001'],
-                   'cutdown': 1}
+                   'cutdown': 1, 'cutdownhashtags': ['#indicator+code', '#date+year+end', '#sex+name', '#indicator+value+num']}
     headers = None
     qcheaders = None
     bites_disabled = [True, True, True]

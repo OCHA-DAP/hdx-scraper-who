@@ -34,8 +34,8 @@ def main():
                 base_url, folder, country, indicators, tags, downloadclass=Download)
             if dataset:
                 dataset.update_from_yaml()
-                dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False, updated_by_script='HDX Scraper: WHO')
                 dataset.generate_resource_view(-1, bites_disabled=bites_disabled)
+                dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False, updated_by_script='HDX Scraper: WHO')
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
 
