@@ -76,17 +76,17 @@ class Download:
 
     @staticmethod
     def get_tabular_rows(url, **kwargs):
-        headers = ['GHO (CODE)', 'PUBLISHSTATE (CODE)', 'header2', 'YEAR (CODE)']
+        headers = ['GHO (CODE)', 'PUBLISHSTATE (CODE)', 'header2', 'YEAR (DISPLAY)', 'STARTYEAR', 'ENDYEAR']
         if url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000001&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_104', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (CODE)': '1992'},
-                      {'GHO (CODE)': 'MDG_000000X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (CODE)': '2015'},
-                      {'GHO (CODE)': 'MDG_0000000001', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (CODE)': '2015'}]
+            retval = [{'GHO (CODE)': 'WHS7_104', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992-1994'},
+                      {'GHO (CODE)': 'MDG_000000X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'},
+                      {'GHO (CODE)': 'MDG_0000000001', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'}]
         elif url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000002&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_105', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (CODE)': '1992'}]
+            retval = [{'GHO (CODE)': 'WHS7_105', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992'}]
         elif url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000003&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_106', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (CODE)': '1992'},
-                      {'GHO (CODE)': 'MDG_000001X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (CODE)': '2015'},
-                      {'GHO (CODE)': 'MDG_0000000002', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (CODE)': '2015'}]
+            retval = [{'GHO (CODE)': 'WHS7_106', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992'},
+                      {'GHO (CODE)': 'MDG_000001X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'},
+                      {'GHO (CODE)': 'MDG_0000000002', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015-2016'}]
         rows = list()
         for row in retval:
             row = kwargs['row_function'](headers, row)
@@ -153,12 +153,13 @@ class TestWHO:
                                'maintainer': '35f7bb2c-4ab6-4796-8334-525b30a94c89', 'owner_org': 'c021f6be-3598-418e-8f7f-c7a799194dba',
                                'data_update_frequency': '7', 'subnational': '0',
                                'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'sustainable development goals - sdg', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
-                               'dataset_date': '01/01/1992-12/31/2015'}
+                               'dataset_date': '01/01/1992-12/31/2016'}
 
             resources = dataset.get_resources()
             assert resources == [{'name': 'All Health Indicators for Afghanistan', 'description': 'See resource descriptions below for links to indicator metadata', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
                                  {'name': 'health and demographics Indicators for Afghanistan', 'description': '*health and demographics:*\n[Life expectancy at birth (years)](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65), [Life expectancy at birth (years) 2](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
-                                 {'name': 'sustainable development goals Indicators for Afghanistan', 'description': '*sustainable development goals:*\n[Life expectancy at birth (years) 3](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'}]
+                                 {'name': 'sustainable development goals Indicators for Afghanistan', 'description': '*sustainable development goals:*\n[Life expectancy at birth (years) 3](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
+                                 {'name': 'QuickCharts Indicators for Afghanistan', 'description': 'Cut down data for QuickCharts', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'}]
 
             assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                                 'url': 'http://www.who.int/countries/afg/en/',
@@ -167,6 +168,8 @@ class TestWHO:
                                 'title': 'Indicators for Afghanistan'}
             assert bites_disabled == [True, False, False]
             file = 'health_indicators_AFG.csv'
+            assert_files_same(join('tests', 'fixtures', file), join(folder, file))
+            file = 'qc_%s' % file
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
             file = 'health and demographics_indicators_AFG.csv'
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
