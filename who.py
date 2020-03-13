@@ -15,6 +15,7 @@ from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
+from hdx.location.country import Country
 from hdx.utilities.dictandlist import dict_of_lists_add
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
@@ -69,14 +70,17 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
-    countryname = country['display']
-    title = '%s - Health Indicators' % countryname
-    logger.info('Creating dataset: %s' % title)
-    slugified_name = slugify('WHO data for %s' % countryname).lower()
     countryiso = country['label']
     for attr in country['attr']:
         if attr['category'] == 'ISO':
             countryiso = attr['value']
+    countryname = Country.get_country_name_from_iso3(countryiso)
+    if countryname is None:
+        logger.warning('Ignoring ISO3 %s (WHO name: %s) for which HDX country name not found!' % (country['display'], countryiso))
+        return None, None, None
+    title = '%s - Health Indicators' % countryname
+    logger.info('Creating dataset: %s' % title)
+    slugified_name = slugify('WHO data for %s' % countryname).lower()
     cat_str = ', '.join(indicators)
     dataset = Dataset({
         'name': slugified_name,
@@ -167,7 +171,9 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
             for i, bite_disabled in enumerate(results['bites_disabled']):
                 if bite_disabled is False:
                     bites_disabled[i] = False
-
+    if len(all_rows) == 0:
+        logger.error('%s has no data!' % countryname)
+        return None, None, None
 
     filename = 'health_indicators_%s.csv' % countryiso
     resourcedata = {
