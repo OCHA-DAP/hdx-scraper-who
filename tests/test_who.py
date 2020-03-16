@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''
-Unit tests for scrapername.
+Unit tests for WHO.
 
 '''
 from collections import OrderedDict
