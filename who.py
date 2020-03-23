@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 hxlate = '&header-row=1&tagger-match-all=on&tagger-01-header=gho+%28code%29&tagger-01-tag=%23indicator%2Bcode&tagger-02-header=gho+%28display%29&tagger-02-tag=%23indicator%2Bname&tagger-03-header=gho+%28url%29&tagger-03-tag=%23indicator%2Burl&tagger-05-header=datasource+%28display%29&tagger-05-tag=%23meta%2Bsource&tagger-07-header=publishstate+%28code%29&tagger-07-tag=%23status%2Bcode&tagger-08-header=publishstate+%28display%29&tagger-08-tag=%23status%2Bname&tagger-11-header=year+%28display%29&tagger-11-tag=%23date%2Byear&tagger-13-header=region+%28code%29&tagger-13-tag=%23region%2Bcode&tagger-14-header=region+%28display%29&tagger-14-tag=%23region%2Bname&tagger-16-header=country+%28code%29&tagger-16-tag=%23country%2Bcode&tagger-17-header=country+%28display%29&tagger-17-tag=%23country%2Bname&tagger-19-header=sex+%28code%29&tagger-19-tag=%23sex%2Bcode&tagger-20-header=sex+%28display%29&tagger-20-tag=%23sex%2Bname&tagger-23-header=numeric&tagger-23-tag=%23indicator%2Bvalue%2Bnum&filter01=sort&sort-tags01=%23indicator%2Bcode%2C%23date%2Byear%2C%23sex%2Bcode'
 hxltags = {'GHO (CODE)': '#indicator+code', 'GHO (DISPLAY)': '#indicator+name', 'GHO (URL)': '#indicator+url', 'DATASOURCE (DISPLAY)': '#meta+source', 'PUBLISHSTATE (CODE)': '#status+code', 'PUBLISHSTATE (DISPLAY)': '#status+name', 'YEAR (DISPLAY)': '#date+year', 'STARTYEAR': '#date+year+start', 'ENDYEAR': '#date+year+end', 'REGION (CODE)': '#region+code', 'REGION (DISPLAY)': '#region+name', 'COUNTRY (CODE)': '#country+code', 'COUNTRY (DISPLAY)': '#country+name', 'SEX (CODE)': '#sex+code', 'SEX (DISPLAY)': '#sex+name', 'Numeric': '#indicator+value+num'}
-indicator_limit = 100
+indicator_limit = 50
 
 
 def get_indicators_and_tags(base_url, downloader):
