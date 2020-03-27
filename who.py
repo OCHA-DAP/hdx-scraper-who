@@ -178,6 +178,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
                 error = False
                 break
             except RowError:
+                logger.warning('No PUBLISHSTATE (CODE)!')
                 error = True
                 sleep(600)
         if error is True:
