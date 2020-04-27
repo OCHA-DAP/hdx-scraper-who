@@ -101,7 +101,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
         return None, None, None
     dataset.set_maintainer('35f7bb2c-4ab6-4796-8334-525b30a94c89')
     dataset.set_organization('c021f6be-3598-418e-8f7f-c7a799194dba')
-    dataset.set_expected_update_frequency('As needed')
+    dataset.set_expected_update_frequency('Every month')
     dataset.set_subnational(False)
     alltags = ['hxl', 'indicators']
     alltags.extend(tags)
@@ -172,7 +172,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
                 iterables.append(iterator)
                 i += indicator_limit
             try:
-                success, results = dataset.generate_resource_from_download(
+                success, results = dataset.generate_resource_from_iterator(
                     fileheaders, chain.from_iterable(iterables), hxltags, folder, filename, resourcedata,
                     date_function=process_date, quickcharts=quickcharts)
                 error = False

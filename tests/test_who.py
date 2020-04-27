@@ -151,7 +151,7 @@ class TestWHO:
                                'notes': "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \nhealth and demographics, sustainable development goals  \n  \nFor links to individual indicator metadata, see resource descriptions.",
                                'title': 'Afghanistan - Health Indicators', 'groups': [{'name': 'afg'}],
                                'maintainer': '35f7bb2c-4ab6-4796-8334-525b30a94c89', 'owner_org': 'c021f6be-3598-418e-8f7f-c7a799194dba',
-                               'data_update_frequency': '-2', 'subnational': '0',
+                               'data_update_frequency': '30', 'subnational': '0',
                                'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'sustainable development goals - sdg', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                                'dataset_date': '01/01/1992-12/31/2016'}
 
