@@ -25,6 +25,7 @@ def main():
 
     configuration = Configuration.read()
     base_url = configuration['base_url']
+    qc_indicators = configuration['qc_indicators']
     with Download(rate_limit={'calls': 1, 'period': 1}) as downloader:
         indicators, tags = get_indicators_and_tags(base_url, downloader)
         countries = get_countries(base_url, downloader)
@@ -34,7 +35,7 @@ def main():
                 base_url, info['folder'], country, indicators, tags, downloadclass=Download)
             if dataset:
                 dataset.update_from_yaml()
-                dataset.generate_resource_view(-1, bites_disabled=bites_disabled)
+                dataset.generate_resource_view(-1, bites_disabled=bites_disabled, indicators=qc_indicators)
                 dataset.create_in_hdx(remove_additional_resources=True, hxl_update=False, updated_by_script='HDX Scraper: WHO', batch=info['batch'])
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
