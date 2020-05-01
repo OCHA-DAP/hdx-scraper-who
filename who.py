@@ -71,8 +71,7 @@ class RowError(Exception):
     pass
 
 
-def generate_dataset_and_showcase(base_url, folder, country, indicators,
-                                  tags, downloadclass):
+def generate_dataset_and_showcase(base_url, folder, country, indicators, tags, qc_indicators, downloadclass):
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
@@ -139,8 +138,9 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators,
     all_rows = list()
     qc_all_rows = list()
     insertions = [(13, 'ENDYEAR'), (13, 'STARTYEAR')]
-    quickcharts = {'hashtag': '#indicator+code', 'values': ['WHOSIS_000001', 'WHS7_104', 'MDG_0000000001'],
-                   'cutdown': 1, 'cutdownhashtags': ['#indicator+code', '#date+year+end', '#sex+name', '#indicator+value+num']}
+    values = [x['code'] for x in qc_indicators]
+    quickcharts = {'hashtag': '#indicator+code', 'values': values, 'numeric_hashtag': '#indicator+value+num',
+                   'cutdown': 1, 'cutdownhashtags': ['#indicator+code', '#country+code', '#date+year+end', '#sex+name']}
     headers = None
     qcheaders = None
     bites_disabled = [True, True, True]

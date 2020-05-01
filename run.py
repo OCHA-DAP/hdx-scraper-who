@@ -32,7 +32,7 @@ def main():
         logger.info('Number of datasets to upload: %d' % len(countries))
         for info, country in progress_storing_tempdir('WHO', countries, 'label'):
             dataset, showcase, bites_disabled = generate_dataset_and_showcase(
-                base_url, info['folder'], country, indicators, tags, downloadclass=Download)
+                base_url, info['folder'], country, indicators, tags, qc_indicators, downloadclass=Download)
             if dataset:
                 dataset.update_from_yaml()
                 dataset.generate_resource_view(-1, bites_disabled=bites_disabled, indicators=qc_indicators)

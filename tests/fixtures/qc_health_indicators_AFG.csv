@@ -1,4 +1,4 @@
-GHO (CODE),ENDYEAR
-#indicator+code,#date+year+end
-WHS7_104,1994
-MDG_0000000001,2015
+GHO (CODE),ENDYEAR,Numeric
+#indicator+code,#date+year+end,#indicator+value+num
+WHS7_104,1994,123.4
+MDG_0000000001,2015,123.4

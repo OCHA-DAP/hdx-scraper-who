@@ -76,17 +76,17 @@ class Download:
 
     @staticmethod
     def get_tabular_rows(url, **kwargs):
-        headers = ['GHO (CODE)', 'PUBLISHSTATE (CODE)', 'header2', 'YEAR (DISPLAY)', 'STARTYEAR', 'ENDYEAR']
+        headers = ['GHO (CODE)', 'PUBLISHSTATE (CODE)', 'header2', 'YEAR (DISPLAY)', 'STARTYEAR', 'ENDYEAR', 'Numeric']
         if url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000001&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_104', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992-1994'},
-                      {'GHO (CODE)': 'MDG_000000X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'},
-                      {'GHO (CODE)': 'MDG_0000000001', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'}]
+            retval = [{'GHO (CODE)': 'WHS7_104', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992-1994', 'Numeric': '123.4'},
+                      {'GHO (CODE)': 'MDG_000000X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015', 'Numeric': '123.4'},
+                      {'GHO (CODE)': 'MDG_0000000001', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015', 'Numeric': '123.4'}]
         elif url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000002&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_105', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992'}]
+            retval = [{'GHO (CODE)': 'WHS7_105', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992', 'Numeric': '123.4'}]
         elif url == 'http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000003&filter=COUNTRY:AFG&profile=verbose':
-            retval = [{'GHO (CODE)': 'WHS7_106', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992'},
-                      {'GHO (CODE)': 'MDG_000001X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015'},
-                      {'GHO (CODE)': 'MDG_0000000002', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015-2016'}]
+            retval = [{'GHO (CODE)': 'WHS7_106', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val21', 'YEAR (DISPLAY)': '1992', 'Numeric': '123.4'},
+                      {'GHO (CODE)': 'MDG_000001X', 'PUBLISHSTATE (CODE)': 'VOID-ACCEPTED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015', 'Numeric': '123.4'},
+                      {'GHO (CODE)': 'MDG_0000000002', 'PUBLISHSTATE (CODE)': 'PUBLISHED', 'header2': 'val22', 'YEAR (DISPLAY)': '2015-2016', 'Numeric': '123.4'}]
         rows = list()
         for row in retval:
             row = kwargs['row_function'](headers, row)
@@ -143,10 +143,11 @@ class TestWHO:
     def test_generate_dataset_and_showcase(self, configuration):
         configuration = Configuration.read()
         base_url = configuration['base_url']
+        qc_indicators = configuration['qc_indicators']
         with temp_dir('WHO') as folder:
             who.indicator_limit = 1
             dataset, showcase, bites_disabled = generate_dataset_and_showcase(
-                base_url, folder, TestWHO.country, TestWHO.indicators, TestWHO.tags, downloadclass=Download)
+                base_url, folder, TestWHO.country, TestWHO.indicators, TestWHO.tags, qc_indicators, downloadclass=Download)
             assert dataset == {'name': 'who-data-for-afghanistan',
                                'notes': "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \nhealth and demographics, sustainable development goals  \n  \nFor links to individual indicator metadata, see resource descriptions.",
                                'title': 'Afghanistan - Health Indicators', 'groups': [{'name': 'afg'}],
@@ -166,7 +167,7 @@ class TestWHO:
                                 'notes': 'Health indicators for Afghanistan', 'name': 'who-data-for-afghanistan-showcase',
                                 'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'sustainable development goals - sdg', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
                                 'title': 'Indicators for Afghanistan'}
-            assert bites_disabled == [True, False, False]
+            assert bites_disabled == [False, True, False]
             file = 'health_indicators_AFG.csv'
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
             file = 'qc_%s' % file
@@ -175,6 +176,6 @@ class TestWHO:
             assert_files_same(join('tests', 'fixtures', file), join(folder, file))
             country = {'label': 'xxx', 'display': 'Unknown', 'attr': []}
             datasetshowcase = generate_dataset_and_showcase(
-                base_url, folder, country, TestWHO.indicators, TestWHO.tags, downloadclass=Download)
+                base_url, folder, country, TestWHO.indicators, TestWHO.tags, qc_indicators, downloadclass=Download)
             assert datasetshowcase == (None, None, None)
 

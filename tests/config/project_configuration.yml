@@ -1,3 +1,16 @@
 # Collector specific configuration
 base_url: "http://papa/"
+qc_indicators:
+  - code: "MDG_0000000001"
+    title: "Infant Mortality Rate"
+    unit: "Percent"
+    description: "Probability of dying between birth and age 1 per 1000 live births"
+  - code: "WHOSIS_000001"
+    title: "Life Expectancy at Birth"
+    unit: "Years"
+    description: "Years"
+  - code: "WHS7_104"
+    title: "Per Capita Government Health Expenditure"
+    unit: "US $"
+    description: "Per capita government expenditure on health at average exchange rate"
 
