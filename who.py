@@ -168,7 +168,7 @@ def generate_dataset_and_showcase(base_url, folder, country, indicators, tags, q
                 url = '%sdata/data-verbose.csv?target=GHO/%s&filter=COUNTRY:%s&profile=verbose' % (
                     base_url, ','.join(indicator_codes[i:ie]), countryiso)
                 fileheaders, iterator = downloadclass().get_tabular_rows(url, dict_form=True, header_insertions=insertions,
-                                                                         row_function=process_row, format='csv')
+                                                                         row_function=process_row, format='csv', encoding='utf-8')
                 iterables.append(iterator)
                 i += indicator_limit
             try:
