@@ -157,10 +157,10 @@ class TestWHO:
                                'dataset_date': '01/01/1992-12/31/2016'}
 
             resources = dataset.get_resources()
-            assert resources == [{'name': 'All Health Indicators for Afghanistan', 'description': 'See resource descriptions below for links to indicator metadata', 'format': 'CSV', 'resource_type': 'file.upload', 'url_type': 'upload'},
-                                 {'name': 'health and demographics Indicators for Afghanistan', 'description': '*health and demographics:*\n[Life expectancy at birth (years)](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65), [Life expectancy at birth (years) 2](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'CSV', 'resource_type': 'file.upload', 'url_type': 'upload'},
-                                 {'name': 'sustainable development goals Indicators for Afghanistan', 'description': '*sustainable development goals:*\n[Life expectancy at birth (years) 3](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'CSV', 'resource_type': 'file.upload', 'url_type': 'upload'},
-                                 {'name': 'QuickCharts Indicators for Afghanistan', 'description': 'Cut down data for QuickCharts', 'format': 'CSV', 'resource_type': 'file.upload', 'url_type': 'upload'}]
+            assert resources == [{'name': 'All Health Indicators for Afghanistan', 'description': 'See resource descriptions below for links to indicator metadata', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
+                                 {'name': 'health and demographics Indicators for Afghanistan', 'description': '*health and demographics:*\n[Life expectancy at birth (years)](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65), [Life expectancy at birth (years) 2](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
+                                 {'name': 'sustainable development goals Indicators for Afghanistan', 'description': '*sustainable development goals:*\n[Life expectancy at birth (years) 3](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
+                                 {'name': 'QuickCharts Indicators for Afghanistan', 'description': 'Cut down data for QuickCharts', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'}]
 
             assert showcase == {'image_url': 'http://www.who.int/sysmedia/images/countries/afg.gif',
                                 'url': 'http://www.who.int/countries/afg/en/',
