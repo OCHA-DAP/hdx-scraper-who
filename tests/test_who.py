@@ -154,7 +154,7 @@ class TestWHO:
                                'maintainer': '35f7bb2c-4ab6-4796-8334-525b30a94c89', 'owner_org': 'c021f6be-3598-418e-8f7f-c7a799194dba',
                                'data_update_frequency': '30', 'subnational': '0',
                                'tags': [{'name': 'hxl', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'indicators', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'health', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'demographics', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}, {'name': 'sustainable development goals - sdg', 'vocabulary_id': '4e61d464-4943-4e97-973a-84673c1aaa87'}],
-                               'dataset_date': '01/01/1992-12/31/2016'}
+                               'dataset_date': '[1992-01-01T00:00:00 TO 2016-12-31T00:00:00]'}
 
             resources = dataset.get_resources()
             assert resources == [{'name': 'All Health Indicators for Afghanistan', 'description': 'See resource descriptions below for links to indicator metadata', 'format': 'csv', 'resource_type': 'file.upload', 'url_type': 'upload'},
