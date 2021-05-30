@@ -9,6 +9,7 @@ qc_indicators:
     title: "Life Expectancy at Birth"
     unit: "Years"
     description: "Years"
+    aggregate: "#sex+name"
   - code: "WHS7_104"
     title: "Per Capita Government Health Expenditure"
     unit: "US $"
