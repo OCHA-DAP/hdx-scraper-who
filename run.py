@@ -69,7 +69,7 @@ def main():
                 prev_country = cur_country
                 tries += 1
                 logger.warning(
-                    "Download failed! Trying again in an hour. Try = %d" % tries
+                    f"Download failed! Trying again in an hour. Try = {tries}"
                 )
                 sleep(3600)
         if ex is not None:
