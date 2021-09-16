@@ -63,7 +63,7 @@ def main():
                         showcase.create_in_hdx()
                         showcase.add_dataset(dataset)
                 break
-            except DownloadError:
+            except DownloadError as ex:
                 if cur_country == prev_country:
                     raise
                 prev_country = cur_country
