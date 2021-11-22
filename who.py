@@ -188,7 +188,8 @@ def generate_dataset_and_showcase(
             indicator_codes.append(indicator_code)
             indicator_links.append(f"[{indicator_name}]({indicator_url})")
         category_link = f"*{category}:*\n{', '.join(indicator_links)}"
-        filename = f"{category}_indicators_{countryiso}.csv"
+        slugified_category = slugify(category, separator="_")
+        filename = f"{slugified_category}_indicators_{countryiso}.csv"
         resourcedata = {
             "name": f"{category} Indicators for {countryname}",
             "description": category_link,

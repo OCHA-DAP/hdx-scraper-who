@@ -7,14 +7,13 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
+import who
+from hdx.api.configuration import Configuration
+from hdx.api.locations import Locations
 from hdx.data.vocabulary import Vocabulary
-from hdx.hdx_configuration import Configuration
-from hdx.hdx_locations import Locations
 from hdx.location.country import Country
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.path import temp_dir
-
-import who
 from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
 
 
@@ -328,7 +327,7 @@ class TestWHO:
         configuration = Configuration.read()
         base_url = configuration["base_url"]
         qc_indicators = configuration["qc_indicators"]
-        with temp_dir("WHO") as folder:
+        with temp_dir("Test_WHO", delete_on_failure=False) as folder:
             who.indicator_limit = 1
             dataset, showcase, bites_disabled = generate_dataset_and_showcase(
                 base_url,
@@ -439,7 +438,7 @@ class TestWHO:
             assert_files_same(join("tests", "fixtures", file), join(folder, file))
             file = f"qc_{file}"
             assert_files_same(join("tests", "fixtures", file), join(folder, file))
-            file = "health and demographics_indicators_AFG.csv"
+            file = "health_and_demographics_indicators_AFG.csv"
             assert_files_same(join("tests", "fixtures", file), join(folder, file))
             country = {"label": "xxx", "display": "Unknown", "attr": []}
             datasetshowcase = generate_dataset_and_showcase(

@@ -5,14 +5,12 @@ Top level script. Calls other functions that generate datasets that this script 
 """
 import logging
 from os.path import expanduser, join
-from time import sleep
 
+from hdx.api.configuration import Configuration
 from hdx.facades.simple import facade
-from hdx.hdx_configuration import Configuration
 from hdx.utilities.downloader import Download, DownloadError
 from hdx.utilities.path import progress_storing_tempdir
 from retry import retry
-
 from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
 
 logger = logging.getLogger(__name__)
@@ -56,9 +54,7 @@ def main():
                 showcase.create_in_hdx()
                 showcase.add_dataset(dataset)
 
-        for info, country in progress_storing_tempdir(
-                "WHO", countries, "label"
-        ):
+        for info, country in progress_storing_tempdir("WHO", countries, "label"):
             process_country(info, country)
 
 
