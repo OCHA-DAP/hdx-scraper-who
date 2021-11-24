@@ -31,7 +31,7 @@ def main():
 
         @retry(DownloadError, tries=5, delay=3600)
         def process_country(info, country):
-            dataset, showcase, bites_disabled = generate_dataset_and_showcase(
+            (dataset, showcase, bites_disabled,) = generate_dataset_and_showcase(
                 base_url,
                 info["folder"],
                 country,
@@ -47,6 +47,7 @@ def main():
                 )
                 dataset.create_in_hdx(
                     remove_additional_resources=True,
+                    match_resource_order=True,
                     hxl_update=False,
                     updated_by_script="HDX Scraper: WHO",
                     batch=info["batch"],
