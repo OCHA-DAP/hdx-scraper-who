@@ -7,6 +7,7 @@ import logging
 from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
+from hdx.data.hdxobject import HDXError
 from hdx.facades.simple import facade
 from hdx.utilities.downloader import Download, DownloadError
 from hdx.utilities.path import progress_storing_tempdir
@@ -29,7 +30,7 @@ def main():
         countries = get_countries(base_url, downloader)
         logger.info(f"Number of datasets to upload: {len(countries)}")
 
-        @retry(DownloadError, tries=5, delay=3600)
+        @retry((DownloadError, HDXError), tries=5, delay=3600)
         def process_country(info, country):
             (dataset, showcase, bites_disabled,) = generate_dataset_and_showcase(
                 base_url,
