@@ -17,120 +17,104 @@ from hdx.utilities.path import temp_dir
 from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
 
 
-class Response:
+class Retrieve:
     @staticmethod
-    def json():
-        pass
-
-
-class Download:
-    @staticmethod
-    def download(url):
-        response = Response()
+    def download_json(url):
         if url == "http://lala/api/GHO?format=json":
-
-            def fn():
-                return {
-                    "dimension": [
-                        {
-                            "code": [
-                                {
-                                    "display": "Life expectancy at birth (years)",
-                                    "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                    "attr": [
-                                        {
-                                            "category": "DISPLAY_FR",
-                                            "value": "Esperance de vie a la naissance (ans)",
-                                        },
-                                        {
-                                            "category": "DISPLAY_ES",
-                                            "value": "Esperanza de vida al nacer",
-                                        },
-                                        {
-                                            "category": "DEFINITION_XML",
-                                            "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                        },
-                                        {
-                                            "category": "CATEGORY",
-                                            "value": "health and demographics",
-                                        },
-                                        {
-                                            "category": "RENDERER_ID",
-                                            "value": "RENDER_2",
-                                        },
-                                    ],
-                                    "display_sequence": 10,
-                                    "label": "WHOSIS_000001",
-                                },
-                                {
-                                    "display": "Life expectancy at birth (years) 2",
-                                    "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                    "attr": [
-                                        {
-                                            "category": "DISPLAY_FR",
-                                            "value": "Esperance de vie a la naissance (ans)",
-                                        },
-                                        {
-                                            "category": "DISPLAY_ES",
-                                            "value": "Esperanza de vida al nacer",
-                                        },
-                                        {
-                                            "category": "DEFINITION_XML",
-                                            "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                        },
-                                        {
-                                            "category": "CATEGORY",
-                                            "value": "health and demographics",
-                                        },
-                                        {
-                                            "category": "RENDERER_ID",
-                                            "value": "RENDER_2",
-                                        },
-                                    ],
-                                    "display_sequence": 10,
-                                    "label": "WHOSIS_000002",
-                                },
-                                {
-                                    "display": "Life expectancy at birth (years) 3",
-                                    "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                    "attr": [
-                                        {
-                                            "category": "DISPLAY_FR",
-                                            "value": "Esperance de vie a la naissance (ans)",
-                                        },
-                                        {
-                                            "category": "DISPLAY_ES",
-                                            "value": "Esperanza de vida al nacer",
-                                        },
-                                        {
-                                            "category": "DEFINITION_XML",
-                                            "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                        },
-                                        {
-                                            "category": "CATEGORY",
-                                            "value": "sustainable development goals",
-                                        },
-                                        {
-                                            "category": "RENDERER_ID",
-                                            "value": "RENDER_2",
-                                        },
-                                    ],
-                                    "display_sequence": 10,
-                                    "label": "WHOSIS_000003",
-                                },
-                            ]
-                        }
-                    ]
-                }
-
-            response.json = fn
+            return {
+                "dimension": [
+                    {
+                        "code": [
+                            {
+                                "display": "Life expectancy at birth (years)",
+                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
+                                "attr": [
+                                    {
+                                        "category": "DISPLAY_FR",
+                                        "value": "Esperance de vie a la naissance (ans)",
+                                    },
+                                    {
+                                        "category": "DISPLAY_ES",
+                                        "value": "Esperanza de vida al nacer",
+                                    },
+                                    {
+                                        "category": "DEFINITION_XML",
+                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
+                                    },
+                                    {
+                                        "category": "CATEGORY",
+                                        "value": "health and demographics",
+                                    },
+                                    {
+                                        "category": "RENDERER_ID",
+                                        "value": "RENDER_2",
+                                    },
+                                ],
+                                "display_sequence": 10,
+                                "label": "WHOSIS_000001",
+                            },
+                            {
+                                "display": "Life expectancy at birth (years) 2",
+                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
+                                "attr": [
+                                    {
+                                        "category": "DISPLAY_FR",
+                                        "value": "Esperance de vie a la naissance (ans)",
+                                    },
+                                    {
+                                        "category": "DISPLAY_ES",
+                                        "value": "Esperanza de vida al nacer",
+                                    },
+                                    {
+                                        "category": "DEFINITION_XML",
+                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
+                                    },
+                                    {
+                                        "category": "CATEGORY",
+                                        "value": "health and demographics",
+                                    },
+                                    {
+                                        "category": "RENDERER_ID",
+                                        "value": "RENDER_2",
+                                    },
+                                ],
+                                "display_sequence": 10,
+                                "label": "WHOSIS_000002",
+                            },
+                            {
+                                "display": "Life expectancy at birth (years) 3",
+                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
+                                "attr": [
+                                    {
+                                        "category": "DISPLAY_FR",
+                                        "value": "Esperance de vie a la naissance (ans)",
+                                    },
+                                    {
+                                        "category": "DISPLAY_ES",
+                                        "value": "Esperanza de vida al nacer",
+                                    },
+                                    {
+                                        "category": "DEFINITION_XML",
+                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
+                                    },
+                                    {
+                                        "category": "CATEGORY",
+                                        "value": "sustainable development goals",
+                                    },
+                                    {
+                                        "category": "RENDERER_ID",
+                                        "value": "RENDER_2",
+                                    },
+                                ],
+                                "display_sequence": 10,
+                                "label": "WHOSIS_000003",
+                            },
+                        ]
+                    }
+                ]
+            }
         elif url == "http://haha/api/COUNTRY?format=json":
-
-            def fn():
-                return {"dimension": [{"code": [TestWHO.country]}]}
-
-            response.json = fn
-        return response
+            return {"dimension": [{"code": [TestWHO.country]}]}
 
     @staticmethod
     def get_tabular_rows(url, **kwargs):
@@ -149,7 +133,7 @@ class Download:
         ):
             retval = [
                 {
-                    "GHO (CODE)": "WHS7_104",
+                    "GHO (CODE)": "VIOLENCE_HOMICIDERATE",
                     "PUBLISHSTATE (CODE)": "PUBLISHED",
                     "header2": "val21",
                     "YEAR (DISPLAY)": "1992-1994",
@@ -252,7 +236,7 @@ class TestWHO:
             ),
         ]
     )
-    tags = ["health", "demographics", "sustainable development goals - sdg"]
+    tags = ["health", "demographics", "sustainable development goals-sdg"]
 
     country = {
         "display_sequence": 10,
@@ -304,23 +288,23 @@ class TestWHO:
                 {"name": "indicators"},
                 {"name": "health"},
                 {"name": "demographics"},
-                {"name": "sustainable development goals - sdg"},
+                {"name": "sustainable development goals-sdg"},
             ],
             "id": "4e61d464-4943-4e97-973a-84673c1aaa87",
             "name": "approved",
         }
 
     @pytest.fixture(scope="function")
-    def downloader(self):
-        return Download()
+    def retriever(self):
+        return Retrieve()
 
-    def test_get_indicators_and_tags(self, configuration, downloader):
-        indicators, tags = get_indicators_and_tags("http://lala/", downloader)
+    def test_get_indicators_and_tags(self, configuration, retriever):
+        indicators, tags = get_indicators_and_tags("http://lala/", retriever)
         assert indicators == TestWHO.indicators
         assert tags == TestWHO.tags
 
-    def test_get_countriesdata(self, downloader):
-        countriesdata = get_countries("http://haha/", downloader)
+    def test_get_countriesdata(self, retriever):
+        countriesdata = get_countries("http://haha/", retriever)
         assert countriesdata == [TestWHO.country]
 
     def test_generate_dataset_and_showcase(self, configuration):
@@ -336,7 +320,7 @@ class TestWHO:
                 TestWHO.indicators,
                 TestWHO.tags,
                 qc_indicators,
-                downloadclass=Download,
+                Retrieve(),
             )
             assert dataset == {
                 "name": "who-data-for-afghanistan",
@@ -365,11 +349,11 @@ class TestWHO:
                         "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
                     },
                     {
-                        "name": "sustainable development goals - sdg",
+                        "name": "sustainable development goals-sdg",
                         "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
                     },
                 ],
-                "dataset_date": "[1992-01-01T00:00:00 TO 2016-12-31T00:00:00]",
+                "dataset_date": "[1992-01-01T00:00:00 TO 2016-12-31T23:59:59]",
             }
 
             resources = dataset.get_resources()
@@ -427,7 +411,7 @@ class TestWHO:
                         "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
                     },
                     {
-                        "name": "sustainable development goals - sdg",
+                        "name": "sustainable development goals-sdg",
                         "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
                     },
                 ],
@@ -448,6 +432,6 @@ class TestWHO:
                 TestWHO.indicators,
                 TestWHO.tags,
                 qc_indicators,
-                downloadclass=Download,
+                Retrieve(),
             )
             assert datasetshowcase == (None, None, None)

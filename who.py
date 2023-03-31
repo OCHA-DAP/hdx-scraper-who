@@ -8,7 +8,6 @@ Reads WHO API and creates datasets
 """
 import logging
 from collections import OrderedDict
-from itertools import chain
 from time import sleep
 
 from hdx.data.dataset import Dataset
@@ -45,11 +44,10 @@ hxltags = {
 indicator_limit = 200
 
 
-def get_indicators_and_tags(base_url, downloader):
+def get_indicators_and_tags(base_url, retriever):
     indicators = OrderedDict()
     tags = list()
-    response = downloader.download(f"{base_url}api/GHO?format=json")
-    json = response.json()
+    json = retriever.download_json(f"{base_url}api/GHO?format=json")
     result = json["dimension"][0]["code"]
 
     replacements = {"(": "", ")": "", "/": ""}
@@ -81,9 +79,8 @@ def get_indicators_and_tags(base_url, downloader):
     return indicators, tags
 
 
-def get_countries(base_url, downloader):
-    response = downloader.download(f"{base_url}api/COUNTRY?format=json")
-    json = response.json()
+def get_countries(base_url, retriever):
+    json = retriever.download_json(f"{base_url}api/COUNTRY?format=json")
     return json["dimension"][0]["code"]
 
 
@@ -92,7 +89,7 @@ class RowError(Exception):
 
 
 def generate_dataset_and_showcase(
-    base_url, folder, country, indicators, tags, qc_indicators, downloadclass
+    base_url, folder, country, indicators, tags, qc_indicators, retriever
 ):
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
@@ -199,25 +196,27 @@ def generate_dataset_and_showcase(
         error = False
         while tries < 5:
             i = 0
-            iterables = list()
+            rows = []
             while i < indicator_list_len:
                 ie = min(i + indicator_limit, indicator_list_len)
                 ic_str = ",".join(indicator_codes[i:ie])
                 url = f"{base_url}data/data-verbose.csv?target=GHO/{ic_str}&filter=COUNTRY:{countryiso}&profile=verbose"
-                fileheaders, iterator = downloadclass().get_tabular_rows(
+                ind_filename = filename.replace(".csv", f"_{i}.csv")
+                fileheaders, iterator = retriever.get_tabular_rows(
                     url,
                     dict_form=True,
+                    filename=ind_filename,
                     header_insertions=insertions,
                     row_function=process_row,
                     format="csv",
                     encoding="utf-8",
                 )
-                iterables.append(iterator)
+                rows.extend(list(iterator))
                 i += indicator_limit
             try:
                 success, results = dataset.generate_resource_from_iterator(
                     fileheaders,
-                    chain.from_iterable(iterables),
+                    rows,
                     hxltags,
                     folder,
                     filename,
