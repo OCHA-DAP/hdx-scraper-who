@@ -4,6 +4,7 @@ Top level script. Calls other functions that generate datasets that this script 
 
 """
 import logging
+from os import remove
 from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
@@ -74,6 +75,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     dataset.generate_quickcharts(
                         -1, bites_disabled=bites_disabled, indicators=qc_indicators
                     )
+                    paths = [x.get_file_to_upload() for x in dataset.get_resources()]
                     dataset.create_in_hdx(
                         remove_additional_resources=True,
                         match_resource_order=True,
@@ -83,6 +85,12 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     )
                     showcase.create_in_hdx()
                     showcase.add_dataset(dataset)
+
+                    for path in paths:
+                        try:  # Needed while there are duplicate categories
+                            remove(path)
+                        except OSError:
+                            pass
 
             for _, country in progress_storing_folder(info, countries, "label"):
                 process_country(country)

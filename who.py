@@ -132,7 +132,10 @@ def generate_dataset_and_showcase(
     def process_row(_, row):
         if "PUBLISHSTATE (CODE)" not in row:
             raise RowError("No PUBLISHSTATE (CODE)!")
-        if "VOID" in row["PUBLISHSTATE (CODE)"]:
+        publishstate = row["PUBLISHSTATE (CODE)"]
+        if publishstate is None:
+            return None
+        if "VOID" in publishstate:
             return None
         return row
 
