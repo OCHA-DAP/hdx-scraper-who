@@ -47,41 +47,67 @@ indicator_limit = 200
 def get_indicators_and_tags(base_url, retriever):
     indicators = OrderedDict()
     tags = list()
-    json = retriever.download_json(f"{base_url}api/GHO?format=json")
-    result = json["dimension"][0]["code"]
+    #json = retriever.download_json(f"{base_url}api/GHO?format=json")
+    json = retriever.download_json(f"{base_url}GHO_MODEL/SF_HIERARCHY_INDICATORS")
+    result = json["value"]
 
-    replacements = {"(": "", ")": "", "/": ""}
+    # replacements = {"(": "", ")": "", "/": ""}
+    # for indicator in result:
+    #     indicator_code = indicator["label"]
+    #     if indicator_code[-9:] == "_ARCHIVED":
+    #         continue
+    #     category = None
+    #     for attr in indicator["attr"]:
+    #         if attr["category"] == "CATEGORY":
+    #             category = attr["value"]
+    #     if category is None:
+    #         continue
+    #     dict_of_lists_add(
+    #         indicators,
+    #         category,
+    #         (indicator_code, indicator["display"], indicator["url"]),
+    #     )
+    #     if " and " in category:
+    #         tag_names = category.split(" and ")
+    #         for tag_name in tag_names:
+    #             tags.append(multiple_replace(tag_name.strip(), replacements))
+    #     else:
+    #         tags.append(multiple_replace(category.strip(), replacements))
+    # for category in indicators:
+    #     indicators[category] = list(OrderedDict.fromkeys(indicators[category]).keys())
+    # tags = list(OrderedDict.fromkeys(tags).keys())
+    # tags, _ = Vocabulary.get_mapped_tags(tags)
+
+    replacements = {"(": "", ")": "", "/": "", ",": ""}
     for indicator in result:
-        indicator_code = indicator["label"]
-        if indicator_code[-9:] == "_ARCHIVED":
-            continue
-        category = None
-        for attr in indicator["attr"]:
-            if attr["category"] == "CATEGORY":
-                category = attr["value"]
-        if category is None:
-            continue
+        indicator_code = indicator["INDICATOR_CODE"]
+        category = indicator["THEME_TITLE"]
         dict_of_lists_add(
             indicators,
             category,
-            (indicator_code, indicator["display"], indicator["url"]),
+            (indicator_code, indicator["INDICATOR_TITLE"], indicator["INDICATOR_URL_NAME"]),
         )
+
         if " and " in category:
             tag_names = category.split(" and ")
             for tag_name in tag_names:
                 tags.append(multiple_replace(tag_name.strip(), replacements))
         else:
             tags.append(multiple_replace(category.strip(), replacements))
+
     for category in indicators:
         indicators[category] = list(OrderedDict.fromkeys(indicators[category]).keys())
     tags = list(OrderedDict.fromkeys(tags).keys())
     tags, _ = Vocabulary.get_mapped_tags(tags)
+
     return indicators, tags
 
 
 def get_countries(base_url, retriever):
-    json = retriever.download_json(f"{base_url}api/COUNTRY?format=json")
-    return json["dimension"][0]["code"]
+    #json = retriever.download_json(f"{base_url}api/COUNTRY?format=json")
+    #return json["dimension"][0]["code"]
+    json = retriever.download_json(f"{base_url}api/DIMENSION/COUNTRY/DimensionValues")
+    return json["value"]
 
 
 class RowError(Exception):
@@ -94,10 +120,11 @@ def generate_dataset_and_showcase(
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
     """
-    countryiso = country["label"]
-    for attr in country["attr"]:
-        if attr["category"] == "ISO":
-            countryiso = attr["value"]
+    print(country)
+    countryiso = country["Code"]
+    # for attr in country["attr"]:
+    #     if attr["category"] == "ISO":
+    #         countryiso = attr["value"]
     countryname = Country.get_country_name_from_iso3(countryiso)
     if countryname is None:
         logger.warning(

@@ -38,7 +38,8 @@ def main(save: bool = False, use_saved: bool = False) -> None:
         None
     """
     configuration = Configuration.read()
-    base_url = configuration["base_url"]
+    base_url = configuration["base_url2"]
+    category_url = configuration["category_url"]
     qc_indicators = configuration["qc_indicators"]
     with wheretostart_tempdir_batch(lookup) as info:
         folder = info["folder"]
@@ -47,7 +48,10 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                 downloader, folder, "saved_data", folder, save, use_saved
             )
 
-            indicators, tags = get_indicators_and_tags(base_url, retriever)
+            indicators, tags = get_indicators_and_tags(category_url, retriever)
+            #countries_temp = get_countries(base_url, retriever)
+            #print(countries_temp[0])
+            #countries = [countries_temp[0]]
             countries = get_countries(base_url, retriever)
             logger.info(f"Number of datasets to upload: {len(countries)}")
 
@@ -92,7 +96,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                         except OSError:
                             pass
 
-            for _, country in progress_storing_folder(info, countries, "label"):
+            for _, country in progress_storing_folder(info, countries, "Code"):
                 process_country(country)
 
 
