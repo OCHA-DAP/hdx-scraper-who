@@ -9,6 +9,7 @@ Reads WHO API and creates datasets
 import logging
 from collections import OrderedDict
 from time import sleep
+from urllib.parse import quote
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
@@ -81,11 +82,12 @@ def get_indicators_and_tags(base_url, retriever):
     replacements = {"(": "", ")": "", "/": "", ",": ""}
     for indicator in result:
         indicator_code = indicator["INDICATOR_CODE"]
+        indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(indicator['INDICATOR_URL_NAME'])}"
         category = indicator["THEME_TITLE"]
         dict_of_lists_add(
             indicators,
             category,
-            (indicator_code, indicator["INDICATOR_TITLE"], indicator["INDICATOR_URL_NAME"]),
+            (indicator_code, indicator["INDICATOR_TITLE"], indicator_url),
         )
 
         if " and " in category:
@@ -98,7 +100,7 @@ def get_indicators_and_tags(base_url, retriever):
     for category in indicators:
         indicators[category] = list(OrderedDict.fromkeys(indicators[category]).keys())
     tags = list(OrderedDict.fromkeys(tags).keys())
-    tags, _ = Vocabulary.get_mapped_tags(tags)
+    #tags, _ = Vocabulary.get_mapped_tags(tags)
 
     return indicators, tags
 
@@ -119,8 +121,8 @@ def generate_dataset_and_showcase(
 ):
     """
     http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
+    https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG'
     """
-    print(country)
     countryiso = country["Code"]
     # for attr in country["attr"]:
     #     if attr["category"] == "ISO":
@@ -135,6 +137,8 @@ def generate_dataset_and_showcase(
     logger.info(f"Creating dataset: {title}")
     slugified_name = slugify(f"WHO data for {countryname}").lower()
     cat_str = ", ".join(indicators)
+
+    print(countryiso, countryname, cat_str)
     dataset = Dataset(
         {
             "name": slugified_name,

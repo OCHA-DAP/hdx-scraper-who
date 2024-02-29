@@ -65,6 +65,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                 after=after_log(logger, logging.INFO),
             )
             def process_country(country):
+                print('hi', country)
                 (dataset, showcase, bites_disabled,) = generate_dataset_and_showcase(
                     base_url,
                     info["folder"],
@@ -96,7 +97,11 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                         except OSError:
                             pass
 
+            print('1', info)
+            print('2', progress_storing_folder)
+            print('3', countries)
             for _, country in progress_storing_folder(info, countries, "Code"):
+                print('-',country)
                 process_country(country)
 
 
