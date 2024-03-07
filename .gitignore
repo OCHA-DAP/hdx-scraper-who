@@ -89,3 +89,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# PyCharm files
+.idea/
+
+#OS Files
+*DS_Store

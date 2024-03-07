@@ -23,6 +23,7 @@ from slugify import slugify
 
 logger = logging.getLogger(__name__)
 
+
 class WHO:
     hxltags = {
         "GHO (CODE)": "#indicator+code",
@@ -80,12 +81,10 @@ class WHO:
 
         return indicators, tags
 
-
     def get_countries(self):
         base_url = self.configuration["base_url"]
         json = self.retriever.download_json(f"{base_url}api/DIMENSION/COUNTRY/DimensionValues")
         return json["value"]
-
 
     def generate_dataset_and_showcase(
         self, country, indicators, tags, quickcharts
@@ -122,6 +121,7 @@ class WHO:
             result = dict()
             year = row["YEAR (DISPLAY)"]
             if year:
+                year = str(year)
                 if len(year) == 9:
                     startyear = year[:4]
                     endyear = year[5:]
@@ -147,7 +147,7 @@ class WHO:
             indicator_links = list()
             count = 0
             for indicator_code, indicator_name, indicator_url in indicators[category]:
-                if count >= 3:
+                if count >= 10:
                     break  # for testing
                 count += 1
                 logger.info(f"Indicator name: {indicator_name}")
@@ -202,12 +202,12 @@ class WHO:
                     self.folder,
                     filename,
                     resourcedata,
-                    quickcharts=quickcharts
+                    date_function=yearcol_function,
+                    quickcharts=quickcharts,
                 )
             except:
                 logger.warning(f"{category} has no data!")
                 continue
-
 
         filename = f"health_indicators_{countryiso.lower()}.csv"
         resourcedata = {
@@ -221,7 +221,7 @@ class WHO:
             self.hxltags,
             self.folder,
             filename,
-            resourcedata
+            resourcedata,
         )
 
         if success is False:
