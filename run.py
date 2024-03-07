@@ -20,7 +20,7 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
-from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
+from who import WHO
 
 logger = logging.getLogger(__name__)
 
@@ -37,22 +37,23 @@ def main(save: bool = False, use_saved: bool = False) -> None:
     Returns:
         None
     """
-    configuration = Configuration.read()
-    base_url = configuration["base_url2"]
-    category_url = configuration["category_url"]
-    qc_indicators = configuration["qc_indicators"]
+    # configuration = Configuration.read()
+    # base_url = configuration["base_url2"]
+    # category_url = configuration["category_url"]
+    # qc_indicators = configuration["qc_indicators"]
     with wheretostart_tempdir_batch(lookup) as info:
         folder = info["folder"]
         with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
             retriever = Retrieve(
                 downloader, folder, "saved_data", folder, save, use_saved
             )
-
-            indicators, tags = get_indicators_and_tags(category_url, retriever)
-            #countries_temp = get_countries(base_url, retriever)
-            #print(countries_temp[0])
-            #countries = [countries_temp[0]]
-            countries = get_countries(base_url, retriever)
+            configuration = Configuration.read()
+            qc_indicators = configuration["qc_indicators"]
+            who = WHO(configuration, retriever, folder)
+            indicators, tags = who.get_indicators_and_tags()
+            countries_temp = who.get_countries()
+            countries = [countries_temp[1]]
+            #countries = who.get_countries()
             logger.info(f"Number of datasets to upload: {len(countries)}")
 
             @retry(
@@ -65,15 +66,17 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                 after=after_log(logger, logging.INFO),
             )
             def process_country(country):
-                print('hi', country)
-                (dataset, showcase, bites_disabled,) = generate_dataset_and_showcase(
-                    base_url,
-                    info["folder"],
+                quickcharts = {
+                    "hashtag": "#index+id",
+                    "values": [x["code"] for x in qc_indicators],
+                    "cutdown": 2,
+                    "cutdownhashtags": ["#index+id", "#date+year", "#indicator+value+num"],
+                }
+                (dataset, showcase, bites_disabled,) = who.generate_dataset_and_showcase(
                     country,
                     indicators,
                     tags,
-                    qc_indicators,
-                    retriever,
+                    quickcharts
                 )
                 if dataset:
                     dataset.update_from_yaml()
@@ -97,11 +100,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                         except OSError:
                             pass
 
-            print('1', info)
-            print('2', progress_storing_folder)
-            print('3', countries)
-            for _, country in progress_storing_folder(info, countries, "Code"):
-                print('-',country)
+            for _, country in progress_storing_folder(info, countries, "Code", 'AFG'):
                 process_country(country)
 
 
