@@ -8,6 +8,7 @@ Reads WHO API and creates datasets
 """
 import logging
 from collections import OrderedDict
+from datetime import datetime
 from time import sleep
 from urllib.parse import quote
 
@@ -36,7 +37,8 @@ class WHO:
         "REGION (DISPLAY)": "#region+name",
         "COUNTRY (CODE)": "#country+code",
         "COUNTRY (DISPLAY)": "#country+name",
-        "SEX (CODE)": "#sex+code",
+        "DIMENSION (TYPE)": "#dimension+type",
+        "DIMENSION (CODE)": "#dimension+code",
         "Numeric": "#indicator+value+num",
         "Value": "#indicator+value",
         "Low": "#indicator+value+low",
@@ -47,7 +49,6 @@ class WHO:
         self.configuration = configuration
         self.retriever = retriever
         self.folder = folder
-        self.data = {}
 
     def get_indicators_and_tags(self):
         indicators = OrderedDict()
@@ -138,23 +139,29 @@ class WHO:
 
         i = 0
         for category in indicators:
-            if i >= 3:
-                break  # for testing
-            i += 1
+            # if i >= 3:
+            #     break  # for testing
+            # i += 1
             logger.info(f"Category: {category}")
             category_data = list()
             indicator_codes = list()
             indicator_links = list()
             count = 0
+
             for indicator_code, indicator_name, indicator_url in indicators[category]:
-                if count >= 10:
-                    break  # for testing
-                count += 1
+                # if count >= 10:
+                #     break  # for testing
+                # count += 1
                 logger.info(f"Indicator name: {indicator_name}")
                 indicator_codes.append(indicator_code)
                 indicator_links.append(f"[{indicator_name}]({indicator_url})")
 
-                url = f"{base_url}api/{indicator_code}?$filter=SpatialDim eq '{countryiso}'"
+
+                if (indicator_code):
+                    url = f"{base_url}api/{indicator_code}?$filter=SpatialDim eq '{countryiso}'"
+                else:
+                    continue
+
                 try:
                     jsonresponse = self.retriever.download_json(url)
                 except:
@@ -165,18 +172,22 @@ class WHO:
                     countryiso = row["SpatialDim"]
                     countryname = Country.get_country_name_from_iso3(countryiso)
 
+                    startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime("%Y")
+                    endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
+
                     obj = {
                         "GHO (CODE)": indicator_code,
                         "GHO (DISPLAY)": indicator_name,
                         "GHO (URL)": indicator_url,
                         "YEAR (DISPLAY)": row["TimeDim"],
-                        "STARTYEAR": row["TimeDimensionBegin"],
-                        "ENDYEAR": row["TimeDimensionEnd"],
+                        "STARTYEAR": startyear,
+                        "ENDYEAR": endyear,
                         "REGION (CODE)": row["ParentLocationCode"],
                         "REGION (DISPLAY)": row["ParentLocation"],
                         "COUNTRY (CODE)": countryiso,
                         "COUNTRY (DISPLAY)": countryname,
-                        "SEX (CODE)": row["Dim1"],
+                        "DIMENSION (TYPE)": row["Dim1Type"],
+                        "DIMENSION (CODE)": row["Dim1"],
                         "Numeric": row["NumericValue"],
                         "Value": row["Value"],
                         "Low": row["Low"],
@@ -184,7 +195,7 @@ class WHO:
                     }
                     category_data.append(obj)
 
-            all_rows.append(category_data)
+            all_rows.extend(category_data)
 
             category_link = f"*{category}:*\n{', '.join(indicator_links)}"
             slugified_category = slugify(category, separator="_")
@@ -203,11 +214,13 @@ class WHO:
                     filename,
                     resourcedata,
                     date_function=yearcol_function,
-                    quickcharts=quickcharts,
+                    quickcharts=None,
                 )
             except:
                 logger.warning(f"{category} has no data!")
                 continue
+
+
 
         filename = f"health_indicators_{countryiso.lower()}.csv"
         resourcedata = {
@@ -222,11 +235,15 @@ class WHO:
             self.folder,
             filename,
             resourcedata,
+            date_function=None,
+            quickcharts=quickcharts,
         )
 
         if success is False:
             logger.error(f"{countryname} has no data!")
             return None, None, None
+
+        bites_disabled = results["bites_disabled"]
 
         showcase = Showcase(
             {

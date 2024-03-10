@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = False) -> None:
+def main(save: bool = False, use_saved: bool = True) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -37,10 +37,6 @@ def main(save: bool = False, use_saved: bool = False) -> None:
     Returns:
         None
     """
-    # configuration = Configuration.read()
-    # base_url = configuration["base_url2"]
-    # category_url = configuration["category_url"]
-    # qc_indicators = configuration["qc_indicators"]
     with wheretostart_tempdir_batch(lookup) as info:
         folder = info["folder"]
         with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
@@ -67,10 +63,16 @@ def main(save: bool = False, use_saved: bool = False) -> None:
             )
             def process_country(country):
                 quickcharts = {
-                    "hashtag": "#index+id",
+                    "hashtag": "#indicator+code",
                     "values": [x["code"] for x in qc_indicators],
-                    "cutdown": 2,
-                    "cutdownhashtags": ["#index+id", "#date+year", "#indicator+value+num"],
+                    "numeric_hashtag": "#indicator+value+num",
+                    "cutdown": 1,
+                    "cutdownhashtags": [
+                        "#indicator+code",
+                        "#country+code",
+                        "#date+year+end",
+                        "#dimension+code"
+                    ],
                 }
                 (dataset, showcase, bites_disabled,) = who.generate_dataset_and_showcase(
                     country,
@@ -78,6 +80,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     tags,
                     quickcharts
                 )
+
                 if dataset:
                     dataset.update_from_yaml()
                     dataset.generate_quickcharts(
@@ -86,7 +89,7 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                     paths = [x.get_file_to_upload() for x in dataset.get_resources()]
                     dataset.create_in_hdx(
                         remove_additional_resources=True,
-                        match_resource_order=True,
+                        match_resource_order=False,
                         hxl_update=False,
                         updated_by_script="HDX Scraper: WHO",
                         batch=info["batch"],

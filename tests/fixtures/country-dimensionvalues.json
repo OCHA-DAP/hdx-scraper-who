@@ -1,0 +1,13 @@
+{
+  "@odata.context": "https://ghoapi.azureedge.net/api/$metadata#Collection(Default.DIMENSION_VALUE)",
+  "value": [
+    {
+      "Code": "AFG",
+      "Title": "Afghanistan",
+      "Dimension": "COUNTRY",
+      "ParentDimension": "REGION",
+      "ParentCode": "EMR",
+      "ParentTitle": "Eastern Mediterranean"
+    }
+  ]
+}
