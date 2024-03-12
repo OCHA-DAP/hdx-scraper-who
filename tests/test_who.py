@@ -409,7 +409,6 @@ class TestWHO:
 
     def test_generate_dataset_and_showcase(self, configuration):
         configuration = Configuration.read()
-        #base_url = configuration["base_url"]
         qc_indicators = configuration["qc_indicators"]
         with temp_dir("Test_WHO", delete_on_failure=False) as folder:
             WHO.indicator_limit = 1

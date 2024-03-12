@@ -47,6 +47,8 @@ def main(save: bool = False, use_saved: bool = True) -> None:
             qc_indicators = configuration["qc_indicators"]
             who = WHO(configuration, retriever, folder)
             indicators, tags = who.get_indicators_and_tags()
+
+            #for testing, only AFG
             countries_temp = who.get_countries()
             countries = [countries_temp[1]]
             #countries = who.get_countries()
@@ -66,7 +68,7 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                     "hashtag": "#indicator+code",
                     "values": [x["code"] for x in qc_indicators],
                     "numeric_hashtag": "#indicator+value+num",
-                    "cutdown": 1,
+                    "cutdown": 2,
                     "cutdownhashtags": [
                         "#indicator+code",
                         "#country+code",
