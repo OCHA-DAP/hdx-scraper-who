@@ -55,7 +55,7 @@ def main(save: bool = True, use_saved: bool = False) -> None:
 
             countries = who.get_countries()
             # TODO: remove
-            countries = who.get_countries()[0:1]
+            countries = who.get_countries()[1:2]
             logger.info(f"Number of datasets to upload: {len(countries)}")
 
             @retry(

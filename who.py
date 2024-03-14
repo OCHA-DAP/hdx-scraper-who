@@ -15,6 +15,7 @@ from hdx.data.dataset import Dataset
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
+from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.dictandlist import dict_of_lists_add
 from hdx.utilities.text import multiple_replace
@@ -182,8 +183,7 @@ class WHO:
 
                 try:
                     jsonresponse = self.retriever.download_json(url)
-                # TODO: find exception
-                except:  # noqa: E722
+                except DownloadError:
                     logger.warning(f"{url} has no data!")
                     continue
 
@@ -232,21 +232,18 @@ class WHO:
                 "description": category_link,
             }
 
-            try:
-                success, results = dataset.generate_resource_from_iterator(
-                    list(self.hxltags.keys()),
-                    category_data,
-                    self.hxltags,
-                    self.folder,
-                    filename,
-                    resourcedata,
-                    date_function=yearcol_function,
-                    quickcharts=None,
-                )
-            # TODO: find exception
-            except:  # noqa: E722
-                logger.warning(f"{category} has no data!")
-                continue
+            # TODO: this may at some point throw an error
+            #  if the category has no data
+            success, results = dataset.generate_resource_from_iterator(
+                list(self.hxltags.keys()),
+                category_data,
+                self.hxltags,
+                self.folder,
+                filename,
+                resourcedata,
+                date_function=yearcol_function,
+                quickcharts=None,
+            )
 
         filename = f"health_indicators_{countryiso.lower()}.csv"
         resourcedata = {
