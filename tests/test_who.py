@@ -7,13 +7,14 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
-from who import WHO
 from hdx.api.configuration import Configuration
 from hdx.api.locations import Locations
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.path import temp_dir
+
+from who import WHO
 
 
 class Retrieve:
@@ -41,7 +42,7 @@ class Retrieve:
                         "DEFINITION_ID": "3f98548a-aed9-4b58-b9b9-d4cff022cdc8",
                         "DEFINITION_TITLE": "Compliance scores: smoke-free legislation",
                         "DEFINITION_URL_NAME": "gho-tobacco-control-monitorcompliance-scores-smoke-free-legislation",
-                        "INDICATOR_CODE": "P_compl_p3"
+                        "INDICATOR_CODE": "P_compl_p3",
                     },
                     {
                         "PROGRAM_ID": "0c231176-b5f1-4b00-80f4-d9ee1938b986",
@@ -62,7 +63,7 @@ class Retrieve:
                         "DEFINITION_ID": "c28d64d7-bf1e-48b2-b156-5331f05df593",
                         "DEFINITION_TITLE": "Compliance scores: advertising promotion and sponsorship bans",
                         "DEFINITION_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "INDICATOR_CODE": "E_compl_e12"
+                        "INDICATOR_CODE": "E_compl_e12",
                     },
                     {
                         "PROGRAM_ID": "0c231176-b5f1-4b00-80f4-d9ee1938b986",
@@ -83,7 +84,7 @@ class Retrieve:
                         "DEFINITION_ID": "c28d64d7-bf1e-48b2-b156-5331f05df593",
                         "DEFINITION_TITLE": "Compliance scores: advertising promotion and sponsorship bans",
                         "DEFINITION_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "INDICATOR_CODE": "E_compl_e14"
+                        "INDICATOR_CODE": "E_compl_e14",
                     },
                 ]
             }
@@ -117,12 +118,9 @@ class Retrieve:
             "Date",
             "TimeDimensionValue",
             "TimeDimensionBegin",
-            "TimeDimensionEnd"
+            "TimeDimensionEnd",
         ]
-        if (
-            url
-            == "https://papa/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG'"
-        ):
+        if url == "https://papa/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG'":
             retval = [
                 {
                     "Id": 4989839,
@@ -135,21 +133,21 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "Dim1": "SEX_MLE",
                     "TimeDim": 2010,
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "59.6",
                     "NumericValue": 59.60036,
-                    "Low": null,
-                    "High": null,
-                    "Comments": null,
+                    "Low": None,
+                    "High": None,
+                    "Comments": None,
                     "Date": "2020-12-04T16:59:43+01:00",
                     "TimeDimensionValue": "2010",
                     "TimeDimensionBegin": "2010-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2010-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2010-12-31T00:00:00+01:00",
                 },
                 {
                     "Id": 5155001,
@@ -162,21 +160,21 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "Dim1": "SEX_MLE",
                     "TimeDim": 2019,
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "63.3",
                     "NumericValue": 63.28709,
-                    "Low": null,
-                    "High": null,
-                    "Comments": null,
+                    "Low": None,
+                    "High": None,
+                    "Comments": None,
                     "Date": "2020-12-04T16:59:43+01:00",
                     "TimeDimensionValue": "2019",
                     "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2019-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
                 },
                 {
                     "Id": 5154473,
@@ -189,26 +187,25 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "Dim1": "SEX_FMLE",
                     "TimeDim": 2019,
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "63.2",
                     "NumericValue": 63.15551,
-                    "Low": null,
-                    "High": null,
-                    "Comments": null,
+                    "Low": None,
+                    "High": None,
+                    "Comments": None,
                     "Date": "2020-12-04T16:59:43+01:00",
                     "TimeDimensionValue": "2019",
                     "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2019-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
                 },
             ]
         elif (
-            url
-            == "https://papa/api/WHOSIS_000002?$filter=SpatialDim eq 'AFG'"
+            url == "https://papa/api/WHOSIS_000002?$filter=SpatialDim eq 'AFG'"
         ):
             retval = [
                 {
@@ -222,26 +219,25 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "Dim1": "SEX_MLE",
                     "TimeDim": 2000,
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "46.9",
                     "NumericValue": 46.93113,
-                    "Low": null,
-                    "High": null,
-                    "Comments": null,
+                    "Low": None,
+                    "High": None,
+                    "Comments": None,
                     "Date": "2020-12-04T16:59:42+01:00",
                     "TimeDimensionValue": "2000",
                     "TimeDimensionBegin": "2000-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2000-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2000-12-31T00:00:00+01:00",
                 }
             ]
         elif (
-            url
-            == "https://papa/api/WHOSIS_000003?$filter=SpatialDim eq 'AFG'"
+            url == "https://papa/api/WHOSIS_000003?$filter=SpatialDim eq 'AFG'"
         ):
             retval = [
                 {
@@ -255,21 +251,21 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "TimeDim": 2012,
                     "Dim1": "SEX_BTSX",
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "44.52 [39.49-50]",
                     "NumericValue": 44.52410,
                     "Low": 39.49034,
                     "High": 50.00299,
-                    "Comments": null,
+                    "Comments": None,
                     "Date": "2023-02-16T08:10:49+01:00",
                     "TimeDimensionValue": "2012",
                     "TimeDimensionBegin": "2012-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2012-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2012-12-31T00:00:00+01:00",
                 },
                 {
                     "Id": 415008,
@@ -282,21 +278,21 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "TimeDim": 2013,
                     "Dim1": "SEX_BTSX",
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "43.13 [37.83-48.86]",
                     "NumericValue": 43.13298,
                     "Low": 37.82833,
                     "High": 48.85624,
-                    "Comments": null,
+                    "Comments": None,
                     "Date": "2023-02-16T08:10:49+01:00",
                     "TimeDimensionValue": "2013",
                     "TimeDimensionBegin": "2013-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2013-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2013-12-31T00:00:00+01:00",
                 },
                 {
                     "Id": 364581,
@@ -309,21 +305,21 @@ class Retrieve:
                     "Dim1Type": "SEX",
                     "TimeDim": 2004,
                     "Dim1": "SEX_BTSX",
-                    "Dim2Type": null,
-                    "Dim2": null,
-                    "Dim3Type": null,
-                    "Dim3": null,
-                    "DataSourceDimType": null,
-                    "DataSourceDim": null,
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
                     "Value": "55.86 [50.85-61.4]",
                     "NumericValue": 55.85786,
                     "Low": 50.84938,
                     "High": 61.40070,
-                    "Comments": null,
+                    "Comments": None,
                     "Date": "2023-02-16T08:10:49+01:00",
                     "TimeDimensionValue": "2004",
                     "TimeDimensionBegin": "2004-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2004-12-31T00:00:00+01:00"
+                    "TimeDimensionEnd": "2004-12-31T00:00:00+01:00",
                 },
             ]
         rows = list()
@@ -341,23 +337,22 @@ class Retrieve:
 class TestWHO:
     indicators = OrderedDict(
         {
-            'Tobacco control':
-            [
+            "Tobacco control": [
                 (
-                    'P_compl_p3',
-                    'Compliance scores: smoke-free legislation (Tobacco control: Monitor)',
-                    'https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-smoke-free-legislation'
+                    "P_compl_p3",
+                    "Compliance scores: smoke-free legislation (Tobacco control: Monitor)",
+                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-smoke-free-legislation",
                 ),
                 (
-                    'E_compl_e12',
-                    'Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)',
-                    'https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans'
+                    "E_compl_e12",
+                    "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
+                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
                 ),
                 (
-                    'E_compl_e14',
-                    'Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)',
-                    'https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans'
-                )
+                    "E_compl_e14",
+                    "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
+                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
+                ),
             ]
         }
     )
@@ -377,7 +372,9 @@ class TestWHO:
         Configuration._create(
             hdx_read_only=True,
             user_agent="test",
-            project_config_yaml=join("tests", "config", "project_configuration.yml"),
+            project_config_yaml=join(
+                "tests", "config", "project_configuration.yml"
+            ),
         )
         Locations.set_validlocations([{"name": "afg", "title": "Afghanistan"}])
         Country.countriesdata(use_live=False)
@@ -412,12 +409,14 @@ class TestWHO:
         qc_indicators = configuration["qc_indicators"]
         with temp_dir("Test_WHO", delete_on_failure=False) as folder:
             WHO.indicator_limit = 1
-            dataset, showcase, bites_disabled = WHO.generate_dataset_and_showcase(
-                self,
-                TestWHO.country,
-                TestWHO.indicators,
-                TestWHO.tags,
-                qc_indicators
+            dataset, showcase, bites_disabled = (
+                WHO.generate_dataset_and_showcase(
+                    self,
+                    TestWHO.country,
+                    TestWHO.indicators,
+                    TestWHO.tags,
+                    qc_indicators,
+                )
             )
             assert dataset == {
                 "name": "who-data-for-afghanistan",
@@ -502,17 +501,17 @@ class TestWHO:
             }
             assert bites_disabled == [False, True, False]
             file = "health_indicators_AFG.csv"
-            assert_files_same(join("tests", "fixtures", file), join(folder, file))
+            assert_files_same(
+                join("tests", "fixtures", file), join(folder, file)
+            )
             # file = f"qc_{file}"
             # assert_files_same(join("tests", "fixtures", file), join(folder, file))
             file = "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_AFG.csv"
-            assert_files_same(join("tests", "fixtures", file), join(folder, file))
+            assert_files_same(
+                join("tests", "fixtures", file), join(folder, file)
+            )
             country = {"label": "xxx", "display": "Unknown", "attr": []}
             datasetshowcase = WHO.generate_dataset_and_showcase(
-                self,
-                country,
-                TestWHO.indicators,
-                TestWHO.tags,
-                qc_indicators
+                self, country, TestWHO.indicators, TestWHO.tags, qc_indicators
             )
             assert datasetshowcase == (None, None, None)

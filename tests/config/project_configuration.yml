@@ -13,4 +13,3 @@ qc_indicators:
     title: "Homicide Rate"
     unit: "Number"
     description: "Number of homicides per 100000 population"
-

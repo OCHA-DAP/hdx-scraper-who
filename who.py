@@ -9,11 +9,9 @@ Reads WHO API and creates datasets
 import logging
 from collections import OrderedDict
 from datetime import datetime
-from time import sleep
 from urllib.parse import quote
 
 from hdx.data.dataset import Dataset
-from hdx.data.hdxobject import HDXError
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
@@ -54,7 +52,9 @@ class WHO:
         indicators = OrderedDict()
         tags = list()
         category_url = self.configuration["category_url"]
-        json = self.retriever.download_json(f"{category_url}GHO_MODEL/SF_HIERARCHY_INDICATORS")
+        json = self.retriever.download_json(
+            f"{category_url}GHO_MODEL/SF_HIERARCHY_INDICATORS"
+        )
         result = json["value"]
 
         replacements = {"(": "", ")": "", "/": "", ",": ""}
@@ -71,12 +71,16 @@ class WHO:
             if " and " in category:
                 tag_names = category.split(" and ")
                 for tag_name in tag_names:
-                    tags.append(multiple_replace(tag_name.strip(), replacements))
+                    tags.append(
+                        multiple_replace(tag_name.strip(), replacements)
+                    )
             else:
                 tags.append(multiple_replace(category.strip(), replacements))
 
         for category in indicators:
-            indicators[category] = list(OrderedDict.fromkeys(indicators[category]).keys())
+            indicators[category] = list(
+                OrderedDict.fromkeys(indicators[category]).keys()
+            )
         tags = list(OrderedDict.fromkeys(tags).keys())
         tags, _ = Vocabulary.get_mapped_tags(tags)
 
@@ -84,14 +88,17 @@ class WHO:
 
     def get_countries(self):
         base_url = self.configuration["base_url"]
-        json = self.retriever.download_json(f"{base_url}api/DIMENSION/COUNTRY/DimensionValues")
+        json = self.retriever.download_json(
+            f"{base_url}api/DIMENSION/COUNTRY/DimensionValues"
+        )
         return json["value"]
 
     def generate_dataset_and_showcase(
         self, country, indicators, tags, quickcharts
     ):
         """
-        https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG'
+        https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim
+        eq 'AFG'
         """
         base_url = self.configuration["base_url"]
         countryiso = country["Code"]
@@ -104,8 +111,11 @@ class WHO:
         dataset = Dataset(
             {
                 "name": slugified_name,
-                "notes": "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \n"
-                         f"{cat_str}  \n  \nFor links to individual indicator metadata, see resource descriptions.",
+                "notes": "Contains data from World Health Organization's "
+                "[data portal](http://www.who.int/gho/en/) covering "
+                "the following categories:  \n"
+                f"{cat_str}  \n  \nFor links to individual indicator "
+                f"metadata, see resource descriptions.",
                 "title": title,
             }
         )
@@ -126,8 +136,12 @@ class WHO:
                 if len(year) == 9:
                     startyear = year[:4]
                     endyear = year[5:]
-                    result["startdate"], _ = parse_date_range(startyear, date_format="%Y")
-                    _, result["enddate"] = parse_date_range(endyear, date_format="%Y")
+                    result["startdate"], _ = parse_date_range(
+                        startyear, date_format="%Y"
+                    )
+                    _, result["enddate"] = parse_date_range(
+                        endyear, date_format="%Y"
+                    )
                 else:
                     result["startdate"], result["enddate"] = parse_date_range(
                         year, date_format="%Y"
@@ -137,7 +151,7 @@ class WHO:
         all_rows = list()
         bites_disabled = [True, True, True]
 
-        i = 0
+        # i = 0
         for category in indicators:
             # if i >= 3:
             #     break  # for testing
@@ -146,9 +160,11 @@ class WHO:
             category_data = list()
             indicator_codes = list()
             indicator_links = list()
-            count = 0
+            # count = 0
 
-            for indicator_code, indicator_name, indicator_url in indicators[category]:
+            for indicator_code, indicator_name, indicator_url in indicators[
+                category
+            ]:
                 # if count >= 10:
                 #     break  # for testing
                 # count += 1
@@ -156,24 +172,33 @@ class WHO:
                 indicator_codes.append(indicator_code)
                 indicator_links.append(f"[{indicator_name}]({indicator_url})")
 
-
-                if (indicator_code):
-                    url = f"{base_url}api/{indicator_code}?$filter=SpatialDim eq '{countryiso}'"
+                if indicator_code:
+                    url = (
+                        f"{base_url}api/{indicator_code}"
+                        f"?$filter=SpatialDim eq '{countryiso}'"
+                    )
                 else:
                     continue
 
                 try:
                     jsonresponse = self.retriever.download_json(url)
-                except:
+                # TODO: find exception
+                except:  # noqa: E722
                     logger.warning(f"{url} has no data!")
                     continue
 
-                for row in jsonresponse['value']:
+                for row in jsonresponse["value"]:
                     countryiso = row["SpatialDim"]
-                    countryname = Country.get_country_name_from_iso3(countryiso)
+                    countryname = Country.get_country_name_from_iso3(
+                        countryiso
+                    )
 
-                    startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime("%Y")
-                    endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
+                    startyear = datetime.fromisoformat(
+                        row["TimeDimensionBegin"]
+                    ).strftime("%Y")
+                    endyear = datetime.fromisoformat(
+                        row["TimeDimensionEnd"]
+                    ).strftime("%Y")
 
                     obj = {
                         "GHO (CODE)": indicator_code,
@@ -191,7 +216,7 @@ class WHO:
                         "Numeric": row["NumericValue"],
                         "Value": row["Value"],
                         "Low": row["Low"],
-                        "High": row["High"]
+                        "High": row["High"],
                     }
                     category_data.append(obj)
 
@@ -199,7 +224,9 @@ class WHO:
 
             category_link = f"*{category}:*\n{', '.join(indicator_links)}"
             slugified_category = slugify(category, separator="_")
-            filename = f"{slugified_category}_indicators_{countryiso.lower()}.csv"
+            filename = (
+                f"{slugified_category}_indicators_{countryiso.lower()}.csv"
+            )
             resourcedata = {
                 "name": f"{category} Indicators for {countryname}",
                 "description": category_link,
@@ -216,16 +243,16 @@ class WHO:
                     date_function=yearcol_function,
                     quickcharts=None,
                 )
-            except:
+            # TODO: find exception
+            except:  # noqa: E722
                 logger.warning(f"{category} has no data!")
                 continue
-
-
 
         filename = f"health_indicators_{countryiso.lower()}.csv"
         resourcedata = {
             "name": f"All Health Indicators for {countryname}",
-            "description": "See resource descriptions below for links to indicator metadata",
+            "description": "See resource descriptions below for links "
+            "to indicator metadata",
         }
 
         success, results = dataset.generate_resource_from_iterator(

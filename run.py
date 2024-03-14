@@ -1,6 +1,7 @@
 #!/usr/bin/python
 """
-Top level script. Calls other functions that generate datasets that this script then creates in HDX.
+Top level script. Calls other functions that generate datasets that this
+script then creates in HDX.
 
 """
 import logging
@@ -11,7 +12,10 @@ from hdx.api.configuration import Configuration
 from hdx.data.hdxobject import HDXError
 from hdx.facades.infer_arguments import facade
 from hdx.utilities.downloader import Download, DownloadError
-from hdx.utilities.path import progress_storing_folder, wheretostart_tempdir_batch
+from hdx.utilities.path import (
+    progress_storing_folder,
+    wheretostart_tempdir_batch,
+)
 from hdx.utilities.retriever import Retrieve
 from tenacity import (
     after_log,
@@ -20,6 +24,7 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
+
 from who import WHO
 
 logger = logging.getLogger(__name__)
@@ -27,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = True) -> None:
+def main(save: bool = True, use_saved: bool = False) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -48,10 +53,9 @@ def main(save: bool = False, use_saved: bool = True) -> None:
             who = WHO(configuration, retriever, folder)
             indicators, tags = who.get_indicators_and_tags()
 
-            #for testing, only AFG
-            countries_temp = who.get_countries()
-            countries = [countries_temp[1]]
-            #countries = who.get_countries()
+            countries = who.get_countries()
+            # TODO: remove
+            countries = who.get_countries()[0:1]
             logger.info(f"Number of datasets to upload: {len(countries)}")
 
             @retry(
@@ -73,22 +77,27 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                         "#indicator+code",
                         "#country+code",
                         "#date+year+end",
-                        "#dimension+code"
+                        "#dimension+code",
                     ],
                 }
-                (dataset, showcase, bites_disabled,) = who.generate_dataset_and_showcase(
-                    country,
-                    indicators,
-                    tags,
-                    quickcharts
+                (
+                    dataset,
+                    showcase,
+                    bites_disabled,
+                ) = who.generate_dataset_and_showcase(
+                    country, indicators, tags, quickcharts
                 )
 
                 if dataset:
                     dataset.update_from_yaml()
                     dataset.generate_quickcharts(
-                        -1, bites_disabled=bites_disabled, indicators=qc_indicators
+                        -1,
+                        bites_disabled=bites_disabled,
+                        indicators=qc_indicators,
                     )
-                    paths = [x.get_file_to_upload() for x in dataset.get_resources()]
+                    paths = [
+                        x.get_file_to_upload() for x in dataset.get_resources()
+                    ]
                     dataset.create_in_hdx(
                         remove_additional_resources=True,
                         match_resource_order=False,
@@ -105,7 +114,9 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                         except OSError:
                             pass
 
-            for _, country in progress_storing_folder(info, countries, "Code", 'AFG'):
+            for _, country in progress_storing_folder(
+                info, countries, "Code", "AFG"
+            ):
                 process_country(country)
 
 
