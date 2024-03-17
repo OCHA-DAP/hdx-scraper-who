@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = True, use_saved: bool = False) -> None:
+def main(save: bool = False, use_saved: bool = True) -> None:
     """Generate datasets and create them in HDX
 
     Args:

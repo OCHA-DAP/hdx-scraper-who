@@ -183,7 +183,7 @@ class WHO:
 
                 try:
                     jsonresponse = self.retriever.download_json(url)
-                except DownloadError:
+                except (DownloadError, FileNotFoundError):
                     logger.warning(f"{url} has no data!")
                     continue
 
