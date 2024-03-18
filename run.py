@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = True) -> None:
+def main(save: bool = True, use_saved: bool = False) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -51,9 +51,9 @@ def main(save: bool = False, use_saved: bool = True) -> None:
             qc_indicators = configuration["qc_indicators"]
             who = WHO(configuration, retriever, folder)
 
-            # countries = who.get_countries()
+            countries = who.get_countries()
             # TODO: remove
-            countries = who.get_countries()[1:2]
+            # countries = who.get_countries()[1:2]
             logger.info(f"Number of datasets to upload: {len(countries)}")
 
             @retry(
@@ -75,7 +75,7 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                         "#indicator+code",
                         "#country+code",
                         "#date+year+end",
-                        "#dimension+code",
+                        "#dimension+name",
                     ],
                 }
                 (dataset, showcase, bites_disabled) = (
@@ -89,9 +89,6 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                         bites_disabled=bites_disabled,
                         indicators=qc_indicators,
                     )
-                    # paths = [
-                    #   x.get_file_to_upload() for x in dataset.get_resources()
-                    # ]
                     dataset.create_in_hdx(
                         remove_additional_resources=True,
                         match_resource_order=False,
@@ -102,15 +99,12 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                     showcase.create_in_hdx()
                     showcase.add_dataset(dataset)
 
-                    # TODO: still needed?
-                    # for path in paths:
-                    #    try:  # Needed while there are duplicate categories
-                    #        remove(path)
-                    #    except OSError:
-                    #        pass
-
             for _, country in progress_storing_folder(
-                info, countries, "Code", "AFG"
+                info,
+                countries,
+                "Code",
+                # TODO: remove
+                # info, countries, "Code", "AFG"
             ):
                 process_country(country)
 
