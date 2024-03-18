@@ -37,6 +37,7 @@ class WHO:
         "COUNTRY (DISPLAY)": "#country+name",
         "DIMENSION (TYPE)": "#dimension+type",
         "DIMENSION (CODE)": "#dimension+code",
+        "DIMENSION (NAME)": "#dimension+name",
         "Numeric": "#indicator+value+num",
         "Value": "#indicator+value",
         "Low": "#indicator+value+low",
@@ -47,8 +48,13 @@ class WHO:
         self.configuration = configuration
         self.retriever = retriever
         self.folder = folder
+        self.dimension_names = self._get_dimension_names()
+        self.indicators, self.tags, self.categories = (
+            self.get_indicators_and_tags(self)
+        )
 
     def get_indicators_and_tags(self):
+        # TODO: save these parameters to self
         # The indicators dictionary will use the indicator codes as a key,
         # where the values are another dictionary that contains the indicator
         # name and, if available, the indicator URL
@@ -71,7 +77,6 @@ class WHO:
         # Loop through all indicators, getting the codes to use as keys,
         # and saving the indicator names
         for indicator in indicator_result:
-            # TODO: use data class
             indicators[indicator["IndicatorCode"]] = {
                 "indicator_name": indicator["IndicatorName"]
             }
@@ -115,6 +120,28 @@ class WHO:
 
         return indicators, tags, categories
 
+    def _get_dimension_names(self):
+        """The main API only provides the dimension codes. This method
+        queries the dimensions in the API to get their names, that can
+        be used for quickcharts, etc."""
+
+        dimension_names = OrderedDict()
+        all_dimensions_url = f"{self.configuration['base_url']}api/dimension"
+        all_dimensions_result = self.retriever.download_json(
+            all_dimensions_url
+        )["value"]
+        for all_dimensions_row in all_dimensions_result:
+            dimension_url = (
+                f"{self.configuration['base_url']}api/DIMENSION/"
+                f"{all_dimensions_row['Code']}/DimensionValues"
+            )
+            dimension_result = self.retriever.download_json(dimension_url)[
+                "value"
+            ]
+            for dimension_row in dimension_result:
+                dimension_names[dimension_row["Code"]] = dimension_row["Title"]
+        return dimension_names
+
     def get_countries(self):
         base_url = self.configuration["base_url"]
         json = self.retriever.download_json(
@@ -122,9 +149,7 @@ class WHO:
         )
         return json["value"]
 
-    def generate_dataset_and_showcase(
-        self, country, indicators, tags, quickcharts, categories
-    ):
+    def generate_dataset_and_showcase(self, country, quickcharts):
 
         # Setup the dataset information
         base_url = self.configuration["base_url"]
@@ -134,7 +159,8 @@ class WHO:
         title = f"{countryname} - Health Indicators"
         logger.info(f"Creating dataset: {title}")
         slugified_name = slugify(f"WHO data for {countryname}").lower()
-        cat_str = ", ".join(indicators)
+        # TODO: check this works
+        cat_str = ", ".join(self.indicators.keys())
         dataset = Dataset(
             {
                 "name": slugified_name,
@@ -152,14 +178,14 @@ class WHO:
         dataset.set_subnational(False)
         dataset.add_country_location(countryiso)
         alltags = ["hxl", "indicators"]
-        alltags.extend(tags)
+        alltags.extend(self.tags)
         dataset.add_tags(alltags)
 
         # Loop through the indicators to download the data for each,
         # saving the rows in a dictionary with indicator code keys, which can
         # will used to build the categories files
         all_indicators_data = OrderedDict()
-        for indicator_code, indicator_dict in indicators.items():
+        for indicator_code, indicator_dict in self.indicators.items():
             indicator_name = indicator_dict["indicator_name"]
             # Some indicators don't have URLs, if they don't have a theme
             indicator_url = indicator_dict.get("indicator_url")
@@ -176,7 +202,7 @@ class WHO:
                 logger.warning(f"{url} has no data!")
                 continue
             indicator_data = [
-                _parse_indicator_row(
+                self._parse_indicator_row(
                     row, indicator_code, indicator_name, indicator_url
                 )
                 for row in indicator_json["value"]
@@ -184,7 +210,7 @@ class WHO:
             all_indicators_data[indicator_code] = indicator_data
 
         # Loop through categories and generate resource for each
-        for category_name, indicator_set in categories.items():
+        for category_name, indicator_set in self.categories.items():
 
             logger.info(f"Category: {category_name}")
             if not indicator_set:
@@ -196,9 +222,12 @@ class WHO:
 
             for indicator_code in indicator_set:
 
-                indicator_name = indicators[indicator_code]["indicator_name"]
-                indicator_url = indicators[indicator_code]["indicator_url"]
-                logger.info(f"Indicator name: {indicator_name}")
+                indicator_name = self.indicators[indicator_code][
+                    "indicator_name"
+                ]
+                indicator_url = self.indicators[indicator_code][
+                    "indicator_url"
+                ]
                 indicator_links.append(f"[{indicator_name}]({indicator_url})")
                 category_data.extend(all_indicators_data[indicator_code])
 
@@ -269,34 +298,38 @@ class WHO:
 
         return dataset, showcase, bites_disabled
 
+    def _parse_indicator_row(
+        self, row, indicator_code, indicator_name, indicator_url
+    ):
+        countryiso = row["SpatialDim"]
+        countryname = Country.get_country_name_from_iso3(countryiso)
 
-def _parse_indicator_row(row, indicator_code, indicator_name, indicator_url):
-    countryiso = row["SpatialDim"]
-    countryname = Country.get_country_name_from_iso3(countryiso)
+        startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime(
+            "%Y"
+        )
+        endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime(
+            "%Y"
+        )
 
-    startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime(
-        "%Y"
-    )
-    endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
-
-    return {
-        "GHO (CODE)": indicator_code,
-        "GHO (DISPLAY)": indicator_name,
-        "GHO (URL)": indicator_url,
-        "YEAR (DISPLAY)": row["TimeDim"],
-        "STARTYEAR": startyear,
-        "ENDYEAR": endyear,
-        "REGION (CODE)": row["ParentLocationCode"],
-        "REGION (DISPLAY)": row["ParentLocation"],
-        "COUNTRY (CODE)": countryiso,
-        "COUNTRY (DISPLAY)": countryname,
-        "DIMENSION (TYPE)": row["Dim1Type"],
-        "DIMENSION (CODE)": row["Dim1"],
-        "Numeric": row["NumericValue"],
-        "Value": row["Value"],
-        "Low": row["Low"],
-        "High": row["High"],
-    }
+        return {
+            "GHO (CODE)": indicator_code,
+            "GHO (DISPLAY)": indicator_name,
+            "GHO (URL)": indicator_url,
+            "YEAR (DISPLAY)": row["TimeDim"],
+            "STARTYEAR": startyear,
+            "ENDYEAR": endyear,
+            "REGION (CODE)": row["ParentLocationCode"],
+            "REGION (DISPLAY)": row["ParentLocation"],
+            "COUNTRY (CODE)": countryiso,
+            "COUNTRY (DISPLAY)": countryname,
+            "DIMENSION (TYPE)": row["Dim1Type"],
+            "DIMENSION (CODE)": row["Dim1"],
+            "DIMENSION (NAME)": self.dimension_names[row["Dim1"]],
+            "Numeric": row["NumericValue"],
+            "Value": row["Value"],
+            "Low": row["Low"],
+            "High": row["High"],
+        }
 
 
 def _yearcol_function(row):

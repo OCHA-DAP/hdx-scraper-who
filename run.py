@@ -51,9 +51,8 @@ def main(save: bool = True, use_saved: bool = False) -> None:
             configuration = Configuration.read()
             qc_indicators = configuration["qc_indicators"]
             who = WHO(configuration, retriever, folder)
-            indicators, tags, categories = who.get_indicators_and_tags()
 
-            countries = who.get_countries()
+            # countries = who.get_countries()
             # TODO: remove
             countries = who.get_countries()[1:2]
             logger.info(f"Number of datasets to upload: {len(countries)}")
@@ -80,12 +79,8 @@ def main(save: bool = True, use_saved: bool = False) -> None:
                         "#dimension+code",
                     ],
                 }
-                (
-                    dataset,
-                    showcase,
-                    bites_disabled,
-                ) = who.generate_dataset_and_showcase(
-                    country, indicators, tags, quickcharts, categories
+                (dataset, showcase, bites_disabled) = (
+                    who.generate_dataset_and_showcase(country, quickcharts)
                 )
 
                 if dataset:
