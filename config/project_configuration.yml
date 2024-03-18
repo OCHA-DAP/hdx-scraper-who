@@ -16,4 +16,4 @@ qc_indicators:
     title: "Life expectancy at age 60 (years)"
     unit: "Years"
     description: "Life expectancy at age 60 (years)"
-    aggregate_col: "#dimension+code"
+    aggregate_col: "#dimension+name"

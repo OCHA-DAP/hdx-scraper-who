@@ -232,7 +232,6 @@ class WHO:
         return dimension_names
 
     def _get_indicators_and_tags(self):
-        # TODO: save these parameters to self
         # The indicators dictionary will use the indicator codes as a key,
         # where the values are another dictionary that contains the indicator
         # name and, if available, the indicator URL
@@ -272,8 +271,7 @@ class WHO:
             indicator_code = category["INDICATOR_CODE"].strip()
             indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(category['INDICATOR_URL_NAME'])}"
             category_title = category["THEME_TITLE"]
-            # Add indicator to categories set
-            categories[category_title].add(indicator_code)
+
             # Add indicator URL to indicator dictionary
             try:
                 indicators[indicator_code]["indicator_url"] = indicator_url
@@ -282,6 +280,10 @@ class WHO:
                     f"Indicator code {indicator_code} was not found"
                     f"on the indicators page"
                 )
+                continue
+
+            # Add indicator to categories set
+            categories[category_title].add(indicator_code)
 
             # Use the category title to create tags
             if " and " in category_title:
