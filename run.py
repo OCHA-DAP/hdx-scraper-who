@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = True) -> None:
+def main(save: bool = True, use_saved: bool = False) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -51,7 +51,7 @@ def main(save: bool = False, use_saved: bool = True) -> None:
             configuration = Configuration.read()
             qc_indicators = configuration["qc_indicators"]
             who = WHO(configuration, retriever, folder)
-            indicators, tags = who.get_indicators_and_tags()
+            indicators, tags, categories = who.get_indicators_and_tags()
 
             countries = who.get_countries()
             # TODO: remove
@@ -85,7 +85,7 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                     showcase,
                     bites_disabled,
                 ) = who.generate_dataset_and_showcase(
-                    country, indicators, tags, quickcharts
+                    country, indicators, tags, quickcharts, categories
                 )
 
                 if dataset:

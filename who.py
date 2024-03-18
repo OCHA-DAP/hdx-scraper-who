@@ -7,7 +7,7 @@ Reads WHO API and creates datasets
 
 """
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 from urllib.parse import quote
 
@@ -17,7 +17,6 @@ from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
 from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
-from hdx.utilities.dictandlist import dict_of_lists_add
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 
@@ -50,42 +49,71 @@ class WHO:
         self.folder = folder
 
     def get_indicators_and_tags(self):
+        # The indicators dictionary will use the indicator codes as a key,
+        # where the values are another dictionary that contains the indicator
+        # name and, if available, the indicator URL
         indicators = OrderedDict()
+        # The categories dictionary contains all the category names as keys,
+        # with a set of indicator codes as values. A set is used because
+        # the API contains duplicate indicator / category pairs.
+        categories = defaultdict(set)
         tags = list()
-        category_url = self.configuration["category_url"]
-        json = self.retriever.download_json(
-            f"{category_url}GHO_MODEL/SF_HIERARCHY_INDICATORS"
+
+        # Query for the indicators and categories
+        indicator_url = f"{self.configuration['base_url']}api/indicator"
+        indicator_result = self.retriever.download_json(indicator_url)["value"]
+        category_url = (
+            f"{self.configuration['category_url']}"
+            f"GHO_MODEL/SF_HIERARCHY_INDICATORS"
         )
-        result = json["value"]
+        category_result = self.retriever.download_json(category_url)["value"]
 
+        # Loop through all indicators, getting the codes to use as keys,
+        # and saving the indicator names
+        for indicator in indicator_result:
+            # TODO: use data class
+            indicators[indicator["IndicatorCode"]] = {
+                "indicator_name": indicator["IndicatorName"]
+            }
+
+        # Loop through all categories, and add indicators to associated set.
+        # Also add the indicator URL (which is not present in the indicator
+        # query) to the indicators dict.
         replacements = {"(": "", ")": "", "/": "", ",": ""}
-        for indicator in result:
-            indicator_code = indicator["INDICATOR_CODE"]
-            indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(indicator['INDICATOR_URL_NAME'])}"
-            category = indicator["THEME_TITLE"]
-            dict_of_lists_add(
-                indicators,
-                category,
-                (indicator_code, indicator["INDICATOR_TITLE"], indicator_url),
-            )
+        for category in category_result:
+            # Some indicator codes have "\t" in them on the category page
+            # which isn't present in the indicator page, such as RADON_Q602,
+            # so need to .strip()
+            indicator_code = category["INDICATOR_CODE"].strip()
+            indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(category['INDICATOR_URL_NAME'])}"
+            category_title = category["THEME_TITLE"]
+            # Add indicator to categories set
+            categories[category_title].add(indicator_code)
+            # Add indicator URL to indicator dictionary
+            try:
+                indicators[indicator_code]["indicator_url"] = indicator_url
+            except KeyError:
+                logger.error(
+                    f"Indicator code {indicator_code} was not found"
+                    f"on the indicators page"
+                )
 
-            if " and " in category:
-                tag_names = category.split(" and ")
+            # Use the category title to create tags
+            if " and " in category_title:
+                tag_names = category_title.split(" and ")
                 for tag_name in tag_names:
                     tags.append(
                         multiple_replace(tag_name.strip(), replacements)
                     )
             else:
-                tags.append(multiple_replace(category.strip(), replacements))
+                tags.append(
+                    multiple_replace(category_title.strip(), replacements)
+                )
 
-        for category in indicators:
-            indicators[category] = list(
-                OrderedDict.fromkeys(indicators[category]).keys()
-            )
         tags = list(OrderedDict.fromkeys(tags).keys())
         tags, _ = Vocabulary.get_mapped_tags(tags)
 
-        return indicators, tags
+        return indicators, tags, categories
 
     def get_countries(self):
         base_url = self.configuration["base_url"]
@@ -95,12 +123,10 @@ class WHO:
         return json["value"]
 
     def generate_dataset_and_showcase(
-        self, country, indicators, tags, quickcharts
+        self, country, indicators, tags, quickcharts, categories
     ):
-        """
-        https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim
-        eq 'AFG'
-        """
+
+        # Setup the dataset information
         base_url = self.configuration["base_url"]
         countryiso = country["Code"]
         countryname = Country.get_country_name_from_iso3(countryiso)
@@ -129,102 +155,63 @@ class WHO:
         alltags.extend(tags)
         dataset.add_tags(alltags)
 
-        def yearcol_function(row):
-            result = dict()
-            year = row["YEAR (DISPLAY)"]
-            if year:
-                year = str(year)
-                if len(year) == 9:
-                    startyear = year[:4]
-                    endyear = year[5:]
-                    result["startdate"], _ = parse_date_range(
-                        startyear, date_format="%Y"
-                    )
-                    _, result["enddate"] = parse_date_range(
-                        endyear, date_format="%Y"
-                    )
-                else:
-                    result["startdate"], result["enddate"] = parse_date_range(
-                        year, date_format="%Y"
-                    )
-            return result
+        # Loop through the indicators to download the data for each,
+        # saving the rows in a dictionary with indicator code keys, which can
+        # will used to build the categories files
+        all_indicators_data = OrderedDict()
+        for indicator_code, indicator_dict in indicators.items():
+            indicator_name = indicator_dict["indicator_name"]
+            # Some indicators don't have URLs, if they don't have a theme
+            indicator_url = indicator_dict.get("indicator_url")
+            logger.info(f"Indicator name: {indicator_name}")
+            # URL for a specific indicator and country:
+            # https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG' # noqa E501
+            url = (
+                f"{base_url}api/{indicator_code}?$filter=SpatialDim eq "
+                f"'{countryiso}'"
+            )
+            try:
+                indicator_json = self.retriever.download_json(url)
+            except (DownloadError, FileNotFoundError):
+                logger.warning(f"{url} has no data!")
+                continue
+            indicator_data = [
+                _parse_indicator_row(
+                    row, indicator_code, indicator_name, indicator_url
+                )
+                for row in indicator_json["value"]
+            ]
+            all_indicators_data[indicator_code] = indicator_data
 
-        all_rows = list()
+        # Loop through categories and generate resource for each
+        for category_name, indicator_set in categories.items():
 
-        for category in indicators:
-            logger.info(f"Category: {category}")
+            logger.info(f"Category: {category_name}")
+            if not indicator_set:
+                logger.error("No indicators present")
+                continue
+
             category_data = list()
-            indicator_codes = list()
             indicator_links = list()
 
-            for indicator_code, indicator_name, indicator_url in indicators[
-                category
-            ]:
+            for indicator_code in indicator_set:
+
+                indicator_name = indicators[indicator_code]["indicator_name"]
+                indicator_url = indicators[indicator_code]["indicator_url"]
                 logger.info(f"Indicator name: {indicator_name}")
-                indicator_codes.append(indicator_code)
                 indicator_links.append(f"[{indicator_name}]({indicator_url})")
+                category_data.extend(all_indicators_data[indicator_code])
 
-                if indicator_code:
-                    url = (
-                        f"{base_url}api/{indicator_code}"
-                        f"?$filter=SpatialDim eq '{countryiso}'"
-                    )
-                else:
-                    continue
-
-                try:
-                    jsonresponse = self.retriever.download_json(url)
-                except (DownloadError, FileNotFoundError):
-                    logger.warning(f"{url} has no data!")
-                    continue
-
-                for row in jsonresponse["value"]:
-                    countryiso = row["SpatialDim"]
-                    countryname = Country.get_country_name_from_iso3(
-                        countryiso
-                    )
-
-                    startyear = datetime.fromisoformat(
-                        row["TimeDimensionBegin"]
-                    ).strftime("%Y")
-                    endyear = datetime.fromisoformat(
-                        row["TimeDimensionEnd"]
-                    ).strftime("%Y")
-
-                    obj = {
-                        "GHO (CODE)": indicator_code,
-                        "GHO (DISPLAY)": indicator_name,
-                        "GHO (URL)": indicator_url,
-                        "YEAR (DISPLAY)": row["TimeDim"],
-                        "STARTYEAR": startyear,
-                        "ENDYEAR": endyear,
-                        "REGION (CODE)": row["ParentLocationCode"],
-                        "REGION (DISPLAY)": row["ParentLocation"],
-                        "COUNTRY (CODE)": countryiso,
-                        "COUNTRY (DISPLAY)": countryname,
-                        "DIMENSION (TYPE)": row["Dim1Type"],
-                        "DIMENSION (CODE)": row["Dim1"],
-                        "Numeric": row["NumericValue"],
-                        "Value": row["Value"],
-                        "Low": row["Low"],
-                        "High": row["High"],
-                    }
-                    category_data.append(obj)
-
-            all_rows.extend(category_data)
-
-            category_link = f"*{category}:*\n{', '.join(indicator_links)}"
-            slugified_category = slugify(category, separator="_")
+            category_link = f"*{category_name}:*\n{', '.join(indicator_links)}"
+            slugified_category = slugify(category_name, separator="_")
             filename = (
                 f"{slugified_category}_indicators_{countryiso.lower()}.csv"
             )
             resourcedata = {
-                "name": f"{category} Indicators for {countryname}",
+                "name": f"{category_name} Indicators for {countryname}",
                 "description": category_link,
             }
 
-            # TODO: this may at some point throw an error
-            #  if the category has no data
             success, results = dataset.generate_resource_from_iterator(
                 list(self.hxltags.keys()),
                 category_data,
@@ -232,10 +219,17 @@ class WHO:
                 self.folder,
                 filename,
                 resourcedata,
-                date_function=yearcol_function,
+                date_function=_yearcol_function,
                 quickcharts=None,
             )
 
+            if not success:
+                logger.error(
+                    f"Resource for category {category_name} failed:"
+                    f"{results}"
+                )
+
+        # Create the final dataset with all indicators
         filename = f"health_indicators_{countryiso.lower()}.csv"
         resourcedata = {
             "name": f"All Health Indicators for {countryname}",
@@ -245,7 +239,9 @@ class WHO:
 
         success, results = dataset.generate_resource_from_iterator(
             list(self.hxltags.keys()),
-            all_rows,
+            # This line makes one long list of all indicators data,
+            # removing the indicator code as keys
+            sum(all_indicators_data.values(), []),
             self.hxltags,
             self.folder,
             filename,
@@ -254,7 +250,7 @@ class WHO:
             quickcharts=quickcharts,
         )
 
-        if success is False:
+        if not success:
             logger.error(f"{countryname} has no data!")
             return None, None, None
 
@@ -272,3 +268,51 @@ class WHO:
         showcase.add_tags(alltags)
 
         return dataset, showcase, bites_disabled
+
+
+def _parse_indicator_row(row, indicator_code, indicator_name, indicator_url):
+    countryiso = row["SpatialDim"]
+    countryname = Country.get_country_name_from_iso3(countryiso)
+
+    startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime(
+        "%Y"
+    )
+    endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
+
+    return {
+        "GHO (CODE)": indicator_code,
+        "GHO (DISPLAY)": indicator_name,
+        "GHO (URL)": indicator_url,
+        "YEAR (DISPLAY)": row["TimeDim"],
+        "STARTYEAR": startyear,
+        "ENDYEAR": endyear,
+        "REGION (CODE)": row["ParentLocationCode"],
+        "REGION (DISPLAY)": row["ParentLocation"],
+        "COUNTRY (CODE)": countryiso,
+        "COUNTRY (DISPLAY)": countryname,
+        "DIMENSION (TYPE)": row["Dim1Type"],
+        "DIMENSION (CODE)": row["Dim1"],
+        "Numeric": row["NumericValue"],
+        "Value": row["Value"],
+        "Low": row["Low"],
+        "High": row["High"],
+    }
+
+
+def _yearcol_function(row):
+    result = dict()
+    year = row["YEAR (DISPLAY)"]
+    if year:
+        year = str(year)
+        if len(year) == 9:
+            startyear = year[:4]
+            endyear = year[5:]
+            result["startdate"], _ = parse_date_range(
+                startyear, date_format="%Y"
+            )
+            _, result["enddate"] = parse_date_range(endyear, date_format="%Y")
+        else:
+            result["startdate"], result["enddate"] = parse_date_range(
+                year, date_format="%Y"
+            )
+    return result
