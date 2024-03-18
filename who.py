@@ -45,15 +45,193 @@ class WHO:
     }
 
     def __init__(self, configuration, retriever, folder):
-        self.configuration = configuration
-        self.retriever = retriever
-        self.folder = folder
-        self.dimension_names = self._get_dimension_names()
-        self.indicators, self.tags, self.categories = (
-            self.get_indicators_and_tags(self)
+        self._configuration = configuration
+        self._retriever = retriever
+        self._folder = folder
+        self._dimension_names = self._get_dimension_names()
+        self._indicators, self._tags, self._categories = (
+            self._get_indicators_and_tags()
         )
 
-    def get_indicators_and_tags(self):
+    def get_countries(self):
+        base_url = self._configuration["base_url"]
+        json = self._retriever.download_json(
+            f"{base_url}api/DIMENSION/COUNTRY/DimensionValues"
+        )
+        return json["value"]
+
+    def generate_dataset_and_showcase(self, country, quickcharts):
+
+        # Setup the dataset information
+        base_url = self._configuration["base_url"]
+        countryiso = country["Code"]
+        countryname = Country.get_country_name_from_iso3(countryiso)
+
+        title = f"{countryname} - Health Indicators"
+        logger.info(f"Creating dataset: {title}")
+        slugified_name = slugify(f"WHO data for {countryname}").lower()
+        # TODO: check this works
+        cat_str = ", ".join(self._indicators.keys())
+        dataset = Dataset(
+            {
+                "name": slugified_name,
+                "notes": "Contains data from World Health Organization's "
+                "[data portal](http://www.who.int/gho/en/) covering "
+                "the following categories:  \n"
+                f"{cat_str}  \n  \nFor links to individual indicator "
+                f"metadata, see resource descriptions.",
+                "title": title,
+            }
+        )
+        dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
+        dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
+        dataset.set_expected_update_frequency("Every month")
+        dataset.set_subnational(False)
+        dataset.add_country_location(countryiso)
+        alltags = ["hxl", "indicators"]
+        alltags.extend(self._tags)
+        dataset.add_tags(alltags)
+
+        # Loop through the indicators to download the data for each,
+        # saving the rows in a dictionary with indicator code keys, which can
+        # will used to build the categories files
+        all_indicators_data = OrderedDict()
+        for indicator_code, indicator_dict in self._indicators.items():
+            indicator_name = indicator_dict["indicator_name"]
+            # Some indicators don't have URLs, if they don't have a theme
+            indicator_url = indicator_dict.get("indicator_url")
+            logger.info(f"Indicator name: {indicator_name}")
+            # URL for a specific indicator and country:
+            # https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG' # noqa E501
+            url = (
+                f"{base_url}api/{indicator_code}?$filter=SpatialDim eq "
+                f"'{countryiso}'"
+            )
+            try:
+                indicator_json = self._retriever.download_json(url)
+            except (DownloadError, FileNotFoundError):
+                logger.warning(f"{url} has no data!")
+                continue
+            indicator_data = [
+                self._parse_indicator_row(
+                    row, indicator_code, indicator_name, indicator_url
+                )
+                for row in indicator_json["value"]
+            ]
+            all_indicators_data[indicator_code] = indicator_data
+
+        # Loop through categories and generate resource for each
+        for category_name, indicator_set in self._categories.items():
+
+            logger.info(f"Category: {category_name}")
+            if not indicator_set:
+                logger.error("No indicators present")
+                continue
+
+            category_data = list()
+            indicator_links = list()
+
+            for indicator_code in indicator_set:
+
+                indicator_name = self._indicators[indicator_code][
+                    "indicator_name"
+                ]
+                indicator_url = self._indicators[indicator_code][
+                    "indicator_url"
+                ]
+                indicator_links.append(f"[{indicator_name}]({indicator_url})")
+                category_data.extend(all_indicators_data[indicator_code])
+
+            category_link = f"*{category_name}:*\n{', '.join(indicator_links)}"
+            slugified_category = slugify(category_name, separator="_")
+            filename = (
+                f"{slugified_category}_indicators_{countryiso.lower()}.csv"
+            )
+            resourcedata = {
+                "name": f"{category_name} Indicators for {countryname}",
+                "description": category_link,
+            }
+
+            success, results = dataset.generate_resource_from_iterator(
+                list(self.hxltags.keys()),
+                category_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=_yearcol_function,
+                quickcharts=None,
+            )
+
+            if not success:
+                logger.error(
+                    f"Resource for category {category_name} failed:"
+                    f"{results}"
+                )
+
+        # Create the final dataset with all indicators
+        filename = f"health_indicators_{countryiso.lower()}.csv"
+        resourcedata = {
+            "name": f"All Health Indicators for {countryname}",
+            "description": "See resource descriptions below for links "
+            "to indicator metadata",
+        }
+
+        success, results = dataset.generate_resource_from_iterator(
+            list(self.hxltags.keys()),
+            # This line makes one long list of all indicators data,
+            # removing the indicator code as keys
+            sum(all_indicators_data.values(), []),
+            self.hxltags,
+            self._folder,
+            filename,
+            resourcedata,
+            date_function=None,
+            quickcharts=quickcharts,
+        )
+
+        if not success:
+            logger.error(f"{countryname} has no data!")
+            return None, None, None
+
+        bites_disabled = results["bites_disabled"]
+
+        showcase = Showcase(
+            {
+                "name": f"{slugified_name}-showcase",
+                "title": f"Indicators for {countryname}",
+                "notes": f"Health indicators for {countryname}",
+                "url": f"http://www.who.int/countries/{countryiso.lower()}/en/",
+                "image_url": f"http://www.who.int/sysmedia/images/countries/{countryiso.lower()}.gif",
+            }
+        )
+        showcase.add_tags(alltags)
+
+        return dataset, showcase, bites_disabled
+
+    def _get_dimension_names(self):
+        """The main API only provides the dimension codes. This method
+        queries the dimensions in the API to get their names, that can
+        be used for quickcharts, etc."""
+
+        dimension_names = OrderedDict()
+        all_dimensions_url = f"{self._configuration['base_url']}api/dimension"
+        all_dimensions_result = self._retriever.download_json(
+            all_dimensions_url
+        )["value"]
+        for all_dimensions_row in all_dimensions_result:
+            dimension_url = (
+                f"{self._configuration['base_url']}api/DIMENSION/"
+                f"{all_dimensions_row['Code']}/DimensionValues"
+            )
+            dimension_result = self._retriever.download_json(dimension_url)[
+                "value"
+            ]
+            for dimension_row in dimension_result:
+                dimension_names[dimension_row["Code"]] = dimension_row["Title"]
+        return dimension_names
+
+    def _get_indicators_and_tags(self):
         # TODO: save these parameters to self
         # The indicators dictionary will use the indicator codes as a key,
         # where the values are another dictionary that contains the indicator
@@ -66,13 +244,15 @@ class WHO:
         tags = list()
 
         # Query for the indicators and categories
-        indicator_url = f"{self.configuration['base_url']}api/indicator"
-        indicator_result = self.retriever.download_json(indicator_url)["value"]
+        indicator_url = f"{self._configuration['base_url']}api/indicator"
+        indicator_result = self._retriever.download_json(indicator_url)[
+            "value"
+        ]
         category_url = (
-            f"{self.configuration['category_url']}"
+            f"{self._configuration['category_url']}"
             f"GHO_MODEL/SF_HIERARCHY_INDICATORS"
         )
-        category_result = self.retriever.download_json(category_url)["value"]
+        category_result = self._retriever.download_json(category_url)["value"]
 
         # Loop through all indicators, getting the codes to use as keys,
         # and saving the indicator names
@@ -120,184 +300,6 @@ class WHO:
 
         return indicators, tags, categories
 
-    def _get_dimension_names(self):
-        """The main API only provides the dimension codes. This method
-        queries the dimensions in the API to get their names, that can
-        be used for quickcharts, etc."""
-
-        dimension_names = OrderedDict()
-        all_dimensions_url = f"{self.configuration['base_url']}api/dimension"
-        all_dimensions_result = self.retriever.download_json(
-            all_dimensions_url
-        )["value"]
-        for all_dimensions_row in all_dimensions_result:
-            dimension_url = (
-                f"{self.configuration['base_url']}api/DIMENSION/"
-                f"{all_dimensions_row['Code']}/DimensionValues"
-            )
-            dimension_result = self.retriever.download_json(dimension_url)[
-                "value"
-            ]
-            for dimension_row in dimension_result:
-                dimension_names[dimension_row["Code"]] = dimension_row["Title"]
-        return dimension_names
-
-    def get_countries(self):
-        base_url = self.configuration["base_url"]
-        json = self.retriever.download_json(
-            f"{base_url}api/DIMENSION/COUNTRY/DimensionValues"
-        )
-        return json["value"]
-
-    def generate_dataset_and_showcase(self, country, quickcharts):
-
-        # Setup the dataset information
-        base_url = self.configuration["base_url"]
-        countryiso = country["Code"]
-        countryname = Country.get_country_name_from_iso3(countryiso)
-
-        title = f"{countryname} - Health Indicators"
-        logger.info(f"Creating dataset: {title}")
-        slugified_name = slugify(f"WHO data for {countryname}").lower()
-        # TODO: check this works
-        cat_str = ", ".join(self.indicators.keys())
-        dataset = Dataset(
-            {
-                "name": slugified_name,
-                "notes": "Contains data from World Health Organization's "
-                "[data portal](http://www.who.int/gho/en/) covering "
-                "the following categories:  \n"
-                f"{cat_str}  \n  \nFor links to individual indicator "
-                f"metadata, see resource descriptions.",
-                "title": title,
-            }
-        )
-        dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
-        dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
-        dataset.set_expected_update_frequency("Every month")
-        dataset.set_subnational(False)
-        dataset.add_country_location(countryiso)
-        alltags = ["hxl", "indicators"]
-        alltags.extend(self.tags)
-        dataset.add_tags(alltags)
-
-        # Loop through the indicators to download the data for each,
-        # saving the rows in a dictionary with indicator code keys, which can
-        # will used to build the categories files
-        all_indicators_data = OrderedDict()
-        for indicator_code, indicator_dict in self.indicators.items():
-            indicator_name = indicator_dict["indicator_name"]
-            # Some indicators don't have URLs, if they don't have a theme
-            indicator_url = indicator_dict.get("indicator_url")
-            logger.info(f"Indicator name: {indicator_name}")
-            # URL for a specific indicator and country:
-            # https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG' # noqa E501
-            url = (
-                f"{base_url}api/{indicator_code}?$filter=SpatialDim eq "
-                f"'{countryiso}'"
-            )
-            try:
-                indicator_json = self.retriever.download_json(url)
-            except (DownloadError, FileNotFoundError):
-                logger.warning(f"{url} has no data!")
-                continue
-            indicator_data = [
-                self._parse_indicator_row(
-                    row, indicator_code, indicator_name, indicator_url
-                )
-                for row in indicator_json["value"]
-            ]
-            all_indicators_data[indicator_code] = indicator_data
-
-        # Loop through categories and generate resource for each
-        for category_name, indicator_set in self.categories.items():
-
-            logger.info(f"Category: {category_name}")
-            if not indicator_set:
-                logger.error("No indicators present")
-                continue
-
-            category_data = list()
-            indicator_links = list()
-
-            for indicator_code in indicator_set:
-
-                indicator_name = self.indicators[indicator_code][
-                    "indicator_name"
-                ]
-                indicator_url = self.indicators[indicator_code][
-                    "indicator_url"
-                ]
-                indicator_links.append(f"[{indicator_name}]({indicator_url})")
-                category_data.extend(all_indicators_data[indicator_code])
-
-            category_link = f"*{category_name}:*\n{', '.join(indicator_links)}"
-            slugified_category = slugify(category_name, separator="_")
-            filename = (
-                f"{slugified_category}_indicators_{countryiso.lower()}.csv"
-            )
-            resourcedata = {
-                "name": f"{category_name} Indicators for {countryname}",
-                "description": category_link,
-            }
-
-            success, results = dataset.generate_resource_from_iterator(
-                list(self.hxltags.keys()),
-                category_data,
-                self.hxltags,
-                self.folder,
-                filename,
-                resourcedata,
-                date_function=_yearcol_function,
-                quickcharts=None,
-            )
-
-            if not success:
-                logger.error(
-                    f"Resource for category {category_name} failed:"
-                    f"{results}"
-                )
-
-        # Create the final dataset with all indicators
-        filename = f"health_indicators_{countryiso.lower()}.csv"
-        resourcedata = {
-            "name": f"All Health Indicators for {countryname}",
-            "description": "See resource descriptions below for links "
-            "to indicator metadata",
-        }
-
-        success, results = dataset.generate_resource_from_iterator(
-            list(self.hxltags.keys()),
-            # This line makes one long list of all indicators data,
-            # removing the indicator code as keys
-            sum(all_indicators_data.values(), []),
-            self.hxltags,
-            self.folder,
-            filename,
-            resourcedata,
-            date_function=None,
-            quickcharts=quickcharts,
-        )
-
-        if not success:
-            logger.error(f"{countryname} has no data!")
-            return None, None, None
-
-        bites_disabled = results["bites_disabled"]
-
-        showcase = Showcase(
-            {
-                "name": f"{slugified_name}-showcase",
-                "title": f"Indicators for {countryname}",
-                "notes": f"Health indicators for {countryname}",
-                "url": f"http://www.who.int/countries/{countryiso.lower()}/en/",
-                "image_url": f"http://www.who.int/sysmedia/images/countries/{countryiso.lower()}.gif",
-            }
-        )
-        showcase.add_tags(alltags)
-
-        return dataset, showcase, bites_disabled
-
     def _parse_indicator_row(
         self, row, indicator_code, indicator_name, indicator_url
     ):
@@ -324,7 +326,7 @@ class WHO:
             "COUNTRY (DISPLAY)": countryname,
             "DIMENSION (TYPE)": row["Dim1Type"],
             "DIMENSION (CODE)": row["Dim1"],
-            "DIMENSION (NAME)": self.dimension_names[row["Dim1"]],
+            "DIMENSION (NAME)": self._dimension_names.get(row["Dim1"]),
             "Numeric": row["NumericValue"],
             "Value": row["Value"],
             "Low": row["Low"],

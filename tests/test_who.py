@@ -396,7 +396,7 @@ class TestWHO:
         return Retrieve()
 
     def test_get_indicators_and_tags(self, configuration, retriever):
-        indicators, tags = WHO.get_indicators_and_tags(self)
+        indicators, tags = WHO._get_indicators_and_tags(self)
         assert indicators == TestWHO.indicators
         assert tags == TestWHO.tags
 

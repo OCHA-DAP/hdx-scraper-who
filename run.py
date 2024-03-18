@@ -5,7 +5,6 @@ script then creates in HDX.
 
 """
 import logging
-from os import remove
 from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
@@ -90,9 +89,9 @@ def main(save: bool = True, use_saved: bool = False) -> None:
                         bites_disabled=bites_disabled,
                         indicators=qc_indicators,
                     )
-                    paths = [
-                        x.get_file_to_upload() for x in dataset.get_resources()
-                    ]
+                    # paths = [
+                    #   x.get_file_to_upload() for x in dataset.get_resources()
+                    # ]
                     dataset.create_in_hdx(
                         remove_additional_resources=True,
                         match_resource_order=False,
@@ -103,11 +102,12 @@ def main(save: bool = True, use_saved: bool = False) -> None:
                     showcase.create_in_hdx()
                     showcase.add_dataset(dataset)
 
-                    for path in paths:
-                        try:  # Needed while there are duplicate categories
-                            remove(path)
-                        except OSError:
-                            pass
+                    # TODO: still needed?
+                    # for path in paths:
+                    #    try:  # Needed while there are duplicate categories
+                    #        remove(path)
+                    #    except OSError:
+                    #        pass
 
             for _, country in progress_storing_folder(
                 info, countries, "Code", "AFG"
