@@ -22,6 +22,12 @@ from slugify import slugify
 
 logger = logging.getLogger(__name__)
 
+SHORTCUT_INDICATORS = [
+    "WHOSIS_000001",
+    "MDG_0000000001",
+    "VIOLENCE_HOMICIDERATE",
+]
+
 
 class WHO:
     hxltags = {
@@ -214,6 +220,12 @@ class WHO:
         queries the dimensions in the API to get their names, that can
         be used for quickcharts, etc."""
 
+        return {
+            "SEX_BTSX": "Both sexes",
+            "SEX_FMLE": "Female",
+            "SEX_MLE": "Male",
+        }
+        """
         dimension_names = OrderedDict()
         all_dimensions_url = f"{self._configuration['base_url']}api/dimension"
         all_dimensions_result = self._retriever.download_json(
@@ -230,6 +242,7 @@ class WHO:
             for dimension_row in dimension_result:
                 dimension_names[dimension_row["Code"]] = dimension_row["Title"]
         return dimension_names
+        """
 
     def _get_indicators_and_tags(self):
         # The indicators dictionary will use the indicator codes as a key,
@@ -256,6 +269,8 @@ class WHO:
         # Loop through all indicators, getting the codes to use as keys,
         # and saving the indicator names
         for indicator in indicator_result:
+            if indicator["IndicatorCode"] not in SHORTCUT_INDICATORS:
+                continue
             indicators[indicator["IndicatorCode"]] = {
                 "indicator_name": indicator["IndicatorName"]
             }
@@ -269,6 +284,8 @@ class WHO:
             # which isn't present in the indicator page, such as RADON_Q602,
             # so need to .strip()
             indicator_code = category["INDICATOR_CODE"].strip()
+            if indicator_code not in SHORTCUT_INDICATORS:
+                continue
             indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(category['INDICATOR_URL_NAME'])}"
             category_title = category["THEME_TITLE"]
 
