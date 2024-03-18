@@ -150,25 +150,16 @@ class WHO:
             return result
 
         all_rows = list()
-        bites_disabled = [True, True, True]
 
-        # i = 0
         for category in indicators:
-            # if i >= 3:
-            #     break  # for testing
-            # i += 1
             logger.info(f"Category: {category}")
             category_data = list()
             indicator_codes = list()
             indicator_links = list()
-            # count = 0
 
             for indicator_code, indicator_name, indicator_url in indicators[
                 category
             ]:
-                # if count >= 10:
-                #     break  # for testing
-                # count += 1
                 logger.info(f"Indicator name: {indicator_name}")
                 indicator_codes.append(indicator_code)
                 indicator_links.append(f"[{indicator_name}]({indicator_url})")
