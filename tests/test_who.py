@@ -55,7 +55,7 @@ class Retrieve:
                 ]
             }
         elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
-            return {"value": [{TestWHO.country}]}
+            return {"value": [TestWHO.country]}
         elif url == "http://papa/api/dimension":
             return {"value": [{"Code": "SEX"}]}
         elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
@@ -434,14 +434,14 @@ class TestWHO:
         return Retrieve()
 
     def test_get_indicators_and_tags(self, configuration, retriever):
-        folder = "/tmp"
-        who = WHO(configuration, retriever, folder)
+        who = WHO(configuration, retriever, "/tmp")
         assert who._indicators == TestWHO.indicators
         assert who._tags == TestWHO.tags
         assert who._categories == TestWHO.categories
 
-    def test_get_countriesdata(self, retriever):
-        countriesdata = WHO.get_countries()
+    def test_get_countriesdata(self, configuration, retriever):
+        who = WHO(configuration, retriever, "/tmp")
+        countriesdata = who.get_countries()
         assert countriesdata == [TestWHO.country]
 
     def test_generate_dataset_and_showcase(self, configuration):
@@ -451,10 +451,7 @@ class TestWHO:
             WHO.indicator_limit = 1
             dataset, showcase, bites_disabled = (
                 WHO.generate_dataset_and_showcase(
-                    self,
                     TestWHO.country,
-                    TestWHO.indicators,
-                    TestWHO.tags,
                     qc_indicators,
                 )
             )
