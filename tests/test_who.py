@@ -3,7 +3,7 @@
 Unit tests for WHO.
 
 """
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from os.path import join
 
 import pytest
@@ -381,6 +381,16 @@ class TestWHO:
         },
     )
     tags = ["disability"]
+    categories = defaultdict(set)
+    categories.update(
+        {
+            "Global Health Estimates: Life expectancy and leading causes of death and disability": {
+                "MDG_0000000001",
+                "WHOSIS_000001",
+            },
+            "World Health Statistics": {"WHOSIS_000001"},
+        }
+    )
 
     country = {
         "Code": "AFG",
@@ -393,7 +403,6 @@ class TestWHO:
 
     @pytest.fixture(scope="function")
     def configuration(self):
-        # TODO: make this return the actual configuration file??
         Configuration.create(
             hdx_read_only=True,
             user_agent="test",
@@ -429,6 +438,7 @@ class TestWHO:
         who = WHO(configuration, retriever, folder)
         assert who._indicators == TestWHO.indicators
         assert who._tags == TestWHO.tags
+        assert who._categories == TestWHO.categories
 
     def test_get_countriesdata(self, retriever):
         countriesdata = WHO.get_countries()
