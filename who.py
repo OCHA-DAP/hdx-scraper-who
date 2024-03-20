@@ -7,7 +7,7 @@ Reads WHO API and creates datasets
 
 """
 import logging
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from datetime import datetime
 from urllib.parse import quote
 
@@ -121,17 +121,14 @@ class WHO:
             all_indicators_data[indicator_code] = indicator_data
 
         # Loop through categories and generate resource for each
-        for category_name, indicator_set in self._categories.items():
+        for category_name, indicator_dict in self._categories.items():
 
             logger.info(f"Category: {category_name}")
-            if not indicator_set:
-                logger.error("No indicators present")
-                continue
 
             category_data = list()
             indicator_links = list()
 
-            for indicator_code in indicator_set:
+            for indicator_code in indicator_dict.keys():
 
                 indicator_name = self._indicators[indicator_code][
                     "indicator_name"
@@ -239,7 +236,9 @@ class WHO:
         # The categories dictionary contains all the category names as keys,
         # with a set of indicator codes as values. A set is used because
         # the API contains duplicate indicator / category pairs.
-        categories = defaultdict(set)
+        # It would make sense to use defaultdict with a set, but that
+        # does not preserve ordering.
+        categories = OrderedDict()
         tags = list()
 
         # Query for the indicators and categories
@@ -282,8 +281,11 @@ class WHO:
                 )
                 continue
 
-            # Add indicator to categories set
-            categories[category_title].add(indicator_code)
+            # Add indicator to categories. Use an OrderedDict (with values
+            # set to None) instead of a set to maintain the order.
+            if category_title not in categories:
+                categories[category_title] = OrderedDict()
+            categories[category_title][indicator_code] = None
 
             # Use the category title to create tags
             if " and " in category_title:

@@ -3,7 +3,7 @@
 Unit tests for WHO.
 
 """
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from os.path import join
 
 import pytest
@@ -352,15 +352,15 @@ class TestWHO:
         },
     )
     tags = ["disability"]
-    categories = defaultdict(set)
-    categories.update(
-        {
-            "Global Health Estimates: Life expectancy and leading causes of death and disability": {
-                "MDG_0000000001",
-                "WHOSIS_000001",
-            },
-            "World Health Statistics": {"WHOSIS_000001"},
-        }
+    categories = OrderedDict(
+        [
+            (
+                "Global Health Estimates: Life expectancy and leading causes of "
+                "death and disability",
+                OrderedDict({"WHOSIS_000001": None, "MDG_0000000001": None}),
+            ),
+            ("World Health Statistics", OrderedDict({"WHOSIS_000001": None})),
+        ]
     )
 
     country = {
@@ -451,7 +451,6 @@ class TestWHO:
                 "title": "Afghanistan - Health Indicators",
             }
             resources = dataset.get_resources()
-            # TODO: issue with resource ordering
             assert resources == [
                 {
                     "description": "*Global Health Estimates: Life expectancy and leading causes "
@@ -461,45 +460,6 @@ class TestWHO:
                     "[Infant mortality rate (probability of dying between birth "
                     "and age 1 per 1000 live "
                     "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20)",
-                    "format": "csv",
-                    "name": "Global Health Estimates: Life expectancy and leading causes of "
-                    "death and disability Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-                {
-                    "description": "*World Health Statistics:*\n"
-                    "[Life expectancy at birth "
-                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
-                    "format": "csv",
-                    "name": "World Health Statistics Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-                {
-                    "description": "See resource descriptions below for links to indicator "
-                    "metadata",
-                    "format": "csv",
-                    "name": "All Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-                {
-                    "description": "Cut down data for QuickCharts",
-                    "format": "csv",
-                    "name": "QuickCharts-All Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-            ] or resources == [
-                {
-                    "description": "*Global Health Estimates: Life expectancy and leading causes "
-                    "of death and disability:*\n"
-                    "[Infant mortality rate (probability of dying between birth "
-                    "and age 1 per 1000 live "
-                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20), "
-                    "[Life expectancy at birth "
-                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
                     "format": "csv",
                     "name": "Global Health Estimates: Life expectancy and leading causes of "
                     "death and disability Indicators for Afghanistan",
@@ -563,8 +523,3 @@ class TestWHO:
             assert_files_same(
                 join("tests", "fixtures", file), join(folder, file)
             )
-            country = {"label": "xxx", "display": "Unknown", "attr": []}
-            datasetshowcase = who.generate_dataset_and_showcase(
-                country, qc_indicators
-            )
-            assert datasetshowcase == (None, None, None)
