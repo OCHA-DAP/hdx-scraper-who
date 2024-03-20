@@ -8,9 +8,6 @@ from os.path import join
 
 import pytest
 from hdx.api.configuration import Configuration
-from hdx.api.locations import Locations
-from hdx.data.vocabulary import Vocabulary
-from hdx.location.country import Country
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.path import temp_dir
 
@@ -20,76 +17,55 @@ from who import WHO
 class Retrieve:
     @staticmethod
     def download_json(url):
-        if url == "https://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+        if url == "http://papa/api/indicator":
             return {
                 "value": [
                     {
-                        "PROGRAM_ID": "0c231176-b5f1-4b00-80f4-d9ee1938b986",
-                        "PROGRAM_TITLE": "GHO",
-                        "PROGRAM_URL_NAME": "GHO",
-                        "THEME_ID": "0486c4a5-16c9-470d-9c9d-3864b6fe8715",
-                        "THEME_TITLE": "Tobacco control",
-                        "THEME_URL_NAME": "tobacco-control",
-                        "TOPIC_ID": "0d68434e-6c10-466d-a515-5ead36dbe7a5",
-                        "TOPIC_TITLE": "Monitor tobacco use and prevention policies (Tobacco control)",
-                        "TOPIC_URL_NAME": "gho-tobacco-control-monitor",
-                        "INDICATOR_GROUP_ID": "208237de-d8f7-42c5-affe-7573205c0a87",
-                        "INDICATOR_GROUP_TITLE": "Compliance scores: tobacco control policies (Tobacco control: Monitor)",
-                        "INDICATOR_GROUP_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-tobacco-control-policies",
-                        "INDICATOR_ID": "6a71b703-0666-4673-8f19-3cba182329a7",
-                        "INDICATOR_TITLE": "Compliance scores: smoke-free legislation (Tobacco control: Monitor)",
-                        "INDICATOR_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-smoke-free-legislation",
-                        "DEFINITION_ID": "3f98548a-aed9-4b58-b9b9-d4cff022cdc8",
-                        "DEFINITION_TITLE": "Compliance scores: smoke-free legislation",
-                        "DEFINITION_URL_NAME": "gho-tobacco-control-monitorcompliance-scores-smoke-free-legislation",
-                        "INDICATOR_CODE": "P_compl_p3",
+                        "IndicatorCode": "WHOSIS_000001",
+                        "IndicatorName": "Life expectancy at birth (years)",
                     },
                     {
-                        "PROGRAM_ID": "0c231176-b5f1-4b00-80f4-d9ee1938b986",
-                        "PROGRAM_TITLE": "GHO",
-                        "PROGRAM_URL_NAME": "GHO",
-                        "THEME_ID": "0486c4a5-16c9-470d-9c9d-3864b6fe8715",
-                        "THEME_TITLE": "Tobacco control",
-                        "THEME_URL_NAME": "tobacco-control",
-                        "TOPIC_ID": "0d68434e-6c10-466d-a515-5ead36dbe7a5",
-                        "TOPIC_TITLE": "Monitor tobacco use and prevention policies (Tobacco control)",
-                        "TOPIC_URL_NAME": "gho-tobacco-control-monitor",
-                        "INDICATOR_GROUP_ID": "208237de-d8f7-42c5-affe-7573205c0a87",
-                        "INDICATOR_GROUP_TITLE": "Compliance scores: tobacco control policies (Tobacco control: Monitor)",
-                        "INDICATOR_GROUP_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-tobacco-control-policies",
-                        "INDICATOR_ID": "daccc207-2417-45d0-854e-feabbbd7eda0",
-                        "INDICATOR_TITLE": "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
-                        "INDICATOR_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "DEFINITION_ID": "c28d64d7-bf1e-48b2-b156-5331f05df593",
-                        "DEFINITION_TITLE": "Compliance scores: advertising promotion and sponsorship bans",
-                        "DEFINITION_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "INDICATOR_CODE": "E_compl_e12",
+                        "IndicatorCode": "MDG_0000000001",
+                        "IndicatorName": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
                     },
                     {
-                        "PROGRAM_ID": "0c231176-b5f1-4b00-80f4-d9ee1938b986",
-                        "PROGRAM_TITLE": "GHO",
-                        "PROGRAM_URL_NAME": "GHO",
-                        "THEME_ID": "0486c4a5-16c9-470d-9c9d-3864b6fe8715",
-                        "THEME_TITLE": "Tobacco control",
-                        "THEME_URL_NAME": "tobacco-control",
-                        "TOPIC_ID": "0d68434e-6c10-466d-a515-5ead36dbe7a5",
-                        "TOPIC_TITLE": "Monitor tobacco use and prevention policies (Tobacco control)",
-                        "TOPIC_URL_NAME": "gho-tobacco-control-monitor",
-                        "INDICATOR_GROUP_ID": "208237de-d8f7-42c5-affe-7573205c0a87",
-                        "INDICATOR_GROUP_TITLE": "Compliance scores: tobacco control policies (Tobacco control: Monitor)",
-                        "INDICATOR_GROUP_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-tobacco-control-policies",
-                        "INDICATOR_ID": "daccc207-2417-45d0-854e-feabbbd7eda0",
-                        "INDICATOR_TITLE": "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
-                        "INDICATOR_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "DEFINITION_ID": "c28d64d7-bf1e-48b2-b156-5331f05df593",
-                        "DEFINITION_TITLE": "Compliance scores: advertising promotion and sponsorship bans",
-                        "DEFINITION_URL_NAME": "gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                        "INDICATOR_CODE": "E_compl_e14",
+                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "IndicatorName": "Estimates of rates of homicides per 100 000 population",
                     },
                 ]
             }
-        elif url == "http://haha/api/DIMENSION/COUNTRY/DimensionValues":
+        if url == "http://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+            return {
+                "value": [
+                    {
+                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
+                        "INDICATOR_URL_NAME": "life-expectancy-at-birth-(years)",
+                        "INDICATOR_CODE": "WHOSIS_000001",
+                    },
+                    {
+                        "THEME_TITLE": "World Health Statistics",
+                        "INDICATOR_URL_NAME": "life-expectancy-at-birth-(years)",
+                        "INDICATOR_CODE": "WHOSIS_000001",
+                    },
+                    {
+                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
+                        "INDICATOR_URL_NAME": "infant-mortality-rate-(probability-of-dying-between-birth-and-age-1-per-1000-live-births) ",
+                        "INDICATOR_CODE": "MDG_0000000001",
+                    },
+                ]
+            }
+        elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
             return {"value": [{TestWHO.country}]}
+        elif url == "http://papa/api/dimension":
+            return {"value": [{"Code": "SEX"}]}
+        elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
+            return {
+                "value": [
+                    {"Code": "SEX_BTSX", "Title": "Both sexes"},
+                    {"Code": "SEX_FMLE", "Title": "Female"},
+                    {"Code": "SEX_MLE", "Title": "Male"},
+                ]
+            }
 
     @staticmethod
     def get_tabular_rows(url, **kwargs):
@@ -205,121 +181,177 @@ class Retrieve:
                 },
             ]
         elif (
-            url == "https://papa/api/WHOSIS_000002?$filter=SpatialDim eq 'AFG'"
+            url
+            == "https://papa/api/MDG_0000000001?$filter=SpatialDim eq 'AFG'"
         ):
             retval = [
                 {
-                    "Id": 5256507,
-                    "IndicatorCode": "WHOSIS_000002",
+                    "Id": 5785042,
+                    "IndicatorCode": "MDG_0000000001",
                     "SpatialDimType": "COUNTRY",
                     "SpatialDim": "AFG",
-                    "TimeDimType": "YEAR",
                     "ParentLocationCode": "EMR",
+                    "TimeDimType": "YEAR",
                     "ParentLocation": "Eastern Mediterranean",
                     "Dim1Type": "SEX",
-                    "Dim1": "SEX_MLE",
-                    "TimeDim": 2000,
+                    "TimeDim": 2011,
+                    "Dim1": "SEX_BTSX",
                     "Dim2Type": None,
                     "Dim2": None,
                     "Dim3Type": None,
                     "Dim3": None,
                     "DataSourceDimType": None,
                     "DataSourceDim": None,
-                    "Value": "46.9",
-                    "NumericValue": 46.93113,
-                    "Low": None,
-                    "High": None,
+                    "Value": "61.76 [56.88-67.01]",
+                    "NumericValue": 61.76149,
+                    "Low": 56.88115,
+                    "High": 67.01448,
                     "Comments": None,
-                    "Date": "2020-12-04T16:59:42+01:00",
-                    "TimeDimensionValue": "2000",
-                    "TimeDimensionBegin": "2000-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2000-12-31T00:00:00+01:00",
-                }
+                    "Date": "2023-02-16T07:52:34+01:00",
+                    "TimeDimensionValue": "2011",
+                    "TimeDimensionBegin": "2011-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "2011-12-31T00:00:00+01:00",
+                },
+                {
+                    "Id": 5675670,
+                    "IndicatorCode": "MDG_0000000001",
+                    "SpatialDimType": "COUNTRY",
+                    "SpatialDim": "AFG",
+                    "ParentLocationCode": "EMR",
+                    "TimeDimType": "YEAR",
+                    "ParentLocation": "Eastern Mediterranean",
+                    "Dim1Type": "SEX",
+                    "TimeDim": 2005,
+                    "Dim1": "SEX_MLE",
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
+                    "Value": "81.72 [76.22-87.73]",
+                    "NumericValue": 81.71819,
+                    "Low": 76.21614,
+                    "High": 87.72866,
+                    "Comments": None,
+                    "Date": "2023-02-16T07:52:32+01:00",
+                    "TimeDimensionValue": "2005",
+                    "TimeDimensionBegin": "2005-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "2005-12-31T00:00:00+01:00",
+                },
+                {
+                    "Id": 5425776,
+                    "IndicatorCode": "MDG_0000000001",
+                    "SpatialDimType": "COUNTRY",
+                    "SpatialDim": "AFG",
+                    "ParentLocationCode": "EMR",
+                    "TimeDimType": "YEAR",
+                    "ParentLocation": "Eastern Mediterranean",
+                    "Dim1Type": "SEX",
+                    "TimeDim": 1992,
+                    "Dim1": "SEX_BTSX",
+                    "Dim2Type": None,
+                    "Dim2": None,
+                    "Dim3Type": None,
+                    "Dim3": None,
+                    "DataSourceDimType": None,
+                    "DataSourceDim": None,
+                    "Value": "113.55 [105.31-122.27]",
+                    "NumericValue": 113.54819,
+                    "Low": 105.30619,
+                    "High": 122.27416,
+                    "Comments": None,
+                    "Date": "2023-02-16T07:52:34+01:00",
+                    "TimeDimensionValue": "1992",
+                    "TimeDimensionBegin": "1992-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "1992-12-31T00:00:00+01:00",
+                },
             ]
         elif (
-            url == "https://papa/api/WHOSIS_000003?$filter=SpatialDim eq 'AFG'"
+            url
+            == "https://papa/api/VIOLENCE_HOMICIDERATE?$filter=SpatialDim eq 'AFG'"
         ):
             retval = [
                 {
-                    "Id": 407493,
-                    "IndicatorCode": "WHOSIS_000003",
+                    "Id": 5607424,
+                    "IndicatorCode": "VIOLENCE_HOMICIDERATE",
                     "SpatialDimType": "COUNTRY",
                     "SpatialDim": "AFG",
                     "TimeDimType": "YEAR",
                     "ParentLocationCode": "EMR",
                     "ParentLocation": "Eastern Mediterranean",
                     "Dim1Type": "SEX",
-                    "TimeDim": 2012,
-                    "Dim1": "SEX_BTSX",
+                    "TimeDim": 2005,
+                    "Dim1": "SEX_MLE",
                     "Dim2Type": None,
                     "Dim2": None,
                     "Dim3Type": None,
                     "Dim3": None,
                     "DataSourceDimType": None,
                     "DataSourceDim": None,
-                    "Value": "44.52 [39.49-50]",
-                    "NumericValue": 44.52410,
-                    "Low": 39.49034,
-                    "High": 50.00299,
+                    "Value": "16.0 [9.0-26.4]",
+                    "NumericValue": 16.00427,
+                    "Low": 8.96329,
+                    "High": 26.42646,
                     "Comments": None,
-                    "Date": "2023-02-16T08:10:49+01:00",
-                    "TimeDimensionValue": "2012",
-                    "TimeDimensionBegin": "2012-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2012-12-31T00:00:00+01:00",
+                    "Date": "2021-02-09T16:20:22+01:00",
+                    "TimeDimensionValue": "2005",
+                    "TimeDimensionBegin": "2005-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "2005-12-31T00:00:00+01:00",
                 },
                 {
-                    "Id": 415008,
-                    "IndicatorCode": "WHOSIS_000003",
+                    "Id": 5333190,
+                    "IndicatorCode": "VIOLENCE_HOMICIDERATE",
                     "SpatialDimType": "COUNTRY",
                     "SpatialDim": "AFG",
                     "TimeDimType": "YEAR",
                     "ParentLocationCode": "EMR",
                     "ParentLocation": "Eastern Mediterranean",
                     "Dim1Type": "SEX",
-                    "TimeDim": 2013,
-                    "Dim1": "SEX_BTSX",
+                    "TimeDim": 2001,
+                    "Dim1": "SEX_MLE",
                     "Dim2Type": None,
                     "Dim2": None,
                     "Dim3Type": None,
                     "Dim3": None,
                     "DataSourceDimType": None,
                     "DataSourceDim": None,
-                    "Value": "43.13 [37.83-48.86]",
-                    "NumericValue": 43.13298,
-                    "Low": 37.82833,
-                    "High": 48.85624,
+                    "Value": "16.4 [8.8-27.4]",
+                    "NumericValue": 16.44246,
+                    "Low": 8.79012,
+                    "High": 27.37148,
                     "Comments": None,
-                    "Date": "2023-02-16T08:10:49+01:00",
-                    "TimeDimensionValue": "2013",
-                    "TimeDimensionBegin": "2013-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2013-12-31T00:00:00+01:00",
+                    "Date": "2021-02-09T16:20:23+01:00",
+                    "TimeDimensionValue": "2001",
+                    "TimeDimensionBegin": "2001-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "2001-12-31T00:00:00+01:00",
                 },
                 {
-                    "Id": 364581,
-                    "IndicatorCode": "WHOSIS_000003",
+                    "Id": 6463929,
+                    "IndicatorCode": "VIOLENCE_HOMICIDERATE",
                     "SpatialDimType": "COUNTRY",
                     "SpatialDim": "AFG",
                     "TimeDimType": "YEAR",
                     "ParentLocationCode": "EMR",
                     "ParentLocation": "Eastern Mediterranean",
                     "Dim1Type": "SEX",
-                    "TimeDim": 2004,
-                    "Dim1": "SEX_BTSX",
+                    "TimeDim": 2019,
+                    "Dim1": "SEX_MLE",
                     "Dim2Type": None,
                     "Dim2": None,
                     "Dim3Type": None,
                     "Dim3": None,
                     "DataSourceDimType": None,
                     "DataSourceDim": None,
-                    "Value": "55.86 [50.85-61.4]",
-                    "NumericValue": 55.85786,
-                    "Low": 50.84938,
-                    "High": 61.40070,
+                    "Value": "13.3 [7.1-23.4]",
+                    "NumericValue": 13.29011,
+                    "Low": 7.12773,
+                    "High": 23.35501,
                     "Comments": None,
-                    "Date": "2023-02-16T08:10:49+01:00",
-                    "TimeDimensionValue": "2004",
-                    "TimeDimensionBegin": "2004-01-01T00:00:00+01:00",
-                    "TimeDimensionEnd": "2004-12-31T00:00:00+01:00",
+                    "Date": "2021-02-09T16:20:23+01:00",
+                    "TimeDimensionValue": "2019",
+                    "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
+                    "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
                 },
             ]
         rows = list()
@@ -336,27 +368,19 @@ class Retrieve:
 
 class TestWHO:
     indicators = OrderedDict(
-        {
-            "Tobacco control": [
-                (
-                    "P_compl_p3",
-                    "Compliance scores: smoke-free legislation (Tobacco control: Monitor)",
-                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-smoke-free-legislation",
-                ),
-                (
-                    "E_compl_e12",
-                    "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
-                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                ),
-                (
-                    "E_compl_e14",
-                    "Compliance scores: advertising promotion and sponsorship bans (Tobacco control: Monitor)",
-                    "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/gho-tobacco-control-monitor-compliance-scores-advertising-promotion-and-sponsorship-bans",
-                ),
-            ]
-        }
+        WHOSIS_000001={
+            "indicator_name": "Life expectancy at birth (years)",
+            "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29",
+        },
+        MDG_0000000001={
+            "indicator_name": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
+            "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20",
+        },
+        VIOLENCE_HOMICIDERATE={
+            "indicator_name": "Estimates of rates of homicides per 100 000 population",
+        },
     )
-    tags = ["hxl", "indicators", "maternity", "health", "disease"]
+    tags = ["disability"]
 
     country = {
         "Code": "AFG",
@@ -369,13 +393,16 @@ class TestWHO:
 
     @pytest.fixture(scope="function")
     def configuration(self):
-        Configuration._create(
+        # TODO: make this return the actual configuration file??
+        Configuration.create(
             hdx_read_only=True,
             user_agent="test",
             project_config_yaml=join(
                 "tests", "config", "project_configuration.yml"
             ),
         )
+        return Configuration.read()
+        """"
         Locations.set_validlocations([{"name": "afg", "title": "Afghanistan"}])
         Country.countriesdata(use_live=False)
         Vocabulary._tags_dict = dict()
@@ -391,14 +418,17 @@ class TestWHO:
             "name": "approved",
         }
 
+        """
+
     @pytest.fixture(scope="function")
     def retriever(self):
         return Retrieve()
 
     def test_get_indicators_and_tags(self, configuration, retriever):
-        indicators, tags = WHO._get_indicators_and_tags(self)
-        assert indicators == TestWHO.indicators
-        assert tags == TestWHO.tags
+        folder = "/tmp"
+        who = WHO(configuration, retriever, folder)
+        assert who._indicators == TestWHO.indicators
+        assert who._tags == TestWHO.tags
 
     def test_get_countriesdata(self, retriever):
         countriesdata = WHO.get_countries()

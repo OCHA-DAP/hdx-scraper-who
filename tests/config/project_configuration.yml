@@ -1,5 +1,6 @@
 # Collector specific configuration
 base_url: "http://papa/"
+category_url: "http://lala/"
 qc_indicators:
   - code: "MDG_0000000001"
     title: "Infant Mortality Rate"
