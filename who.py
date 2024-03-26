@@ -20,6 +20,10 @@ from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 
+from database.db_dimension_values import DBDimensionValues
+from database.db_dimensions import DBDimensions
+from database.db_indicators import DBIndicators
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,22 +48,110 @@ class WHO:
         "High": "#indicator+value+high",
     }
 
-    def __init__(self, configuration, retriever, folder):
+    def __init__(self, configuration, retriever, folder, session):
         self._configuration = configuration
         self._retriever = retriever
         self._folder = folder
-        self._dimension_names = self._get_dimension_names()
+        self._session = session
+        self._dimension_value_names_dict = dict()
         self._indicators, self._tags, self._categories = (
             self._get_indicators_and_tags()
         )
 
+    def populate_dimensions_db(self):
+        """The main API only provides the dimension codes. This method
+        queries the dimensions in the API to get their names, that can
+        be used for quickcharts, etc."""
+        logger.info("Populating dimensions DB")
+        dimensions_url = f"{self._configuration['base_url']}api/dimension"
+        dimensions_result = self._retriever.download_json(dimensions_url)[
+            "value"
+        ]
+        for dimensions_row in dimensions_result:
+            dimension_code = dimensions_row["Code"]
+            db_dimensions_row = DBDimensions(
+                code=dimension_code, title=dimensions_row["Title"]
+            )
+            self._session.add(db_dimensions_row)
+            self._session.commit()
+            dimension_values_url = (
+                f"{self._configuration['base_url']}api/DIMENSION/"
+                f"{dimension_code}/DimensionValues"
+            )
+            dimension_values_result = self._retriever.download_json(
+                dimension_values_url
+            )["value"]
+            for dimension_values_row in dimension_values_result:
+                db_dimension_values_row = DBDimensionValues(
+                    code=dimension_values_row["Code"],
+                    title=dimension_values_row["Title"],
+                    dimension_code=dimension_code,
+                )
+                self._session.add(db_dimension_values_row)
+            self._session.commit()
+        logger.info("Done populating dimensions DB")
+
+    def create_dimension_names_dict(self):
+        results = self._session.query(DBDimensionValues).all()
+        self._dimension_value_names_dict = {
+            row.code: row.title for row in results
+        }
+
     def get_countries(self):
-        # TODO: combine with get dimension names
-        base_url = self._configuration["base_url"]
-        json = self._retriever.download_json(
-            f"{base_url}api/DIMENSION/COUNTRY/DimensionValues"
+        results = self._session.query(DBDimensionValues).filter(
+            DBDimensionValues.dimension_code == "COUNTRY"
         )
-        return json["value"]
+        return [row.code for row in results]
+
+    def populate_indicator_db(self):
+        for indicator_code, indicator_dict in self._indicators.items():
+            indicator_name = indicator_dict["indicator_name"]
+            indicator_url = indicator_dict.get("indicator_url")
+            logger.info(f"Downloading file for indicator {indicator_name}")
+            base_url = self._configuration["base_url"]
+            url = f"{base_url}api/{indicator_code}"
+            try:
+                indicator_json = self._retriever.download_json(url)
+            except (DownloadError, FileNotFoundError):
+                logger.warning(f"{url} has no data")
+                continue
+            logger.info(f"Populating DB for indicator {indicator_name}")
+            for row in indicator_json["value"]:
+                if row["SpatialDimType"] != "COUNTRY":
+                    continue
+                country_iso3 = row["SpatialDim"]
+                country_name = Country.get_country_name_from_iso3(country_iso3)
+                startyear = datetime.fromisoformat(
+                    row["TimeDimensionBegin"]
+                ).strftime("%Y")
+                endyear = datetime.fromisoformat(
+                    row["TimeDimensionEnd"]
+                ).strftime("%Y")
+                db_indicators_row = DBIndicators(
+                    id=row["Id"],
+                    indicator_code=indicator_code,
+                    indicator_name=indicator_name,
+                    indicator_url=indicator_url,
+                    year=row["TimeDim"],
+                    start_year=startyear,
+                    end_year=endyear,
+                    region_code=row["ParentLocationCode"],
+                    region_display=row["ParentLocation"],
+                    country_code=country_iso3,
+                    country_display=country_name,
+                    dimension_type=row["Dim1Type"],
+                    dimension_code=row["Dim1"],
+                    dimension_name=self._dimension_value_names_dict.get(
+                        row["Dim1"]
+                    ),
+                    numeric=row["NumericValue"],
+                    value=row["Value"],
+                    low=row["Low"],
+                    high=row["High"],
+                )
+                self._session.add(db_indicators_row)
+            self._session.commit()
+            logger.info(f"Done indicator {indicator_name}")
 
     def generate_dataset_and_showcase(self, country, quickcharts):
 
@@ -211,28 +303,6 @@ class WHO:
         showcase.add_tags(alltags)
 
         return dataset, showcase, bites_disabled
-
-    def _get_dimension_names(self):
-        """The main API only provides the dimension codes. This method
-        queries the dimensions in the API to get their names, that can
-        be used for quickcharts, etc."""
-
-        dimension_names = OrderedDict()
-        all_dimensions_url = f"{self._configuration['base_url']}api/dimension"
-        all_dimensions_result = self._retriever.download_json(
-            all_dimensions_url
-        )["value"]
-        for all_dimensions_row in all_dimensions_result:
-            dimension_url = (
-                f"{self._configuration['base_url']}api/DIMENSION/"
-                f"{all_dimensions_row['Code']}/DimensionValues"
-            )
-            dimension_result = self._retriever.download_json(dimension_url)[
-                "value"
-            ]
-            for dimension_row in dimension_result:
-                dimension_names[dimension_row["Code"]] = dimension_row["Title"]
-        return dimension_names
 
     def _get_indicators_and_tags(self):
         # The indicators dictionary will use the indicator codes as a key,

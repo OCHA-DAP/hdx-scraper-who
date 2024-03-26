@@ -9,6 +9,7 @@ from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
 from hdx.data.hdxobject import HDXError
+from hdx.database import Database
 from hdx.facades.infer_arguments import facade
 from hdx.utilities.downloader import Download, DownloadError
 from hdx.utilities.path import (
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = True) -> None:
+def main(save: bool = True, use_saved: bool = False) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -43,42 +44,54 @@ def main(save: bool = False, use_saved: bool = True) -> None:
     """
     with wheretostart_tempdir_batch(lookup) as info:
         folder = info["folder"]
-        with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
-            retriever = Retrieve(
-                downloader,
-                folder,
-                "/tmp/who_saved_data",
-                folder,
-                save,
-                use_saved,
-            )
-            configuration = Configuration.read()
-            qc_indicators = configuration["qc_indicators"]
-            quickcharts = {
-                "hashtag": "#indicator+code",
-                "values": [x["code"] for x in qc_indicators],
-                "numeric_hashtag": "#indicator+value+num",
-                "cutdown": 2,
-                "cutdownhashtags": [
-                    "#indicator+code",
-                    "#country+code",
-                    "#date+year+end",
-                    "#dimension+name",
-                ],
-            }
-            who = WHO(configuration, retriever, folder)
-            countries = who.get_countries()
+        params = {
+            "dialect": "sqlite",
+            "database": f"/{folder}/who_gho.sqlite",
+        }
+        with Database(**params) as session:
+            with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    folder,
+                    "/tmp/who_saved_data",
+                    folder,
+                    save,
+                    use_saved,
+                )
+                configuration = Configuration.read()
+                qc_indicators = configuration["qc_indicators"]
+                quickcharts = {
+                    "hashtag": "#indicator+code",
+                    "values": [x["code"] for x in qc_indicators],
+                    "numeric_hashtag": "#indicator+value+num",
+                    "cutdown": 2,
+                    "cutdownhashtags": [
+                        "#indicator+code",
+                        "#country+code",
+                        "#date+year+end",
+                        "#dimension+name",
+                    ],
+                }
 
-            logger.info(f"Number of datasets to upload: {len(countries)}")
+                who = WHO(configuration, retriever, folder, session)
+                # TODO: these should maybe be put in the instantiation
+                who.populate_dimensions_db()
+                who.create_dimension_names_dict()
+                countries = who.get_countries()
+                who.populate_indicator_db()
 
-            for _, country in progress_storing_folder(
-                info,
-                countries,
-                "Code",
-                # TODO: remove
-                # info, countries, "Code", "AFG"
-            ):
-                process_country(who, country, quickcharts, qc_indicators, info)
+                logger.info(f"Number of datasets to upload: {len(countries)}")
+
+                for _, country in progress_storing_folder(
+                    info,
+                    countries,
+                    "Code",
+                    # TODO: remove
+                    # info, countries, "Code", "AFG"
+                ):
+                    process_country(
+                        who, country, quickcharts, qc_indicators, info
+                    )
 
 
 @retry(
