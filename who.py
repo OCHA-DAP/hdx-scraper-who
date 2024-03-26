@@ -69,7 +69,7 @@ class WHO:
 
         title = f"{countryname} - Health Indicators"
         logger.info(f"Creating dataset: {title}")
-        slugified_name = slugify(f"WHO data for {countryname}").lower()
+        slugified_name = slugify(f"WHO data for {countryiso}").lower()
         # TODO: check this works
         cat_str = ", ".join(self._indicators.keys())
         dataset = Dataset(
@@ -190,6 +190,11 @@ class WHO:
         if not success:
             logger.error(f"{countryname} has no data!")
             return None, None, None
+
+        # Move the all data resource to the beginning
+        # TODO: this doesn't appear to work on dev
+        resources = dataset.get_resources()
+        resources.insert(0, resources.pop(-2))
 
         bites_disabled = results["bites_disabled"]
 
