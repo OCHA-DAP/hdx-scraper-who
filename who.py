@@ -54,6 +54,7 @@ class WHO:
         )
 
     def get_countries(self):
+        # TODO: combine with get dimension names
         base_url = self._configuration["base_url"]
         json = self._retriever.download_json(
             f"{base_url}api/DIMENSION/COUNTRY/DimensionValues"

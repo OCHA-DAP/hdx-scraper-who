@@ -45,59 +45,31 @@ def main(save: bool = False, use_saved: bool = True) -> None:
         folder = info["folder"]
         with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
             retriever = Retrieve(
-                downloader, folder, "saved_data", folder, save, use_saved
+                downloader,
+                folder,
+                "/tmp/who_saved_data",
+                folder,
+                save,
+                use_saved,
             )
             configuration = Configuration.read()
             qc_indicators = configuration["qc_indicators"]
+            quickcharts = {
+                "hashtag": "#indicator+code",
+                "values": [x["code"] for x in qc_indicators],
+                "numeric_hashtag": "#indicator+value+num",
+                "cutdown": 2,
+                "cutdownhashtags": [
+                    "#indicator+code",
+                    "#country+code",
+                    "#date+year+end",
+                    "#dimension+name",
+                ],
+            }
             who = WHO(configuration, retriever, folder)
-
             countries = who.get_countries()
-            # TODO: remove
-            # countries = who.get_countries()[1:2]
+
             logger.info(f"Number of datasets to upload: {len(countries)}")
-
-            @retry(
-                retry=(
-                    retry_if_exception_type(DownloadError)
-                    | retry_if_exception_type(HDXError)
-                ),
-                stop=stop_after_attempt(5),
-                wait=wait_fixed(3600),
-                after=after_log(logger, logging.INFO),
-            )
-            def process_country(country):
-                quickcharts = {
-                    "hashtag": "#indicator+code",
-                    "values": [x["code"] for x in qc_indicators],
-                    "numeric_hashtag": "#indicator+value+num",
-                    "cutdown": 2,
-                    "cutdownhashtags": [
-                        "#indicator+code",
-                        "#country+code",
-                        "#date+year+end",
-                        "#dimension+name",
-                    ],
-                }
-                (dataset, showcase, bites_disabled) = (
-                    who.generate_dataset_and_showcase(country, quickcharts)
-                )
-
-                if dataset:
-                    dataset.update_from_yaml()
-                    dataset.generate_quickcharts(
-                        -1,
-                        bites_disabled=bites_disabled,
-                        indicators=qc_indicators,
-                    )
-                    dataset.create_in_hdx(
-                        remove_additional_resources=True,
-                        match_resource_order=False,
-                        hxl_update=False,
-                        updated_by_script="HDX Scraper: WHO",
-                        batch=info["batch"],
-                    )
-                    showcase.create_in_hdx()
-                    showcase.add_dataset(dataset)
 
             for _, country in progress_storing_folder(
                 info,
@@ -106,7 +78,40 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                 # TODO: remove
                 # info, countries, "Code", "AFG"
             ):
-                process_country(country)
+                process_country(who, country, quickcharts, qc_indicators, info)
+
+
+@retry(
+    retry=(
+        retry_if_exception_type(DownloadError)
+        | retry_if_exception_type(HDXError)
+    ),
+    stop=stop_after_attempt(5),
+    wait=wait_fixed(3600),
+    after=after_log(logger, logging.INFO),
+)
+def process_country(who, country, quickcharts, qc_indicators, info):
+
+    (dataset, showcase, bites_disabled) = who.generate_dataset_and_showcase(
+        country, quickcharts
+    )
+
+    if dataset:
+        dataset.update_from_yaml()
+        dataset.generate_quickcharts(
+            -1,
+            bites_disabled=bites_disabled,
+            indicators=qc_indicators,
+        )
+        dataset.create_in_hdx(
+            remove_additional_resources=True,
+            match_resource_order=False,
+            hxl_update=False,
+            updated_by_script="HDX Scraper: WHO",
+            batch=info["batch"],
+        )
+        showcase.create_in_hdx()
+        showcase.add_dataset(dataset)
 
 
 if __name__ == "__main__":

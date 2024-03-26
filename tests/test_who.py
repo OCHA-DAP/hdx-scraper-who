@@ -424,7 +424,7 @@ class TestWHO:
                 "dataset_date": "[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
-                "name": "who-data-for-afghanistan",
+                "name": "who-data-for-afg",
                 "notes": "Contains data from World Health Organization's [data "
                 "portal](http://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
@@ -453,6 +453,14 @@ class TestWHO:
             resources = dataset.get_resources()
             assert resources == [
                 {
+                    "description": "See resource descriptions below for links to indicator "
+                    "metadata",
+                    "format": "csv",
+                    "name": "All Health Indicators for Afghanistan",
+                    "resource_type": "file.upload",
+                    "url_type": "upload",
+                },
+                {
                     "description": "*Global Health Estimates: Life expectancy and leading causes "
                     "of death and disability:*\n"
                     "[Life expectancy at birth "
@@ -476,14 +484,6 @@ class TestWHO:
                     "url_type": "upload",
                 },
                 {
-                    "description": "See resource descriptions below for links to indicator "
-                    "metadata",
-                    "format": "csv",
-                    "name": "All Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-                {
                     "description": "Cut down data for QuickCharts",
                     "format": "csv",
                     "name": "QuickCharts-All Health Indicators for Afghanistan",
@@ -494,7 +494,7 @@ class TestWHO:
 
             assert showcase == {
                 "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
-                "name": "who-data-for-afghanistan-showcase",
+                "name": "who-data-for-afg-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
