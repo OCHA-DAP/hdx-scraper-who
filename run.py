@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = True, use_saved: bool = False) -> None:
+def main(save: bool = False, use_saved: bool = True) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -77,14 +77,16 @@ def main(save: bool = True, use_saved: bool = False) -> None:
                 # TODO: these should maybe be put in the instantiation
                 who.populate_dimensions_db()
                 who.create_dimension_names_dict()
-                countries = who.get_countries()
-                who.populate_indicator_db()
+                country_iso3s = who.get_countries()
+                who.populate_categories_and_indicators_db()
+                who.create_tags()
+                who.populate_indicator_data_db()
 
-                logger.info(f"Number of datasets to upload: {len(countries)}")
+                logger.info(f"Number of countries: {len(country_iso3s)}")
 
                 for _, country in progress_storing_folder(
                     info,
-                    countries,
+                    country_iso3s,
                     "Code",
                     # TODO: remove
                     # info, countries, "Code", "AFG"
