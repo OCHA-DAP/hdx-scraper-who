@@ -45,6 +45,7 @@ coverage.xml
 *,cover
 .hypothesis/
 tests/*.log
+saved_data/
 
 # Translations
 *.mo
@@ -89,3 +90,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# PyCharm files
+.idea/
+
+#OS Files
+*DS_Store

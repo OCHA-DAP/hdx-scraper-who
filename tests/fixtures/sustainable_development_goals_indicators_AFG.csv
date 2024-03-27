@@ -1,4 +1,0 @@
-GHO (CODE),PUBLISHSTATE (CODE),header2,YEAR (DISPLAY),STARTYEAR,ENDYEAR,Numeric
-#indicator+code,#status+code,,#date+year,#date+year+start,#date+year+end,#indicator+value+num
-WHS7_106,PUBLISHED,val21,1992,1992,1992,123.4
-MDG_0000000002,PUBLISHED,val22,2015-2016,2015,2016,123.4
