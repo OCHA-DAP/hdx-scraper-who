@@ -8,8 +8,8 @@ from os.path import join
 
 import pytest
 from hdx.api.configuration import Configuration
+from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
-from hdx.utilities.path import temp_dir
 
 from who import WHO
 
@@ -57,7 +57,12 @@ class Retrieve:
         elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
             return {"value": [TestWHO.country]}
         elif url == "http://papa/api/dimension":
-            return {"value": [{"Code": "SEX"}]}
+            return {
+                "value": [
+                    {"Code": "SEX", "Title": "Sex"},
+                    {"Code": "COUNTRY", "Title": "Country"},
+                ]
+            }
         elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
             return {
                 "value": [
@@ -66,9 +71,7 @@ class Retrieve:
                     {"Code": "SEX_MLE", "Title": "Male"},
                 ]
             }
-        elif (
-            url == "http://papa/api/WHOSIS_000001?$filter=SpatialDim eq 'AFG'"
-        ):
+        elif url == "http://papa/api/WHOSIS_000001":
             return {
                 "value": [
                     {
@@ -154,9 +157,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif (
-            url == "http://papa/api/MDG_0000000001?$filter=SpatialDim eq 'AFG'"
-        ):
+        elif url == "http://papa/api/MDG_0000000001":
             return {
                 "value": [
                     {
@@ -242,10 +243,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif (
-            url
-            == "http://papa/api/VIOLENCE_HOMICIDERATE?$filter=SpatialDim eq 'AFG'"
-        ):
+        elif url == "http://papa/api/VIOLENCE_HOMICIDERATE":
             return {
                 "value": [
                     {
@@ -386,24 +384,26 @@ class TestWHO:
     def retriever(self):
         return Retrieve()
 
-    def test_get_indicators_and_tags(self, configuration, retriever):
+    def test_get_countriesdata(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
-        who = WHO(configuration, retriever, "/tmp")
-        assert who._indicators == TestWHO.indicators
-        assert who._tags == TestWHO.tags
-        assert who._categories == TestWHO.categories
+        with Database(
+            dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
+        ) as session:
+            who = WHO(configuration, retriever, tmp_path, session)
+            who.populate_db()
+            countriesdata = who.get_countries()
+            assert countriesdata == [{"Code": "AFG"}]
 
-    def test_get_countriesdata(self, configuration, retriever):
+    def test_generate_dataset_and_showcase(
+        self, configuration, retriever, tmp_path
+    ):
         configuration = Configuration.read()
-        who = WHO(configuration, retriever, "/tmp")
-        countriesdata = who.get_countries()
-        assert countriesdata == [TestWHO.country]
-
-    def test_generate_dataset_and_showcase(self, configuration, retriever):
-        configuration = Configuration.read()
-        who = WHO(configuration, retriever, "/tmp/Test_WHO")
-        qc_indicators = configuration["qc_indicators"]
-        with temp_dir("Test_WHO", delete_on_failure=False) as folder:
+        with Database(
+            dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
+        ) as session:
+            who = WHO(configuration, retriever, tmp_path, session)
+            who.populate_db()
+            qc_indicators = configuration["qc_indicators"]
             quickcharts = {
                 "hashtag": "#indicator+code",
                 "values": [x["code"] for x in qc_indicators],
@@ -424,11 +424,12 @@ class TestWHO:
                 "dataset_date": "[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
-                "name": "who-data-for-afg",
+                "name": "who-data-for-afghanistan",
                 "notes": "Contains data from World Health Organization's [data "
                 "portal](http://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
-                "WHOSIS_000001, MDG_0000000001, VIOLENCE_HOMICIDERATE  \n"
+                "Global Health Estimates: Life expectancy and leading causes of "
+                "death and disability, World Health Statistics  \n"
                 "  \n"
                 "For links to individual indicator metadata, see resource "
                 "descriptions.",
@@ -463,8 +464,6 @@ class TestWHO:
                 {
                     "description": "*Global Health Estimates: Life expectancy and leading causes "
                     "of death and disability:*\n"
-                    "[Life expectancy at birth "
-                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29), "
                     "[Infant mortality rate (probability of dying between birth "
                     "and age 1 per 1000 live "
                     "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20)",
@@ -494,7 +493,7 @@ class TestWHO:
 
             assert showcase == {
                 "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
-                "name": "who-data-for-afg-showcase",
+                "name": "who-data-for-afghanistan-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
@@ -517,9 +516,9 @@ class TestWHO:
             assert bites_disabled == [False, False, False]
             file = "health_indicators_afg.csv"
             assert_files_same(
-                join("tests", "fixtures", file), join(folder, file)
+                join("tests", "fixtures", file), join(tmp_path, file)
             )
             file = "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv"
             assert_files_same(
-                join("tests", "fixtures", file), join(folder, file)
+                join("tests", "fixtures", file), join(tmp_path, file)
             )

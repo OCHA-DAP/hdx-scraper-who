@@ -58,7 +58,17 @@ class WHO:
         self._dimension_value_names_dict = dict()
         self._tags = list()
 
-    def populate_dimensions_db(self):
+    def populate_db(self, populate_db: bool = True):
+        if populate_db:
+            self._populate_dimensions_db()
+        # This dictionary is needed for populating the other DBs
+        self._create_dimension_value_names_dict()
+        if populate_db:
+            self._populate_categories_and_indicators_db()
+            self._populate_indicator_data_db()
+        self._create_tags()
+
+    def _populate_dimensions_db(self):
         """The main API only provides the dimension codes. This method
         queries the dimensions in the API to get their names, that can
         be used for quickcharts, etc."""
@@ -91,7 +101,7 @@ class WHO:
             self._session.commit()
         logger.info("Done populating dimensions DB")
 
-    def create_dimension_names_dict(self):
+    def _create_dimension_value_names_dict(self):
         results = self._session.query(DBDimensionValues).all()
         self._dimension_value_names_dict = {
             row.code: row.title for row in results
@@ -101,9 +111,9 @@ class WHO:
         results = self._session.query(DBDimensionValues).filter(
             DBDimensionValues.dimension_code == "COUNTRY"
         )
-        return [row.code for row in results]
+        return [{"Code": row.code} for row in results]
 
-    def populate_categories_and_indicators_db(self):
+    def _populate_categories_and_indicators_db(self):
         # Get the indicator results
         indicator_url = f"{self._configuration['base_url']}api/indicator"
         indicator_result = self._retriever.download_json(indicator_url)[
@@ -162,7 +172,7 @@ class WHO:
             result.category_title = category_title
             self._session.commit()
 
-    def create_tags(self):
+    def _create_tags(self):
         """Use category titles to create tags"""
         tags = []
         replacements = {"(": "", ")": "", "/": "", ",": ""}
@@ -185,7 +195,7 @@ class WHO:
 
         self._tags = tags
 
-    def populate_indicator_data_db(self):
+    def _populate_indicator_data_db(self):
         for db_row in self._session.query(DBIndicators).all():
             indicator_name = db_row.title
             indicator_url = db_row.url
@@ -236,13 +246,14 @@ class WHO:
             self._session.commit()
             logger.info(f"Done indicator {indicator_name}")
 
-    def generate_dataset_and_showcase(self, country_iso3, quickcharts):
+    def generate_dataset_and_showcase(self, country, quickcharts):
         # Setup the dataset information
+        country_iso3 = country["Code"]
         country_name = Country.get_country_name_from_iso3(country_iso3)
         title = f"{country_name} - Health Indicators"
 
         logger.info(f"Creating dataset: {title}")
-        slugified_name = slugify(f"WHO data for {country_iso3}").lower()
+        slugified_name = slugify(f"WHO data for {country_name}").lower()
 
         category_names = [
             row.title for row in self._session.query(DBCategories).all()
@@ -287,7 +298,9 @@ class WHO:
                 .all()
             )
 
-            category_data = [_parse_indicator_row for row in all_category_rows]
+            category_data = [
+                _parse_indicator_row(row) for row in all_category_rows
+            ]
             indicator_links = [
                 f"[{row.title}]({row.url})"
                 for row in self._session.query(DBIndicators).filter(
@@ -329,19 +342,16 @@ class WHO:
             "description": "See resource descriptions below for links "
             "to indicator metadata",
         }
-        # TODO: just get all indicators data
         all_rows = (
             self._session.query(DBIndicatorData)
             .filter(DBIndicatorData.country_code == country_iso3)
             .all()
         )
-        all_indicators_data = [_parse_indicator_row for row in all_rows]
+        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
 
         success, results = dataset.generate_resource_from_iterator(
             list(self.hxltags.keys()),
-            # This line makes one long list of all indicators data,
-            # removing the indicator code as keys
-            sum(all_indicators_data.values(), []),
+            all_indicators_data,
             self.hxltags,
             self._folder,
             filename,
@@ -386,14 +396,14 @@ def _parse_indicator_row(row):
         "REGION (CODE)": row.region_code,
         "REGION (DISPLAY)": row.region_display,
         "COUNTRY (CODE)": row.country_code,
-        "COUNTRY (DISPLAY)": row.country_name,
+        "COUNTRY (DISPLAY)": row.country_display,
         "DIMENSION (TYPE)": row.dimension_type,
         "DIMENSION (CODE)": row.dimension_code,
         "DIMENSION (NAME)": row.dimension_name,
         "Numeric": row.numeric,
         "Value": row.value,
         "Low": row.low,
-        "High": row.hight,
+        "High": row.high,
     }
 
 

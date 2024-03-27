@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = False, use_saved: bool = True) -> None:
+def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
     """Generate datasets and create them in HDX
 
     Args:
@@ -74,19 +74,15 @@ def main(save: bool = False, use_saved: bool = True) -> None:
                 }
 
                 who = WHO(configuration, retriever, folder, session)
-                # TODO: these should maybe be put in the instantiation
-                who.populate_dimensions_db()
-                who.create_dimension_names_dict()
-                country_iso3s = who.get_countries()
-                who.populate_categories_and_indicators_db()
-                who.create_tags()
-                who.populate_indicator_data_db()
+                # This takes a long time to run
+                who.populate_db(populate_db=populate_db)
+                countries = who.get_countries()
 
-                logger.info(f"Number of countries: {len(country_iso3s)}")
+                logger.info(f"Number of countries: {len(countries)}")
 
                 for _, country in progress_storing_folder(
                     info,
-                    country_iso3s,
+                    countries,
                     "Code",
                     # TODO: remove
                     # info, countries, "Code", "AFG"
@@ -110,23 +106,26 @@ def process_country(who, country, quickcharts, qc_indicators, info):
     (dataset, showcase, bites_disabled) = who.generate_dataset_and_showcase(
         country, quickcharts
     )
+    if not dataset:
+        return
 
-    if dataset:
-        dataset.update_from_yaml()
-        dataset.generate_quickcharts(
-            -1,
-            bites_disabled=bites_disabled,
-            indicators=qc_indicators,
-        )
-        dataset.create_in_hdx(
-            remove_additional_resources=True,
-            match_resource_order=False,
-            hxl_update=False,
-            updated_by_script="HDX Scraper: WHO",
-            batch=info["batch"],
-        )
-        showcase.create_in_hdx()
-        showcase.add_dataset(dataset)
+    logger.info(f"Uploading dataset for {country['Code']}")
+    dataset.update_from_yaml()
+    dataset.generate_quickcharts(
+        -1,
+        bites_disabled=bites_disabled,
+        indicators=qc_indicators,
+    )
+    dataset.create_in_hdx(
+        remove_additional_resources=True,
+        match_resource_order=False,
+        hxl_update=False,
+        updated_by_script="HDX Scraper: WHO",
+        batch=info["batch"],
+    )
+    showcase.create_in_hdx()
+    showcase.add_dataset(dataset)
+    logger.info(f"Finished uploading dataset for {country['Code']}")
 
 
 if __name__ == "__main__":
