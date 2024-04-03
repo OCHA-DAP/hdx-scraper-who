@@ -9,13 +9,12 @@ repos:
       - id: check-ast
       - id: check-json
       - id: check-yaml
-  - repo: https://github.com/psf/black
-    rev: 24.2.0
-    hooks:
-      - id: black
-        args: [--config, .config/black.toml]
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.3.2
     hooks:
+      # Run the linter.
       - id: ruff
-        args: [--config, .config/ruff.toml, --fix, --exit-non-zero-on-fix]
+        args: [--config, .config/ruff.toml, --fix]
+      # Run the formatter.
+      - id: ruff-format
+        args: [--config, .config/ruff.toml]

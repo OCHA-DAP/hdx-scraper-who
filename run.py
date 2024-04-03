@@ -4,6 +4,7 @@ Top level script. Calls other functions that generate datasets that this
 script then creates in HDX.
 
 """
+
 import logging
 from os.path import expanduser, join
 
@@ -32,12 +33,17 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
+# def main(save: bool = True, use_saved:
+# bool = False, populate_db: bool = True) -> None:
+def main(
+    save: bool = False, use_saved: bool = True, populate_db: bool = True
+) -> None:
     """Generate datasets and create them in HDX
 
     Args:
-        save (bool): Save downloaded data. Defaults to False.
+        save (bool): Save downloaded data. Defaults to True.
         use_saved (bool): Use saved data. Defaults to False.
+        populate_db(bool): Populate the database. Defaults to True.
 
     Returns:
         None
@@ -53,6 +59,7 @@ def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
                 retriever = Retrieve(
                     downloader,
                     folder,
+                    # TODO: change this
                     "/tmp/who_saved_data",
                     folder,
                     save,
@@ -76,7 +83,8 @@ def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
                 who = WHO(configuration, retriever, folder, session)
                 # This takes a long time to run
                 who.populate_db(populate_db=populate_db)
-                countries = who.get_countries()
+                # TODO: remove index
+                countries = who.get_countries()[1:2]
 
                 logger.info(f"Number of countries: {len(countries)}")
 
@@ -84,8 +92,6 @@ def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
                     info,
                     countries,
                     "Code",
-                    # TODO: remove
-                    # info, countries, "Code", "AFG"
                 ):
                     process_country(
                         who, country, quickcharts, qc_indicators, info
@@ -102,7 +108,6 @@ def main(save: bool = True, use_saved: bool = False, populate_db=True) -> None:
     after=after_log(logger, logging.INFO),
 )
 def process_country(who, country, quickcharts, qc_indicators, info):
-
     (dataset, showcase, bites_disabled) = who.generate_dataset_and_showcase(
         country, quickcharts
     )
