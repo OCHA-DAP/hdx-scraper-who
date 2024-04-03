@@ -20,6 +20,7 @@ from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
+from sqlalchemy import insert
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -28,6 +29,8 @@ from database.db_indicator_data import DBIndicatorData
 from database.db_indicators import DBIndicators
 
 logger = logging.getLogger(__name__)
+
+_BATCH_SIZE = 1000
 
 
 class WHO:
@@ -219,6 +222,9 @@ class WHO:
                 logger.warning(f"{url} has no data")
                 continue
             logger.info(f"Populating DB for indicator {indicator_name}")
+
+            batch = []
+            irow = 0
             for row in indicator_json["value"]:
                 if row["SpatialDimType"] != "COUNTRY":
                     continue
@@ -230,7 +236,7 @@ class WHO:
                 endyear = datetime.fromisoformat(
                     row["TimeDimensionEnd"]
                 ).strftime("%Y")
-                db_indicators_row = DBIndicatorData(
+                db_indicators_row = dict(
                     id=row["Id"],
                     indicator_code=indicator_code,
                     indicator_name=indicator_name,
@@ -252,7 +258,14 @@ class WHO:
                     low=row["Low"],
                     high=row["High"],
                 )
-                self._session.add(db_indicators_row)
+                batch.append(db_indicators_row)
+                irow += 1
+                if len(batch) >= _BATCH_SIZE:
+                    logger.info(f"Added {irow} rows")
+                    self._session.execute(insert(DBIndicatorData), batch)
+                    batch = []
+            if batch:
+                self._session.execute(insert(DBIndicatorData), batch)
             self._session.commit()
             logger.info(f"Done indicator {indicator_name}")
 
