@@ -59,8 +59,7 @@ def main(
                 retriever = Retrieve(
                     downloader,
                     folder,
-                    # TODO: change this
-                    "/tmp/who_saved_data",
+                    "saved_data",
                     folder,
                     save,
                     use_saved,

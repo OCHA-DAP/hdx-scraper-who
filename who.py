@@ -6,6 +6,7 @@ WHO:
 Reads WHO API and creates datasets
 
 """
+
 import logging
 from collections import OrderedDict
 from datetime import datetime
@@ -59,6 +60,15 @@ class WHO:
         self._tags = list()
 
     def populate_db(self, populate_db: bool = True):
+        """Populate the database and create convenience dictionaries and
+        lists
+
+        Args:
+            populate_db (bool): populate the database
+
+        Returns:
+            None
+        """
         if populate_db:
             self._populate_dimensions_db()
         # This dictionary is needed for populating the other DBs
@@ -157,19 +167,19 @@ class WHO:
                 self._session.add(db_categories_row)
                 self._session.commit()
             # Add category and URL to indicator
-            result = (
+            indicator_row = (
                 self._session.query(DBIndicators)
                 .filter(DBIndicators.code == indicator_code)
                 .first()
             )
-            if not result:
+            if not indicator_row:
                 logger.warning(
                     f"Indicator code {indicator_code} was not found on the "
                     f"indicators page"
                 )
                 continue
-            result.url = indicator_url
-            result.category_title = category_title
+            indicator_row.url = indicator_url
+            indicator_row.category_title = category_title
             self._session.commit()
 
     def _create_tags(self):
