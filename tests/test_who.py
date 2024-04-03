@@ -3,6 +3,7 @@
 Unit tests for WHO.
 
 """
+
 from collections import OrderedDict
 from os.path import join
 
@@ -376,7 +377,7 @@ class TestWHO:
             hdx_read_only=True,
             user_agent="test",
             project_config_yaml=join(
-                "tests", "config", "project_configuration.yml"
+                "tests", "config", "project_configuration.yaml"
             ),
         )
 
