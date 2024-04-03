@@ -76,10 +76,19 @@ class WHO:
             self._populate_dimensions_db()
         # This dictionary is needed for populating the other DBs
         self._create_dimension_value_names_dict()
+        self._create_countries_dict()
         if populate_db:
             self._populate_categories_and_indicators_db()
             self._populate_indicator_data_db()
         self._create_tags()
+
+    def get_countries(self):
+        """Public method that returns countries in the format required
+        for progress_starting_folder"""
+        return [
+            {"Code": country_iso3}
+            for country_iso3 in self._countries_dict.keys()
+        ]
 
     def _populate_dimensions_db(self):
         """The main API only provides the dimension codes. This method
@@ -120,11 +129,14 @@ class WHO:
             row.code: row.title for row in results
         }
 
-    def get_countries(self):
+    def _create_countries_dict(self):
         results = self._session.query(DBDimensionValues).filter(
             DBDimensionValues.dimension_code == "COUNTRY"
         )
-        return [{"Code": row.code} for row in results]
+        self._countries_dict = {
+            row.code: Country.get_country_name_from_iso3(row.code)
+            for row in results
+        }
 
     def _populate_categories_and_indicators_db(self):
         # Get the indicator results
@@ -229,7 +241,7 @@ class WHO:
                 if row["SpatialDimType"] != "COUNTRY":
                     continue
                 country_iso3 = row["SpatialDim"]
-                country_name = Country.get_country_name_from_iso3(country_iso3)
+                country_name = self._countries_dict[country_iso3]
                 startyear = datetime.fromisoformat(
                     row["TimeDimensionBegin"]
                 ).strftime("%Y")
