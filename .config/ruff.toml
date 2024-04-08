@@ -1,0 +1,9 @@
+line-length = 79
+# List of rules: https://beta.ruff.rs/docs/rules/
+lint.select = [
+  "E",   # pycodestyle - default
+  "F",   # pyflakes - default
+  "I"    # isort
+]
+[lint.per-file-ignores]
+"tests/test_who.py" = ["E501"] # ignore too long lines

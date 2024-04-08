@@ -3,203 +3,333 @@
 Unit tests for WHO.
 
 """
+
 from collections import OrderedDict
 from os.path import join
 
 import pytest
-import who
 from hdx.api.configuration import Configuration
-from hdx.api.locations import Locations
-from hdx.data.vocabulary import Vocabulary
-from hdx.location.country import Country
+from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
-from hdx.utilities.path import temp_dir
-from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
+
+from who import WHO
 
 
 class Retrieve:
     @staticmethod
     def download_json(url):
-        if url == "http://lala/api/GHO?format=json":
+        if url == "http://papa/api/indicator":
             return {
-                "dimension": [
+                "value": [
                     {
-                        "code": [
-                            {
-                                "display": "Life expectancy at birth (years)",
-                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                "attr": [
-                                    {
-                                        "category": "DISPLAY_FR",
-                                        "value": "Esperance de vie a la naissance (ans)",
-                                    },
-                                    {
-                                        "category": "DISPLAY_ES",
-                                        "value": "Esperanza de vida al nacer",
-                                    },
-                                    {
-                                        "category": "DEFINITION_XML",
-                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                    },
-                                    {
-                                        "category": "CATEGORY",
-                                        "value": "health and demographics",
-                                    },
-                                    {
-                                        "category": "RENDERER_ID",
-                                        "value": "RENDER_2",
-                                    },
-                                ],
-                                "display_sequence": 10,
-                                "label": "WHOSIS_000001",
-                            },
-                            {
-                                "display": "Life expectancy at birth (years) 2",
-                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                "attr": [
-                                    {
-                                        "category": "DISPLAY_FR",
-                                        "value": "Esperance de vie a la naissance (ans)",
-                                    },
-                                    {
-                                        "category": "DISPLAY_ES",
-                                        "value": "Esperanza de vida al nacer",
-                                    },
-                                    {
-                                        "category": "DEFINITION_XML",
-                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                    },
-                                    {
-                                        "category": "CATEGORY",
-                                        "value": "health and demographics",
-                                    },
-                                    {
-                                        "category": "RENDERER_ID",
-                                        "value": "RENDER_2",
-                                    },
-                                ],
-                                "display_sequence": 10,
-                                "label": "WHOSIS_000002",
-                            },
-                            {
-                                "display": "Life expectancy at birth (years) 3",
-                                "url": "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                                "attr": [
-                                    {
-                                        "category": "DISPLAY_FR",
-                                        "value": "Esperance de vie a la naissance (ans)",
-                                    },
-                                    {
-                                        "category": "DISPLAY_ES",
-                                        "value": "Esperanza de vida al nacer",
-                                    },
-                                    {
-                                        "category": "DEFINITION_XML",
-                                        "value": "http://apps.who.int/gho/indicatorregistryservice/publicapiservice.asmx/IndicatorGetAsXml?profileCode=WHO&applicationCode=System&languageAlpha2=en&indicatorId=65",
-                                    },
-                                    {
-                                        "category": "CATEGORY",
-                                        "value": "sustainable development goals",
-                                    },
-                                    {
-                                        "category": "RENDERER_ID",
-                                        "value": "RENDER_2",
-                                    },
-                                ],
-                                "display_sequence": 10,
-                                "label": "WHOSIS_000003",
-                            },
-                        ]
-                    }
+                        "IndicatorCode": "WHOSIS_000001",
+                        "IndicatorName": "Life expectancy at birth (years)",
+                    },
+                    {
+                        "IndicatorCode": "MDG_0000000001",
+                        "IndicatorName": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
+                    },
+                    {
+                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "IndicatorName": "Estimates of rates of homicides per 100 000 population",
+                    },
                 ]
             }
-        elif url == "http://haha/api/COUNTRY?format=json":
-            return {"dimension": [{"code": [TestWHO.country]}]}
-
-    @staticmethod
-    def get_tabular_rows(url, **kwargs):
-        headers = [
-            "GHO (CODE)",
-            "PUBLISHSTATE (CODE)",
-            "header2",
-            "YEAR (DISPLAY)",
-            "STARTYEAR",
-            "ENDYEAR",
-            "Numeric",
-        ]
-        if (
-            url
-            == "http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000001&filter=COUNTRY:AFG&profile=verbose"
-        ):
-            retval = [
-                {
-                    "GHO (CODE)": "VIOLENCE_HOMICIDERATE",
-                    "PUBLISHSTATE (CODE)": "PUBLISHED",
-                    "header2": "val21",
-                    "YEAR (DISPLAY)": "1992-1994",
-                    "Numeric": "123.4",
-                },
-                {
-                    "GHO (CODE)": "MDG_000000X",
-                    "PUBLISHSTATE (CODE)": "VOID-ACCEPTED",
-                    "header2": "val22",
-                    "YEAR (DISPLAY)": "2015",
-                    "Numeric": "123.4",
-                },
-                {
-                    "GHO (CODE)": "MDG_0000000001",
-                    "PUBLISHSTATE (CODE)": "PUBLISHED",
-                    "header2": "val22",
-                    "YEAR (DISPLAY)": "2015",
-                    "Numeric": "123.4",
-                },
-            ]
-        elif (
-            url
-            == "http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000002&filter=COUNTRY:AFG&profile=verbose"
-        ):
-            retval = [
-                {
-                    "GHO (CODE)": "WHS7_105",
-                    "PUBLISHSTATE (CODE)": "PUBLISHED",
-                    "header2": "val21",
-                    "YEAR (DISPLAY)": "1992",
-                    "Numeric": "123.4",
-                }
-            ]
-        elif (
-            url
-            == "http://papa/data/data-verbose.csv?target=GHO/WHOSIS_000003&filter=COUNTRY:AFG&profile=verbose"
-        ):
-            retval = [
-                {
-                    "GHO (CODE)": "WHS7_106",
-                    "PUBLISHSTATE (CODE)": "PUBLISHED",
-                    "header2": "val21",
-                    "YEAR (DISPLAY)": "1992",
-                    "Numeric": "123.4",
-                },
-                {
-                    "GHO (CODE)": "MDG_000001X",
-                    "PUBLISHSTATE (CODE)": "VOID-ACCEPTED",
-                    "header2": "val22",
-                    "YEAR (DISPLAY)": "2015",
-                    "Numeric": "123.4",
-                },
-                {
-                    "GHO (CODE)": "MDG_0000000002",
-                    "PUBLISHSTATE (CODE)": "PUBLISHED",
-                    "header2": "val22",
-                    "YEAR (DISPLAY)": "2015-2016",
-                    "Numeric": "123.4",
-                },
-            ]
-        rows = list()
-        for row in retval:
-            row = kwargs["row_function"](headers, row)
-            if row:
-                rows.append(row)
-        return headers, rows
+        if url == "http://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+            return {
+                "value": [
+                    {
+                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
+                        "INDICATOR_URL_NAME": "life-expectancy-at-birth-(years)",
+                        "INDICATOR_CODE": "WHOSIS_000001",
+                    },
+                    {
+                        "THEME_TITLE": "World Health Statistics",
+                        "INDICATOR_URL_NAME": "life-expectancy-at-birth-(years)",
+                        "INDICATOR_CODE": "WHOSIS_000001",
+                    },
+                    {
+                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
+                        "INDICATOR_URL_NAME": "infant-mortality-rate-(probability-of-dying-between-birth-and-age-1-per-1000-live-births) ",
+                        "INDICATOR_CODE": "MDG_0000000001",
+                    },
+                ]
+            }
+        elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
+            return {"value": [TestWHO.country]}
+        elif url == "http://papa/api/dimension":
+            return {
+                "value": [
+                    {"Code": "SEX", "Title": "Sex"},
+                    {"Code": "COUNTRY", "Title": "Country"},
+                ]
+            }
+        elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
+            return {
+                "value": [
+                    {"Code": "SEX_BTSX", "Title": "Both sexes"},
+                    {"Code": "SEX_FMLE", "Title": "Female"},
+                    {"Code": "SEX_MLE", "Title": "Male"},
+                ]
+            }
+        elif url == "http://papa/api/WHOSIS_000001":
+            return {
+                "value": [
+                    {
+                        "Id": 4989839,
+                        "IndicatorCode": "WHOSIS_000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "Dim1": "SEX_MLE",
+                        "TimeDim": 2010,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "59.6",
+                        "NumericValue": 59.60036,
+                        "Low": None,
+                        "High": None,
+                        "Comments": None,
+                        "Date": "2020-12-04T16:59:43+01:00",
+                        "TimeDimensionValue": "2010",
+                        "TimeDimensionBegin": "2010-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2010-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 5155001,
+                        "IndicatorCode": "WHOSIS_000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "Dim1": "SEX_MLE",
+                        "TimeDim": 2019,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "63.3",
+                        "NumericValue": 63.28709,
+                        "Low": None,
+                        "High": None,
+                        "Comments": None,
+                        "Date": "2020-12-04T16:59:43+01:00",
+                        "TimeDimensionValue": "2019",
+                        "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 5154473,
+                        "IndicatorCode": "WHOSIS_000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "Dim1": "SEX_FMLE",
+                        "TimeDim": 2019,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "63.2",
+                        "NumericValue": 63.15551,
+                        "Low": None,
+                        "High": None,
+                        "Comments": None,
+                        "Date": "2020-12-04T16:59:43+01:00",
+                        "TimeDimensionValue": "2019",
+                        "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                    },
+                ]
+            }
+        elif url == "http://papa/api/MDG_0000000001":
+            return {
+                "value": [
+                    {
+                        "Id": 5785042,
+                        "IndicatorCode": "MDG_0000000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 2011,
+                        "Dim1": "SEX_BTSX",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "61.76 [56.88-67.01]",
+                        "NumericValue": 61.76149,
+                        "Low": 56.88115,
+                        "High": 67.01448,
+                        "Comments": None,
+                        "Date": "2023-02-16T07:52:34+01:00",
+                        "TimeDimensionValue": "2011",
+                        "TimeDimensionBegin": "2011-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2011-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 5675670,
+                        "IndicatorCode": "MDG_0000000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 2005,
+                        "Dim1": "SEX_MLE",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "81.72 [76.22-87.73]",
+                        "NumericValue": 81.71819,
+                        "Low": 76.21614,
+                        "High": 87.72866,
+                        "Comments": None,
+                        "Date": "2023-02-16T07:52:32+01:00",
+                        "TimeDimensionValue": "2005",
+                        "TimeDimensionBegin": "2005-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2005-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 5425776,
+                        "IndicatorCode": "MDG_0000000001",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "ParentLocationCode": "EMR",
+                        "TimeDimType": "YEAR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 1992,
+                        "Dim1": "SEX_BTSX",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "113.55 [105.31-122.27]",
+                        "NumericValue": 113.54819,
+                        "Low": 105.30619,
+                        "High": 122.27416,
+                        "Comments": None,
+                        "Date": "2023-02-16T07:52:34+01:00",
+                        "TimeDimensionValue": "1992",
+                        "TimeDimensionBegin": "1992-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "1992-12-31T00:00:00+01:00",
+                    },
+                ]
+            }
+        elif url == "http://papa/api/VIOLENCE_HOMICIDERATE":
+            return {
+                "value": [
+                    {
+                        "Id": 5607424,
+                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 2005,
+                        "Dim1": "SEX_MLE",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "16.0 [9.0-26.4]",
+                        "NumericValue": 16.00427,
+                        "Low": 8.96329,
+                        "High": 26.42646,
+                        "Comments": None,
+                        "Date": "2021-02-09T16:20:22+01:00",
+                        "TimeDimensionValue": "2005",
+                        "TimeDimensionBegin": "2005-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2005-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 5333190,
+                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 2001,
+                        "Dim1": "SEX_MLE",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "16.4 [8.8-27.4]",
+                        "NumericValue": 16.44246,
+                        "Low": 8.79012,
+                        "High": 27.37148,
+                        "Comments": None,
+                        "Date": "2021-02-09T16:20:23+01:00",
+                        "TimeDimensionValue": "2001",
+                        "TimeDimensionBegin": "2001-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2001-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 6463929,
+                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": "SEX",
+                        "TimeDim": 2019,
+                        "Dim1": "SEX_MLE",
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "13.3 [7.1-23.4]",
+                        "NumericValue": 13.29011,
+                        "Low": 7.12773,
+                        "High": 23.35501,
+                        "Comments": None,
+                        "Date": "2021-02-09T16:20:23+01:00",
+                        "TimeDimensionValue": "2019",
+                        "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                    },
+                ]
+            }
 
     @staticmethod
     def hxl_row(headers, hxltags, dict_form):
@@ -208,68 +338,37 @@ class Retrieve:
 
 class TestWHO:
     indicators = OrderedDict(
+        WHOSIS_000001={
+            "indicator_name": "Life expectancy at birth (years)",
+            "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29",
+        },
+        MDG_0000000001={
+            "indicator_name": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
+            "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20",
+        },
+        VIOLENCE_HOMICIDERATE={
+            "indicator_name": "Estimates of rates of homicides per 100 000 population",
+        },
+    )
+    tags = ["disability"]
+    categories = OrderedDict(
         [
             (
-                "health and demographics",
-                [
-                    (
-                        "WHOSIS_000001",
-                        "Life expectancy at birth (years)",
-                        "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                    ),
-                    (
-                        "WHOSIS_000002",
-                        "Life expectancy at birth (years) 2",
-                        "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                    ),
-                ],
+                "Global Health Estimates: Life expectancy and leading causes of "
+                "death and disability",
+                OrderedDict({"WHOSIS_000001": None, "MDG_0000000001": None}),
             ),
-            (
-                "sustainable development goals",
-                [
-                    (
-                        "WHOSIS_000003",
-                        "Life expectancy at birth (years) 3",
-                        "http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65",
-                    )
-                ],
-            ),
+            ("World Health Statistics", OrderedDict({"WHOSIS_000001": None})),
         ]
     )
-    tags = ["health", "demographics", "sustainable development goals-sdg"]
 
     country = {
-        "display_sequence": 10,
-        "url": "",
-        "display": "Afghanistan",
-        "attr": [
-            {"category": "WORLD_BANK_INCOME_GROUP_GNI_REFERENCE_YEAR", "value": "2015"},
-            {"category": "WORLD_BANK_INCOME_GROUP_RELEASE_DATE", "value": "2016"},
-            {"category": "WHO_REGION", "value": "Eastern Mediterranean"},
-            {"category": "WORLD_BANK_INCOME_GROUP", "value": "Low-income"},
-            {"category": "WHO_REGION_CODE", "value": "EMR"},
-            {"category": "WORLD_BANK_INCOME_GROUP_CODE", "value": "WB_LI"},
-            {"category": "DS", "value": "AFG"},
-            {"category": "FIPS", "value": "AF"},
-            {"category": "IOC", "value": "AFG"},
-            {"category": "ISO2", "value": "AF"},
-            {"category": "ISO", "value": "AFG"},
-            {"category": "ITU", "value": "AFG"},
-            {"category": "MARC", "value": "af"},
-            {"category": "WHO", "value": "AFG"},
-            {"category": "WMO", "value": "AF"},
-            {"category": "GEOMETRY", "value": "AFG"},
-            {"category": "MORT", "value": "3010"},
-            {"category": "LAND_AREA_KMSQ_2012", "value": "652,230"},
-            {
-                "category": "LANGUAGES_EN_2012",
-                "value": "Dari, Pashto, Turkic languages, 30 minor languages",
-            },
-            {"category": "SHORTNAMEES", "value": "Afganistan"},
-            {"category": "SHORTNAMEFR", "value": "Afghanistan"},
-            {"category": "WHOLEGALSTATUS", "value": "M"},
-        ],
-        "label": "AFG",
+        "Code": "AFG",
+        "Dimension": "COUNTRY",
+        "ParentCode": "EMR",
+        "ParentDimension": "REGION",
+        "ParentTitle": "Eastern Mediterranean",
+        "Title": "Afghanistan",
     }
 
     @pytest.fixture(scope="function")
@@ -277,112 +376,117 @@ class TestWHO:
         Configuration._create(
             hdx_read_only=True,
             user_agent="test",
-            project_config_yaml=join("tests", "config", "project_configuration.yml"),
+            project_config_yaml=join(
+                "tests", "config", "project_configuration.yaml"
+            ),
         )
-        Locations.set_validlocations([{"name": "afg", "title": "Afghanistan"}])
-        Country.countriesdata(use_live=False)
-        Vocabulary._tags_dict = dict()
-        Vocabulary._approved_vocabulary = {
-            "tags": [
-                {"name": "hxl"},
-                {"name": "indicators"},
-                {"name": "health"},
-                {"name": "demographics"},
-                {"name": "sustainable development goals-sdg"},
-            ],
-            "id": "4e61d464-4943-4e97-973a-84673c1aaa87",
-            "name": "approved",
-        }
 
     @pytest.fixture(scope="function")
     def retriever(self):
         return Retrieve()
 
-    def test_get_indicators_and_tags(self, configuration, retriever):
-        indicators, tags = get_indicators_and_tags("http://lala/", retriever)
-        assert indicators == TestWHO.indicators
-        assert tags == TestWHO.tags
-
-    def test_get_countriesdata(self, retriever):
-        countriesdata = get_countries("http://haha/", retriever)
-        assert countriesdata == [TestWHO.country]
-
-    def test_generate_dataset_and_showcase(self, configuration):
+    def test_get_countriesdata(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
-        base_url = configuration["base_url"]
-        qc_indicators = configuration["qc_indicators"]
-        with temp_dir("Test_WHO", delete_on_failure=False) as folder:
-            who.indicator_limit = 1
-            dataset, showcase, bites_disabled = generate_dataset_and_showcase(
-                base_url,
-                folder,
-                TestWHO.country,
-                TestWHO.indicators,
-                TestWHO.tags,
-                qc_indicators,
-                Retrieve(),
+        with Database(
+            dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
+        ) as session:
+            who = WHO(configuration, retriever, tmp_path, session)
+            who.populate_db()
+            countriesdata = who.get_countries()
+            assert countriesdata == [{"Code": "AFG"}]
+
+    def test_generate_dataset_and_showcase(
+        self, configuration, retriever, tmp_path
+    ):
+        configuration = Configuration.read()
+        with Database(
+            dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
+        ) as session:
+            who = WHO(configuration, retriever, tmp_path, session)
+            who.populate_db()
+            qc_indicators = configuration["qc_indicators"]
+            quickcharts = {
+                "hashtag": "#indicator+code",
+                "values": [x["code"] for x in qc_indicators],
+                "numeric_hashtag": "#indicator+value+num",
+                "cutdown": 2,
+                "cutdownhashtags": [
+                    "#indicator+code",
+                    "#country+code",
+                    "#date+year+end",
+                    "#dimension+name",
+                ],
+            }
+            dataset, showcase, bites_disabled = (
+                who.generate_dataset_and_showcase(TestWHO.country, quickcharts)
             )
             assert dataset == {
-                "name": "who-data-for-afghanistan",
-                "notes": "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \nhealth and demographics, sustainable development goals  \n  \nFor links to individual indicator metadata, see resource descriptions.",
-                "title": "Afghanistan - Health Indicators",
+                "data_update_frequency": "30",
+                "dataset_date": "[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
+                "name": "who-data-for-afghanistan",
+                "notes": "Contains data from World Health Organization's [data "
+                "portal](http://www.who.int/gho/en/) covering the following "
+                "categories:  \n"
+                "Global Health Estimates: Life expectancy and leading causes of "
+                "death and disability, World Health Statistics  \n"
+                "  \n"
+                "For links to individual indicator metadata, see resource "
+                "descriptions.",
                 "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
-                "data_update_frequency": "30",
                 "subnational": "0",
                 "tags": [
                     {
                         "name": "hxl",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                     {
                         "name": "indicators",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                     {
-                        "name": "health",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
-                    },
-                    {
-                        "name": "demographics",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
-                    },
-                    {
-                        "name": "sustainable development goals-sdg",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "name": "disability",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],
-                "dataset_date": "[1992-01-01T00:00:00 TO 2016-12-31T23:59:59]",
+                "title": "Afghanistan - Health Indicators",
             }
-
             resources = dataset.get_resources()
             assert resources == [
                 {
+                    "description": "See resource descriptions below for links to indicator "
+                    "metadata",
+                    "format": "csv",
                     "name": "All Health Indicators for Afghanistan",
-                    "description": "See resource descriptions below for links to indicator metadata",
-                    "format": "csv",
                     "resource_type": "file.upload",
                     "url_type": "upload",
                 },
                 {
-                    "name": "health and demographics Indicators for Afghanistan",
-                    "description": "*health and demographics:*\n[Life expectancy at birth (years)](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65), [Life expectancy at birth (years) 2](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)",
+                    "description": "*Global Health Estimates: Life expectancy and leading causes "
+                    "of death and disability:*\n"
+                    "[Infant mortality rate (probability of dying between birth "
+                    "and age 1 per 1000 live "
+                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20)",
                     "format": "csv",
+                    "name": "Global Health Estimates: Life expectancy and leading causes of "
+                    "death and disability Indicators for Afghanistan",
                     "resource_type": "file.upload",
                     "url_type": "upload",
                 },
                 {
-                    "name": "sustainable development goals Indicators for Afghanistan",
-                    "description": "*sustainable development goals:*\n[Life expectancy at birth (years) 3](http://apps.who.int/gho/indicatorregistry/App_Main/view_indicator.aspx?iid=65)",
+                    "description": "*World Health Statistics:*\n"
+                    "[Life expectancy at birth "
+                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
                     "format": "csv",
+                    "name": "World Health Statistics Indicators for Afghanistan",
                     "resource_type": "file.upload",
                     "url_type": "upload",
                 },
                 {
-                    "name": "QuickCharts Indicators for Afghanistan",
                     "description": "Cut down data for QuickCharts",
                     "format": "csv",
+                    "name": "QuickCharts-All Health Indicators for Afghanistan",
                     "resource_type": "file.upload",
                     "url_type": "upload",
                 },
@@ -390,48 +494,32 @@ class TestWHO:
 
             assert showcase == {
                 "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
-                "url": "http://www.who.int/countries/afg/en/",
-                "notes": "Health indicators for Afghanistan",
                 "name": "who-data-for-afghanistan-showcase",
+                "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
                         "name": "hxl",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                     {
                         "name": "indicators",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                     {
-                        "name": "health",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
-                    },
-                    {
-                        "name": "demographics",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
-                    },
-                    {
-                        "name": "sustainable development goals-sdg",
-                        "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
+                        "name": "disability",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],
                 "title": "Indicators for Afghanistan",
+                "url": "http://www.who.int/countries/afg/en/",
             }
-            assert bites_disabled == [False, True, False]
-            file = "health_indicators_AFG.csv"
-            assert_files_same(join("tests", "fixtures", file), join(folder, file))
-            file = f"qc_{file}"
-            assert_files_same(join("tests", "fixtures", file), join(folder, file))
-            file = "health_and_demographics_indicators_AFG.csv"
-            assert_files_same(join("tests", "fixtures", file), join(folder, file))
-            country = {"label": "xxx", "display": "Unknown", "attr": []}
-            datasetshowcase = generate_dataset_and_showcase(
-                base_url,
-                folder,
-                country,
-                TestWHO.indicators,
-                TestWHO.tags,
-                qc_indicators,
-                Retrieve(),
+
+            assert bites_disabled == [False, False, False]
+            file = "health_indicators_afg.csv"
+            assert_files_same(
+                join("tests", "fixtures", file), join(tmp_path, file)
             )
-            assert datasetshowcase == (None, None, None)
+            file = "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv"
+            assert_files_same(
+                join("tests", "fixtures", file), join(tmp_path, file)
+            )
