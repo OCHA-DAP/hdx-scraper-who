@@ -11,11 +11,14 @@ import pytest
 from hdx.api.configuration import Configuration
 from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
+from hdx.utilities.downloader import Download
+from hdx.utilities.path import temp_dir
+from hdx.utilities.retriever import Retrieve
 
 from who import WHO
 
 
-class Retrieve:
+class MockRetrieve:
     @staticmethod
     def download_file(url):
         return
@@ -387,7 +390,7 @@ class TestWHO:
 
     @pytest.fixture(scope="function")
     def retriever(self):
-        return Retrieve()
+        return MockRetrieve()
 
     def test_get_countriesdata(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
@@ -527,3 +530,51 @@ class TestWHO:
             assert_files_same(
                 join("tests", "fixtures", file), join(tmp_path, file)
             )
+
+    def test_showcase(self, configuration):
+        with temp_dir(
+            "TestWHO",
+            delete_on_success=True,
+            delete_on_failure=False,
+        ) as tempdir:
+            with Download(user_agent="test") as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    tempdir,
+                    tempdir,
+                    tempdir,
+                    save=False,
+                    use_saved=False,
+                )
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "AFG",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase == {
+                    "image_url": "https://www.who.int/sysmedia/images/countries/afg.gif",
+                    "name": "who-data-for-afghanistan-showcase",
+                    "notes": "Health indicators for Afghanistan",
+                    "tags": [
+                        {
+                            "name": "hxl",
+                            "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                        },
+                        {
+                            "name": "indicators",
+                            "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                        },
+                    ],
+                    "title": "Indicators for Afghanistan",
+                    "url": "https://www.who.int/countries/afg/en/",
+                }
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "ABC",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase is None

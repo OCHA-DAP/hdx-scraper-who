@@ -281,6 +281,28 @@ class WHO:
             self._session.commit()
             logger.info(f"Done indicator {indicator_name}")
 
+    @staticmethod
+    def get_showcase(
+        retriever, country_iso3, country_name, slugified_name, alltags
+    ):
+        try:
+            lower_iso3 = country_iso3.lower()
+            url = f"https://www.who.int/countries/{lower_iso3}/en/"
+            retriever.download_file(url)
+            showcase = Showcase(
+                {
+                    "name": f"{slugified_name}-showcase",
+                    "title": f"Indicators for {country_name}",
+                    "notes": f"Health indicators for {country_name}",
+                    "url": url,
+                    "image_url": f"https://www.who.int/sysmedia/images/countries/{lower_iso3}.gif",
+                }
+            )
+            showcase.add_tags(alltags)
+            return showcase
+        except DownloadError:
+            return None
+
     def generate_dataset_and_showcase(self, country, quickcharts):
         # Setup the dataset information
         country_iso3 = country["Code"]
@@ -406,22 +428,13 @@ class WHO:
 
         bites_disabled = results["bites_disabled"]
 
-        try:
-            url = f"https://www.who.int/countries/{country_iso3.lower()}/en/"
-            self._retriever.download_file(url)
-            showcase = Showcase(
-                {
-                    "name": f"{slugified_name}-showcase",
-                    "title": f"Indicators for {country_name}",
-                    "notes": f"Health indicators for {country_name}",
-                    "url": url,
-                    "image_url": f"https://www.who.int/sysmedia/images/countries/{country_iso3.lower()}.gif",
-                }
-            )
-            showcase.add_tags(alltags)
-        except DownloadError:
-            showcase = None
-
+        showcase = self.get_showcase(
+            self._retriever,
+            country_iso3,
+            country_name,
+            slugified_name,
+            alltags,
+        )
         return dataset, showcase, bites_disabled
 
 
