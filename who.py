@@ -298,7 +298,7 @@ class WHO:
             {
                 "name": slugified_name,
                 "notes": "Contains data from World Health Organization's "
-                "[data portal](http://www.who.int/gho/en/) covering "
+                "[data portal](https://www.who.int/gho/en/) covering "
                 "the following categories:  \n"
                 f"{cat_str}  \n  \nFor links to individual indicator "
                 f"metadata, see resource descriptions.",
@@ -406,16 +406,21 @@ class WHO:
 
         bites_disabled = results["bites_disabled"]
 
-        showcase = Showcase(
-            {
-                "name": f"{slugified_name}-showcase",
-                "title": f"Indicators for {country_name}",
-                "notes": f"Health indicators for {country_name}",
-                "url": f"http://www.who.int/countries/{country_iso3.lower()}/en/",
-                "image_url": f"http://www.who.int/sysmedia/images/countries/{country_iso3.lower()}.gif",
-            }
-        )
-        showcase.add_tags(alltags)
+        try:
+            url = f"https://www.who.int/countries/{country_iso3.lower()}/en/"
+            self._retriever.download_file(url)
+            showcase = Showcase(
+                {
+                    "name": f"{slugified_name}-showcase",
+                    "title": f"Indicators for {country_name}",
+                    "notes": f"Health indicators for {country_name}",
+                    "url": url,
+                    "image_url": f"https://www.who.int/sysmedia/images/countries/{country_iso3.lower()}.gif",
+                }
+            )
+            showcase.add_tags(alltags)
+        except DownloadError:
+            showcase = None
 
         return dataset, showcase, bites_disabled
 

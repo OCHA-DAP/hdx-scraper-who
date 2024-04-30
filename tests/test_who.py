@@ -17,8 +17,12 @@ from who import WHO
 
 class Retrieve:
     @staticmethod
+    def download_file(url):
+        return
+
+    @staticmethod
     def download_json(url):
-        if url == "http://papa/api/indicator":
+        if url == "https://papa/api/indicator":
             return {
                 "value": [
                     {
@@ -35,7 +39,7 @@ class Retrieve:
                     },
                 ]
             }
-        if url == "http://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+        if url == "https://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
             return {
                 "value": [
                     {
@@ -55,16 +59,16 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
+        elif url == "https://papa/api/DIMENSION/COUNTRY/DimensionValues":
             return {"value": [TestWHO.country]}
-        elif url == "http://papa/api/dimension":
+        elif url == "https://papa/api/dimension":
             return {
                 "value": [
                     {"Code": "SEX", "Title": "Sex"},
                     {"Code": "COUNTRY", "Title": "Country"},
                 ]
             }
-        elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
+        elif url == "https://papa/api/DIMENSION/SEX/DimensionValues":
             return {
                 "value": [
                     {"Code": "SEX_BTSX", "Title": "Both sexes"},
@@ -72,7 +76,7 @@ class Retrieve:
                     {"Code": "SEX_MLE", "Title": "Male"},
                 ]
             }
-        elif url == "http://papa/api/WHOSIS_000001":
+        elif url == "https://papa/api/WHOSIS_000001":
             return {
                 "value": [
                     {
@@ -158,7 +162,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/MDG_0000000001":
+        elif url == "https://papa/api/MDG_0000000001":
             return {
                 "value": [
                     {
@@ -244,7 +248,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/VIOLENCE_HOMICIDERATE":
+        elif url == "https://papa/api/VIOLENCE_HOMICIDERATE":
             return {
                 "value": [
                     {
@@ -427,7 +431,7 @@ class TestWHO:
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-data-for-afghanistan",
                 "notes": "Contains data from World Health Organization's [data "
-                "portal](http://www.who.int/gho/en/) covering the following "
+                "portal](https://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
                 "Global Health Estimates: Life expectancy and leading causes of "
                 "death and disability, World Health Statistics  \n"
@@ -493,7 +497,7 @@ class TestWHO:
             ]
 
             assert showcase == {
-                "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
+                "image_url": "https://www.who.int/sysmedia/images/countries/afg.gif",
                 "name": "who-data-for-afghanistan-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
@@ -511,7 +515,7 @@ class TestWHO:
                     },
                 ],
                 "title": "Indicators for Afghanistan",
-                "url": "http://www.who.int/countries/afg/en/",
+                "url": "https://www.who.int/countries/afg/en/",
             }
 
             assert bites_disabled == [False, False, False]
