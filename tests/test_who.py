@@ -13,11 +13,22 @@ from hdx.api.locations import Locations
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
 from hdx.utilities.compare import assert_files_same
+from hdx.utilities.downloader import Download
 from hdx.utilities.path import temp_dir
-from who import generate_dataset_and_showcase, get_countries, get_indicators_and_tags
+from hdx.utilities.retriever import Retrieve
+from who import (
+    generate_dataset_and_showcase,
+    get_countries,
+    get_indicators_and_tags,
+    get_showcase,
+)
 
 
-class Retrieve:
+class MockRetrieve:
+    @staticmethod
+    def download_file(url):
+        return
+
     @staticmethod
     def download_json(url):
         if url == "http://lala/api/GHO?format=json":
@@ -296,7 +307,7 @@ class TestWHO:
 
     @pytest.fixture(scope="function")
     def retriever(self):
-        return Retrieve()
+        return MockRetrieve()
 
     def test_get_indicators_and_tags(self, configuration, retriever):
         indicators, tags = get_indicators_and_tags("http://lala/", retriever)
@@ -320,16 +331,22 @@ class TestWHO:
                 TestWHO.indicators,
                 TestWHO.tags,
                 qc_indicators,
-                Retrieve(),
+                MockRetrieve(),
             )
             assert dataset == {
-                "name": "who-data-for-afghanistan",
-                "notes": "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \nhealth and demographics, sustainable development goals  \n  \nFor links to individual indicator metadata, see resource descriptions.",
-                "title": "Afghanistan - Health Indicators",
+                "data_update_frequency": "30",
+                "dataset_date": "[1992-01-01T00:00:00 TO 2016-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
+                "name": "who-data-for-afghanistan",
+                "notes": "Contains data from World Health Organization's [data "
+                "portal](https://www.who.int/gho/en/) covering the following "
+                "categories:  \n"
+                "health and demographics, sustainable development goals  \n"
+                "  \n"
+                "For links to individual indicator metadata, see resource "
+                "descriptions.",
                 "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
-                "data_update_frequency": "30",
                 "subnational": "0",
                 "tags": [
                     {
@@ -353,7 +370,7 @@ class TestWHO:
                         "vocabulary_id": "4e61d464-4943-4e97-973a-84673c1aaa87",
                     },
                 ],
-                "dataset_date": "[1992-01-01T00:00:00 TO 2016-12-31T23:59:59]",
+                "title": "Afghanistan - Health Indicators",
             }
 
             resources = dataset.get_resources()
@@ -389,10 +406,9 @@ class TestWHO:
             ]
 
             assert showcase == {
-                "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
-                "url": "http://www.who.int/countries/afg/en/",
-                "notes": "Health indicators for Afghanistan",
+                "image_url": "https://www.who.int/sysmedia/images/countries/afg.gif",
                 "name": "who-data-for-afghanistan-showcase",
+                "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
                         "name": "hxl",
@@ -416,6 +432,7 @@ class TestWHO:
                     },
                 ],
                 "title": "Indicators for Afghanistan",
+                "url": "https://www.who.int/countries/afg/en/",
             }
             assert bites_disabled == [False, True, False]
             file = "health_indicators_AFG.csv"
@@ -432,6 +449,30 @@ class TestWHO:
                 TestWHO.indicators,
                 TestWHO.tags,
                 qc_indicators,
-                Retrieve(),
+                MockRetrieve(),
             )
             assert datasetshowcase == (None, None, None)
+
+    def test_showcase_for_nonexistent_url(self, configuration):
+        with temp_dir(
+            "TestWHO",
+            delete_on_success=True,
+            delete_on_failure=False,
+        ) as tempdir:
+            with Download(user_agent="test") as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    tempdir,
+                    tempdir,
+                    tempdir,
+                    save=False,
+                    use_saved=False,
+                )
+                showcase = get_showcase(
+                    retriever,
+                    "ABC",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase is None
