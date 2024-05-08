@@ -15,6 +15,7 @@ from hdx.data.hdxobject import HDXError
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
+from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.dictandlist import dict_of_lists_add
 from hdx.utilities.text import multiple_replace
@@ -111,7 +112,7 @@ def generate_dataset_and_showcase(
     dataset = Dataset(
         {
             "name": slugified_name,
-            "notes": "Contains data from World Health Organization's [data portal](http://www.who.int/gho/en/) covering the following categories:  \n"
+            "notes": "Contains data from World Health Organization's [data portal](https://www.who.int/gho/en/) covering the following categories:  \n"
             f"{cat_str}  \n  \nFor links to individual indicator metadata, see resource descriptions.",
             "title": title,
         }
@@ -273,14 +274,32 @@ def generate_dataset_and_showcase(
     )
 
     isolower = countryiso.lower()
-    showcase = Showcase(
-        {
-            "name": f"{slugified_name}-showcase",
-            "title": f"Indicators for {countryname}",
-            "notes": f"Health indicators for {countryname}",
-            "url": f"http://www.who.int/countries/{isolower}/en/",
-            "image_url": f"http://www.who.int/sysmedia/images/countries/{isolower}.gif",
-        }
+
+    showcase = get_showcase(
+        retriever,
+        isolower,
+        countryname,
+        slugified_name,
+        alltags,
     )
-    showcase.add_tags(alltags)
     return dataset, showcase, bites_disabled
+
+
+def get_showcase(retriever, country_iso3, country_name, slugified_name, alltags):
+    try:
+        lower_iso3 = country_iso3.lower()
+        url = f"https://www.who.int/countries/{lower_iso3}/en/"
+        retriever.download_file(url)
+        showcase = Showcase(
+            {
+                "name": f"{slugified_name}-showcase",
+                "title": f"Indicators for {country_name}",
+                "notes": f"Health indicators for {country_name}",
+                "url": url,
+                "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/{lower_iso3}.jpg"
+            }
+        )
+        showcase.add_tags(alltags)
+        return showcase
+    except DownloadError:
+        return None
