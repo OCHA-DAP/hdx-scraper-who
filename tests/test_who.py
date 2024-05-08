@@ -406,7 +406,7 @@ class TestWHO:
             ]
 
             assert showcase == {
-                "image_url": "https://www.who.int/sysmedia/images/countries/afg.gif",
+                "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
                 "name": "who-data-for-afghanistan-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [

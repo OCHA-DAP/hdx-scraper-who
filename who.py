@@ -296,7 +296,7 @@ def get_showcase(retriever, country_iso3, country_name, slugified_name, alltags)
                 "title": f"Indicators for {country_name}",
                 "notes": f"Health indicators for {country_name}",
                 "url": url,
-                "image_url": f"https://www.who.int/sysmedia/images/countries/{lower_iso3}.gif",
+                "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/{lower_iso3}.jpg"
             }
         )
         showcase.add_tags(alltags)
