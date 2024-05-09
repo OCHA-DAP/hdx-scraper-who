@@ -302,4 +302,6 @@ def get_showcase(retriever, country_iso3, country_name, slugified_name, alltags)
         showcase.add_tags(alltags)
         return showcase
     except DownloadError:
-        return None
+        # If the showcase URL doesn't exist, only return the showcase id
+        # so that it can be deleted if needed
+        return Showcase({"name": f"{slugified_name}-showcase"})
