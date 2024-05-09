@@ -83,8 +83,9 @@ def main(save: bool = False, use_saved: bool = False) -> None:
                         updated_by_script="HDX Scraper: WHO",
                         batch=info["batch"],
                     )
-                    showcase.create_in_hdx()
-                    showcase.add_dataset(dataset)
+                    if showcase:
+                        showcase.create_in_hdx()
+                        showcase.add_dataset(dataset)
 
                     for path in paths:
                         try:  # Needed while there are duplicate categories
