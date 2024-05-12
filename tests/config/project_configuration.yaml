@@ -1,6 +1,6 @@
 # Collector specific configuration
-base_url: "http://papa/"
-category_url: "http://lala/"
+base_url: "https://papa/"
+category_url: "https://lala/"
 qc_indicators:
   - code: "WHOSIS_000001"
     title: "Life Expectancy at Birth"

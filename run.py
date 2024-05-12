@@ -33,10 +33,8 @@ logger = logging.getLogger(__name__)
 lookup = "hdx-scraper-who"
 
 
-# def main(save: bool = True, use_saved:
-# bool = False, populate_db: bool = True) -> None:
 def main(
-    save: bool = False, use_saved: bool = True, populate_db: bool = True
+    save: bool = False, use_saved: bool = False, populate_db: bool = True
 ) -> None:
     """Generate datasets and create them in HDX
 
@@ -127,8 +125,9 @@ def process_country(who, country, quickcharts, qc_indicators, info):
         updated_by_script="HDX Scraper: WHO",
         batch=info["batch"],
     )
-    showcase.create_in_hdx()
-    showcase.add_dataset(dataset)
+    if showcase:
+        showcase.create_in_hdx()
+        showcase.add_dataset(dataset)
     logger.info(f"Finished uploading dataset for {country['Code']}")
 
 

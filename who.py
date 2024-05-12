@@ -281,6 +281,28 @@ class WHO:
             self._session.commit()
             logger.info(f"Done indicator {indicator_name}")
 
+    @staticmethod
+    def get_showcase(
+        retriever, country_iso3, country_name, slugified_name, alltags
+    ):
+        try:
+            lower_iso3 = country_iso3.lower()
+            url = f"https://www.who.int/countries/{lower_iso3}/en/"
+            retriever.download_file(url)
+            showcase = Showcase(
+                {
+                    "name": f"{slugified_name}-showcase",
+                    "title": f"Indicators for {country_name}",
+                    "notes": f"Health indicators for {country_name}",
+                    "url": url,
+                    "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/{lower_iso3}.jpg",
+                }
+            )
+            showcase.add_tags(alltags)
+            return showcase
+        except DownloadError:
+            return None
+
     def generate_dataset_and_showcase(self, country, quickcharts):
         # Setup the dataset information
         country_iso3 = country["Code"]
@@ -298,7 +320,7 @@ class WHO:
             {
                 "name": slugified_name,
                 "notes": "Contains data from World Health Organization's "
-                "[data portal](http://www.who.int/gho/en/) covering "
+                "[data portal](https://www.who.int/gho/en/) covering "
                 "the following categories:  \n"
                 f"{cat_str}  \n  \nFor links to individual indicator "
                 f"metadata, see resource descriptions.",
@@ -406,17 +428,13 @@ class WHO:
 
         bites_disabled = results["bites_disabled"]
 
-        showcase = Showcase(
-            {
-                "name": f"{slugified_name}-showcase",
-                "title": f"Indicators for {country_name}",
-                "notes": f"Health indicators for {country_name}",
-                "url": f"http://www.who.int/countries/{country_iso3.lower()}/en/",
-                "image_url": f"http://www.who.int/sysmedia/images/countries/{country_iso3.lower()}.gif",
-            }
+        showcase = self.get_showcase(
+            self._retriever,
+            country_iso3,
+            country_name,
+            slugified_name,
+            alltags,
         )
-        showcase.add_tags(alltags)
-
         return dataset, showcase, bites_disabled
 
 

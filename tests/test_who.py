@@ -11,14 +11,21 @@ import pytest
 from hdx.api.configuration import Configuration
 from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
+from hdx.utilities.downloader import Download
+from hdx.utilities.path import temp_dir
+from hdx.utilities.retriever import Retrieve
 
 from who import WHO
 
 
-class Retrieve:
+class MockRetrieve:
+    @staticmethod
+    def download_file(url):
+        return
+
     @staticmethod
     def download_json(url):
-        if url == "http://papa/api/indicator":
+        if url == "https://papa/api/indicator":
             return {
                 "value": [
                     {
@@ -35,7 +42,7 @@ class Retrieve:
                     },
                 ]
             }
-        if url == "http://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+        if url == "https://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
             return {
                 "value": [
                     {
@@ -55,16 +62,16 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/DIMENSION/COUNTRY/DimensionValues":
+        elif url == "https://papa/api/DIMENSION/COUNTRY/DimensionValues":
             return {"value": [TestWHO.country]}
-        elif url == "http://papa/api/dimension":
+        elif url == "https://papa/api/dimension":
             return {
                 "value": [
                     {"Code": "SEX", "Title": "Sex"},
                     {"Code": "COUNTRY", "Title": "Country"},
                 ]
             }
-        elif url == "http://papa/api/DIMENSION/SEX/DimensionValues":
+        elif url == "https://papa/api/DIMENSION/SEX/DimensionValues":
             return {
                 "value": [
                     {"Code": "SEX_BTSX", "Title": "Both sexes"},
@@ -72,7 +79,7 @@ class Retrieve:
                     {"Code": "SEX_MLE", "Title": "Male"},
                 ]
             }
-        elif url == "http://papa/api/WHOSIS_000001":
+        elif url == "https://papa/api/WHOSIS_000001":
             return {
                 "value": [
                     {
@@ -158,7 +165,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/MDG_0000000001":
+        elif url == "https://papa/api/MDG_0000000001":
             return {
                 "value": [
                     {
@@ -244,7 +251,7 @@ class Retrieve:
                     },
                 ]
             }
-        elif url == "http://papa/api/VIOLENCE_HOMICIDERATE":
+        elif url == "https://papa/api/VIOLENCE_HOMICIDERATE":
             return {
                 "value": [
                     {
@@ -383,7 +390,7 @@ class TestWHO:
 
     @pytest.fixture(scope="function")
     def retriever(self):
-        return Retrieve()
+        return MockRetrieve()
 
     def test_get_countriesdata(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
@@ -427,7 +434,7 @@ class TestWHO:
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-data-for-afghanistan",
                 "notes": "Contains data from World Health Organization's [data "
-                "portal](http://www.who.int/gho/en/) covering the following "
+                "portal](https://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
                 "Global Health Estimates: Life expectancy and leading causes of "
                 "death and disability, World Health Statistics  \n"
@@ -493,7 +500,7 @@ class TestWHO:
             ]
 
             assert showcase == {
-                "image_url": "http://www.who.int/sysmedia/images/countries/afg.gif",
+                "image_url": "https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
                 "name": "who-data-for-afghanistan-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
@@ -511,7 +518,7 @@ class TestWHO:
                     },
                 ],
                 "title": "Indicators for Afghanistan",
-                "url": "http://www.who.int/countries/afg/en/",
+                "url": "https://www.who.int/countries/afg/en/",
             }
 
             assert bites_disabled == [False, False, False]
@@ -523,3 +530,51 @@ class TestWHO:
             assert_files_same(
                 join("tests", "fixtures", file), join(tmp_path, file)
             )
+
+    def test_showcase(self, configuration):
+        with temp_dir(
+            "TestWHO",
+            delete_on_success=True,
+            delete_on_failure=False,
+        ) as tempdir:
+            with Download(user_agent="test") as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    tempdir,
+                    tempdir,
+                    tempdir,
+                    save=False,
+                    use_saved=False,
+                )
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "AFG",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase == {
+                    "image_url": "https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
+                    "name": "who-data-for-afghanistan-showcase",
+                    "notes": "Health indicators for Afghanistan",
+                    "tags": [
+                        {
+                            "name": "hxl",
+                            "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                        },
+                        {
+                            "name": "indicators",
+                            "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                        },
+                    ],
+                    "title": "Indicators for Afghanistan",
+                    "url": "https://www.who.int/countries/afg/en/",
+                }
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "ABC",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase is None
