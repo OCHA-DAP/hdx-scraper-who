@@ -22,6 +22,7 @@ from who import (
     get_indicators_and_tags,
     get_showcase,
 )
+from hdx.data.showcase import Showcase
 
 
 class MockRetrieve:
@@ -475,4 +476,4 @@ class TestWHO:
                     "who-data-for-afghanistan",
                     ["hxl", "indicators"],
                 )
-                assert showcase is None
+                assert showcase == Showcase({"name": "who-data-for-afghanistan-showcase"})
