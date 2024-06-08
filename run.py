@@ -80,8 +80,7 @@ def main(
                 who = WHO(configuration, retriever, folder, session)
                 # This takes a long time to run
                 who.populate_db(populate_db=populate_db)
-                # TODO: remove index
-                countries = who.get_countries()[1:2]
+                countries = who.get_countries()
 
                 logger.info(f"Number of countries: {len(countries)}")
 

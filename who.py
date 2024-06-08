@@ -225,6 +225,10 @@ class WHO:
             indicator_name = db_row.title
             indicator_url = db_row.url
             indicator_code = db_row.code
+            # TODO: put indicators without category into archived dataset
+            # Skip indicators without a category
+            if indicator_url is None:
+                continue
             logger.info(f"Downloading file for indicator {indicator_name}")
             base_url = self._configuration["base_url"]
             url = f"{base_url}api/{indicator_code}"
@@ -319,12 +323,24 @@ class WHO:
         dataset = Dataset(
             {
                 "name": slugified_name,
-                "notes": "Contains data from World Health Organization's "
-                "[data portal](https://www.who.int/gho/en/) covering "
-                "the following categories:  \n"
-                f"{cat_str}  \n  \nFor links to individual indicator "
-                f"metadata, see resource descriptions.",
-                "title": title,
+                "notes": "The World Health Organization (WHO) is the United "
+                         "Nations agency that connects nations, partners and "
+                         "people to promote health, keep the world safe and "
+                         "serve the vulnerable – so everyone, everywhere can "
+                         "attain the highest level of health.\nThe Organization "
+                         "leads global efforts to expand universal health "
+                         "coverage. It directs and coordinates the world’s "
+                         "response to health emergencies. It promotes healthier "
+                         "lives – from pregnancy care through old age. The Triple "
+                         "Billion targets outline an ambitious plan for the world "
+                         "to achieve good health for all using science-based "
+                         "policies and programmes.\n"
+                         "This dataset contains data from WHO's "
+                         "[data portal](https://www.who.int/gho/en/) covering "
+                         "the following categories:  \n"
+                        f"{cat_str}  \n  \nFor links to individual indicator "
+                        f"metadata, see resource descriptions.",
+                        "title": title,
             }
         )
         dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
