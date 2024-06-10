@@ -428,37 +428,30 @@ class TestWHO:
                 who.generate_dataset_and_showcase(TestWHO.country, quickcharts)
             )
             assert dataset == {
-                "data_update_frequency": "30",
-                "dataset_date": "[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]",
-                "groups": [{"name": "afg"}],
-                "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
-                "name": "who-data-for-afghanistan",
-                "notes": "Contains data from World Health Organization's [data "
-                "portal](https://www.who.int/gho/en/) covering the following "
-                "categories:  \n"
-                "Global Health Estimates: Life expectancy and leading causes of "
-                "death and disability, World Health Statistics  \n"
-                "  \n"
-                "For links to individual indicator metadata, see resource "
-                "descriptions.",
-                "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
-                "subnational": "0",
-                "tags": [
-                    {
-                        "name": "hxl",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "indicators",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "disability",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                ],
-                "title": "Afghanistan - Health Indicators",
-            }
+                'data_update_frequency': '30',
+                 'dataset_date': '[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]',
+                 'groups': [{'name': 'afg'}],
+                 'maintainer': '35f7bb2c-4ab6-4796-8334-525b30a94c89',
+                 'name': 'who-data-for-afghanistan',
+                 'notes': "This dataset contains data from WHO's [data "
+                          'portal](https://www.who.int/gho/en/) covering the following '
+                          'categories:  \n'
+                          '  \n'
+                          'Global Health Estimates: Life expectancy and leading causes of '
+                          'death and disability, World Health Statistics.  \n'
+                          '  \n'
+                          'For links to individual indicator metadata, see resource '
+                          'descriptions.',
+                 'owner_org': 'c021f6be-3598-418e-8f7f-c7a799194dba',
+                 'subnational': '0',
+                 'tags': [{'name': 'hxl',
+                           'vocabulary_id': 'b891512e-9516-4bf5-962a-7a289772a2a1'},
+                          {'name': 'indicators',
+                           'vocabulary_id': 'b891512e-9516-4bf5-962a-7a289772a2a1'},
+                          {'name': 'disability',
+                           'vocabulary_id': 'b891512e-9516-4bf5-962a-7a289772a2a1'}],
+                 'title': 'Afghanistan - Health Indicators'}
+
             resources = dataset.get_resources()
             assert resources == [
                 {
@@ -521,7 +514,7 @@ class TestWHO:
                 "url": "https://www.who.int/countries/afg/en/",
             }
 
-            assert bites_disabled == [False, False, False]
+            assert bites_disabled == [False, False, True]
             file = "health_indicators_afg.csv"
             assert_files_same(
                 join("tests", "fixtures", file), join(tmp_path, file)
@@ -577,4 +570,4 @@ class TestWHO:
                     "who-data-for-afghanistan",
                     ["hxl", "indicators"],
                 )
-                assert showcase is None
+                assert showcase == {'name':  'who-data-for-afghanistan-showcase'}

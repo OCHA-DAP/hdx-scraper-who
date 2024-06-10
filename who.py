@@ -306,7 +306,9 @@ class WHO:
             showcase.add_tags(alltags)
             return showcase
         except DownloadError:
-            return None
+            # If the showcase URL doesn't exist, only return the showcase id
+            # so that it can be deleted if needed
+            return Showcase({"name": f"{slugified_name}-showcase"})
 
     def generate_dataset_and_showcase(self, country, quickcharts):
         # Setup the dataset information
