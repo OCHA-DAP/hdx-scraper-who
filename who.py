@@ -21,6 +21,7 @@ from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 from sqlalchemy import insert
+from hdx.data.hdxobject import HDXError
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -323,31 +324,23 @@ class WHO:
         dataset = Dataset(
             {
                 "name": slugified_name,
-                "notes": "The World Health Organization (WHO) is the United "
-                         "Nations agency that connects nations, partners and "
-                         "people to promote health, keep the world safe and "
-                         "serve the vulnerable – so everyone, everywhere can "
-                         "attain the highest level of health.\nThe Organization "
-                         "leads global efforts to expand universal health "
-                         "coverage. It directs and coordinates the world’s "
-                         "response to health emergencies. It promotes healthier "
-                         "lives – from pregnancy care through old age. The Triple "
-                         "Billion targets outline an ambitious plan for the world "
-                         "to achieve good health for all using science-based "
-                         "policies and programmes.\n"
-                         "This dataset contains data from WHO's "
-                         "[data portal](https://www.who.int/gho/en/) covering "
-                         "the following categories:  \n"
-                        f"{cat_str}  \n  \nFor links to individual indicator "
-                        f"metadata, see resource descriptions.",
-                        "title": title,
+                "notes": f"This dataset contains data from WHO's "
+                         f"[data portal](https://www.who.int/gho/en/) covering "
+                         f"the following categories:  \n  \n"
+                         f"{cat_str}.  \n  \nFor links to individual indicator "
+                         f"metadata, see resource descriptions.",
+                "title": title
             }
         )
         dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
         dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
         dataset.set_expected_update_frequency("Every month")
         dataset.set_subnational(False)
-        dataset.add_country_location(country_iso3)
+        try:
+            dataset.add_country_location(country_iso3)
+        except HDXError:
+            logger.error(f"Couldn't find country {country_iso3}, skipping")
+            return None, None, None
         alltags = ["hxl", "indicators"]
         alltags.extend(self._tags)
         dataset.add_tags(alltags)
@@ -391,7 +384,7 @@ class WHO:
                 "description": category_link,
             }
 
-            success, results = dataset.generate_resource_from_iterator(
+            success, results = dataset.generate_resource_from_iterable(
                 list(self.hxltags.keys()),
                 category_data,
                 self.hxltags,
@@ -422,7 +415,7 @@ class WHO:
         )
         all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
 
-        success, results = dataset.generate_resource_from_iterator(
+        success, results = dataset.generate_resource_from_iterable(
             list(self.hxltags.keys()),
             all_indicators_data,
             self.hxltags,
@@ -437,7 +430,7 @@ class WHO:
             logger.error(f"{country_name} has no data!")
             return None, None, None
 
-        # Move the all data resource to the beginning
+        # Move the "all data" resource to the beginning
         # TODO: this doesn't appear to work on dev
         resources = dataset.get_resources()
         resources.insert(0, resources.pop(-2))
