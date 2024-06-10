@@ -12,8 +12,8 @@ qc_indicators:
     unit: "Percent"
     description: "Probability of dying between birth and age 1 per 1000 live births"
     aggregate_col: "#dimension+name"
-  - code: 'VIOLENCE_HOMICIDERATE'
-    title: "Homicide rate"
-    unit: "Number"
-    description: "Estimates of rates of homicides per 100 000 population"
+  - code: 'WSH_SANITATION_BASIC'
+    title: "Sanitation Services"
+    unit: "Percent"
+    description: "Population using at least basic sanitation services"
     aggregate_col: "#dimension+name"

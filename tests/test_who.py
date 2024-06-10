@@ -514,7 +514,7 @@ class TestWHO:
                 "url": "https://www.who.int/countries/afg/en/",
             }
 
-            assert bites_disabled == [False, False, True]
+            assert bites_disabled == [False, False, False]
             file = "health_indicators_afg.csv"
             assert_files_same(
                 join("tests", "fixtures", file), join(tmp_path, file)
