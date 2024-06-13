@@ -10,8 +10,8 @@ from os.path import expanduser, join
 
 from hdx.api.configuration import Configuration
 from hdx.data.hdxobject import HDXError
-from hdx.database import Database
 from hdx.data.showcase import Showcase
+from hdx.database import Database
 from hdx.facades.infer_arguments import facade
 from hdx.utilities.downloader import Download, DownloadError
 from hdx.utilities.path import (
@@ -109,6 +109,8 @@ def process_country(who, country, quickcharts, qc_indicators, info):
         country, quickcharts
     )
     if not dataset:
+        logger.warning(f"Deleting dataset for {country} as there is no data")
+        dataset.delete_from_hdx()
         return
 
     logger.info(f"Uploading dataset for {country['Code']}")
