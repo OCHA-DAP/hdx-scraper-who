@@ -9,6 +9,7 @@ from os.path import join
 
 import pytest
 from hdx.api.configuration import Configuration
+from hdx.data.showcase import Showcase
 from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.downloader import Download
@@ -37,8 +38,8 @@ class MockRetrieve:
                         "IndicatorName": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
                     },
                     {
-                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
-                        "IndicatorName": "Estimates of rates of homicides per 100 000 population",
+                        "IndicatorCode": "WSH_SANITATION_BASIC",
+                        "IndicatorName": "Population using at least basic sanitation services( %)",
                     },
                 ]
             }
@@ -51,14 +52,19 @@ class MockRetrieve:
                         "INDICATOR_CODE": "WHOSIS_000001",
                     },
                     {
+                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
+                        "INDICATOR_URL_NAME": "infant-mortality-rate-(probability-of-dying-between-birth-and-age-1-per-1000-live-births) ",
+                        "INDICATOR_CODE": "MDG_0000000001",
+                    },
+                    {
                         "THEME_TITLE": "World Health Statistics",
                         "INDICATOR_URL_NAME": "life-expectancy-at-birth-(years)",
                         "INDICATOR_CODE": "WHOSIS_000001",
                     },
                     {
-                        "THEME_TITLE": "Global Health Estimates: Life expectancy and leading causes of death and disability",
-                        "INDICATOR_URL_NAME": "infant-mortality-rate-(probability-of-dying-between-birth-and-age-1-per-1000-live-births) ",
-                        "INDICATOR_CODE": "MDG_0000000001",
+                        "THEME_TITLE": "World Health Statistics",
+                        "INDICATOR_URL_NAME": "population-using-at-least-basic-sanitation-services-(-)",
+                        "INDICATOR_CODE": "WSH_SANITATION_BASIC",
                     },
                 ]
             }
@@ -69,6 +75,10 @@ class MockRetrieve:
                 "value": [
                     {"Code": "SEX", "Title": "Sex"},
                     {"Code": "COUNTRY", "Title": "Country"},
+                    {
+                        "Code": "RESIDENCEAREATYPE",
+                        "Title": "Residence Area Type",
+                    },
                 ]
             }
         elif url == "https://papa/api/DIMENSION/SEX/DimensionValues":
@@ -77,6 +87,16 @@ class MockRetrieve:
                     {"Code": "SEX_BTSX", "Title": "Both sexes"},
                     {"Code": "SEX_FMLE", "Title": "Female"},
                     {"Code": "SEX_MLE", "Title": "Male"},
+                ]
+            }
+        elif (
+            url
+            == "https://papa/api/DIMENSION/RESIDENCEAREATYPE/DimensionValues"
+        ):
+            return {
+                "value": [
+                    {"Code": "RESIDENCEAREATYPE_URB", "Title": "Urban"},
+                    {"Code": "RESIDENCEAREATYPE_RUR", "Title": "Urban"},
                 ]
             }
         elif url == "https://papa/api/WHOSIS_000001":
@@ -251,89 +271,89 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/VIOLENCE_HOMICIDERATE":
+        elif url == "https://papa/api/WSH_SANITATION_BASIC":
             return {
                 "value": [
                     {
-                        "Id": 5607424,
-                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "Id": 375582,
+                        "IndicatorCode": "WSH_SANITATION_BASIC",
                         "SpatialDimType": "COUNTRY",
                         "SpatialDim": "AFG",
                         "TimeDimType": "YEAR",
                         "ParentLocationCode": "EMR",
                         "ParentLocation": "Eastern Mediterranean",
-                        "Dim1Type": "SEX",
+                        "Dim1Type": "RESIDENCEAREATYPE",
                         "TimeDim": 2005,
-                        "Dim1": "SEX_MLE",
+                        "Dim1": "RESIDENCEAREATYPE_URB",
                         "Dim2Type": None,
                         "Dim2": None,
                         "Dim3Type": None,
                         "Dim3": None,
                         "DataSourceDimType": None,
                         "DataSourceDim": None,
-                        "Value": "16.0 [9.0-26.4]",
-                        "NumericValue": 16.00427,
-                        "Low": 8.96329,
-                        "High": 26.42646,
+                        "Value": "37",
+                        "NumericValue": 36.95171,
+                        "Low": None,
+                        "High": None,
                         "Comments": None,
-                        "Date": "2021-02-09T16:20:22+01:00",
+                        "Date": "2023-07-10T08:10:46+02:00",
                         "TimeDimensionValue": "2005",
                         "TimeDimensionBegin": "2005-01-01T00:00:00+01:00",
                         "TimeDimensionEnd": "2005-12-31T00:00:00+01:00",
                     },
                     {
-                        "Id": 5333190,
-                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "Id": 375583,
+                        "IndicatorCode": "WSH_SANITATION_BASIC",
                         "SpatialDimType": "COUNTRY",
                         "SpatialDim": "AFG",
                         "TimeDimType": "YEAR",
                         "ParentLocationCode": "EMR",
                         "ParentLocation": "Eastern Mediterranean",
-                        "Dim1Type": "SEX",
-                        "TimeDim": 2001,
-                        "Dim1": "SEX_MLE",
+                        "Dim1Type": "RESIDENCEAREATYPE",
+                        "TimeDim": 2006,
+                        "Dim1": "RESIDENCEAREATYPE_URB",
                         "Dim2Type": None,
                         "Dim2": None,
                         "Dim3Type": None,
                         "Dim3": None,
                         "DataSourceDimType": None,
                         "DataSourceDim": None,
-                        "Value": "16.4 [8.8-27.4]",
-                        "NumericValue": 16.44246,
-                        "Low": 8.79012,
-                        "High": 27.37148,
+                        "Value": "37",
+                        "NumericValue": 36.95171,
+                        "Low": None,
+                        "High": None,
                         "Comments": None,
-                        "Date": "2021-02-09T16:20:23+01:00",
-                        "TimeDimensionValue": "2001",
-                        "TimeDimensionBegin": "2001-01-01T00:00:00+01:00",
-                        "TimeDimensionEnd": "2001-12-31T00:00:00+01:00",
+                        "Date": "2023-07-10T08:10:46+02:00",
+                        "TimeDimensionValue": "2006",
+                        "TimeDimensionBegin": "2006-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2006-12-31T00:00:00+01:00",
                     },
                     {
-                        "Id": 6463929,
-                        "IndicatorCode": "VIOLENCE_HOMICIDERATE",
+                        "Id": 375584,
+                        "IndicatorCode": "WSH_SANITATION_BASIC",
                         "SpatialDimType": "COUNTRY",
                         "SpatialDim": "AFG",
                         "TimeDimType": "YEAR",
                         "ParentLocationCode": "EMR",
                         "ParentLocation": "Eastern Mediterranean",
-                        "Dim1Type": "SEX",
-                        "TimeDim": 2019,
-                        "Dim1": "SEX_MLE",
+                        "Dim1Type": "RESIDENCEAREATYPE",
+                        "TimeDim": 2007,
+                        "Dim1": "RESIDENCEAREATYPE_RUR",
                         "Dim2Type": None,
                         "Dim2": None,
                         "Dim3Type": None,
                         "Dim3": None,
                         "DataSourceDimType": None,
                         "DataSourceDim": None,
-                        "Value": "13.3 [7.1-23.4]",
-                        "NumericValue": 13.29011,
-                        "Low": 7.12773,
-                        "High": 23.35501,
+                        "Value": "37",
+                        "NumericValue": 36.95171,
+                        "Low": None,
+                        "High": None,
                         "Comments": None,
-                        "Date": "2021-02-09T16:20:23+01:00",
-                        "TimeDimensionValue": "2019",
-                        "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
-                        "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                        "Date": "2023-07-10T08:10:46+02:00",
+                        "TimeDimensionValue": "2007",
+                        "TimeDimensionBegin": "2007-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2007-12-31T00:00:00+01:00",
                     },
                 ]
             }
@@ -353,8 +373,9 @@ class TestWHO:
             "indicator_name": "Infant mortality rate (probability of dying between birth and age 1 per 1000 live births",
             "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20",
         },
-        VIOLENCE_HOMICIDERATE={
-            "indicator_name": "Estimates of rates of homicides per 100 000 population",
+        WSH_SANITATION_BASIC={
+            "indicator_name": "Population using at least basic sanitation services( %)",
+            "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-using-at-least-basic-sanitation-services( %)",
         },
     )
     tags = ["disability"]
@@ -365,7 +386,12 @@ class TestWHO:
                 "death and disability",
                 OrderedDict({"WHOSIS_000001": None, "MDG_0000000001": None}),
             ),
-            ("World Health Statistics", OrderedDict({"WHOSIS_000001": None})),
+            (
+                "World Health Statistics",
+                OrderedDict(
+                    {"WHOSIS_000001": None, "WSH_SANITATION_BASIC": None}
+                ),
+            ),
         ]
     )
 
@@ -429,15 +455,16 @@ class TestWHO:
             )
             assert dataset == {
                 "data_update_frequency": "30",
-                "dataset_date": "[2010-01-01T00:00:00 TO 2019-12-31T23:59:59]",
+                "dataset_date": "[2005-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-data-for-afghanistan",
-                "notes": "Contains data from World Health Organization's [data "
+                "notes": "This dataset contains data from WHO's [data "
                 "portal](https://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
+                "  \n"
                 "Global Health Estimates: Life expectancy and leading causes of "
-                "death and disability, World Health Statistics  \n"
+                "death and disability, World Health Statistics.  \n"
                 "  \n"
                 "For links to individual indicator metadata, see resource "
                 "descriptions.",
@@ -459,6 +486,7 @@ class TestWHO:
                 ],
                 "title": "Afghanistan - Health Indicators",
             }
+
             resources = dataset.get_resources()
             assert resources == [
                 {
@@ -474,7 +502,9 @@ class TestWHO:
                     "of death and disability:*\n"
                     "[Infant mortality rate (probability of dying between birth "
                     "and age 1 per 1000 live "
-                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20)",
+                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20), "
+                    "[Life expectancy at birth "
+                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
                     "format": "csv",
                     "name": "Global Health Estimates: Life expectancy and leading causes of "
                     "death and disability Indicators for Afghanistan",
@@ -484,7 +514,9 @@ class TestWHO:
                 {
                     "description": "*World Health Statistics:*\n"
                     "[Life expectancy at birth "
-                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
+                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29), "
+                    "[Population using at least basic sanitation services( "
+                    "%)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-using-at-least-basic-sanitation-services-%28-%29)",
                     "format": "csv",
                     "name": "World Health Statistics Indicators for Afghanistan",
                     "resource_type": "file.upload",
@@ -522,14 +554,17 @@ class TestWHO:
             }
 
             assert bites_disabled == [False, False, False]
-            file = "health_indicators_afg.csv"
-            assert_files_same(
-                join("tests", "fixtures", file), join(tmp_path, file)
-            )
-            file = "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv"
-            assert_files_same(
-                join("tests", "fixtures", file), join(tmp_path, file)
-            )
+            filename_list = [
+                "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv",
+                "health_indicators_afg.csv",
+                "qc_health_indicators_afg.csv",
+                "world_health_statistics_indicators_afg.csv",
+            ]
+            for filename in filename_list:
+                assert_files_same(
+                    join("tests", "fixtures", filename),
+                    join(tmp_path, filename),
+                )
 
     def test_showcase(self, configuration):
         with temp_dir(
@@ -577,4 +612,32 @@ class TestWHO:
                     "who-data-for-afghanistan",
                     ["hxl", "indicators"],
                 )
-                assert showcase is None
+                assert showcase == {
+                    "name": "who-data-for-afghanistan-showcase"
+                }
+
+    def test_showcase_for_nonexistent_url(self, configuration):
+        with temp_dir(
+            "TestWHO",
+            delete_on_success=True,
+            delete_on_failure=False,
+        ) as tempdir:
+            with Download(user_agent="test") as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    tempdir,
+                    tempdir,
+                    tempdir,
+                    save=False,
+                    use_saved=False,
+                )
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "ABC",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase == Showcase(
+                    {"name": "who-data-for-afghanistan-showcase"}
+                )

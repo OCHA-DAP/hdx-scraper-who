@@ -11,6 +11,7 @@ from os.path import expanduser, join
 from hdx.api.configuration import Configuration
 from hdx.data.hdxobject import HDXError
 from hdx.database import Database
+from hdx.data.showcase import Showcase
 from hdx.facades.infer_arguments import facade
 from hdx.utilities.downloader import Download, DownloadError
 from hdx.utilities.path import (
@@ -80,8 +81,7 @@ def main(
                 who = WHO(configuration, retriever, folder, session)
                 # This takes a long time to run
                 who.populate_db(populate_db=populate_db)
-                # TODO: remove index
-                countries = who.get_countries()[1:2]
+                countries = who.get_countries()
 
                 logger.info(f"Number of countries: {len(countries)}")
 
@@ -125,9 +125,16 @@ def process_country(who, country, quickcharts, qc_indicators, info):
         updated_by_script="HDX Scraper: WHO",
         batch=info["batch"],
     )
-    if showcase:
+
+    if "url" in showcase.data.keys():
         showcase.create_in_hdx()
         showcase.add_dataset(dataset)
+    else:
+        # If the showcase has no URL, it should be deleted if it exists
+        showcase = Showcase.read_from_hdx(showcase.data["name"])
+        if showcase:
+            showcase.delete_from_hdx()
+
     logger.info(f"Finished uploading dataset for {country['Code']}")
 
 

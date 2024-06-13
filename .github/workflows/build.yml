@@ -3,6 +3,7 @@ name: Build Docker Image
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -19,8 +20,13 @@ jobs:
       - name: Tag Info
         id: tag_info
         run: |
-          export IMAGE_TAG="${GITHUB_REF#refs/*/}"
-          export IMAGE_TAG=${IMAGE_TAG//[^[:alnum:].-]/-}
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            export IMAGE_TAG=$(git rev-parse --short HEAD)
+          else
+            export IMAGE_TAG="${GITHUB_REF#refs/*/}"
+            export IMAGE_TAG=${IMAGE_TAG//[^[:alnum:].-]/-}
+          fi
+          echo "Image Tag: ${IMAGE_TAG}"
           echo ::set-output name=IMAGE_TAG::${IMAGE_TAG}
 
       - name: Configure AWS credentials
