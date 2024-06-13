@@ -9,6 +9,7 @@ from os.path import join
 
 import pytest
 from hdx.api.configuration import Configuration
+from hdx.data.showcase import Showcase
 from hdx.database import Database
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.downloader import Download
@@ -501,7 +502,9 @@ class TestWHO:
                     "of death and disability:*\n"
                     "[Infant mortality rate (probability of dying between birth "
                     "and age 1 per 1000 live "
-                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20)",
+                    "births](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/infant-mortality-rate-%28probability-of-dying-between-birth-and-age-1-per-1000-live-births%29%20), "
+                    "[Life expectancy at birth "
+                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29)",
                     "format": "csv",
                     "name": "Global Health Estimates: Life expectancy and leading causes of "
                     "death and disability Indicators for Afghanistan",
@@ -551,10 +554,17 @@ class TestWHO:
             }
 
             assert bites_disabled == [False, False, False]
-            file = "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv"
-            assert_files_same(
-                join("tests", "fixtures", file), join(tmp_path, file)
-            )
+            filename_list = [
+                "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv",
+                "health_indicators_afg.csv",
+                "qc_health_indicators_afg.csv",
+                "world_health_statistics_indicators_afg.csv",
+            ]
+            for filename in filename_list:
+                assert_files_same(
+                    join("tests", "fixtures", filename),
+                    join(tmp_path, filename),
+                )
 
     def test_showcase(self, configuration):
         with temp_dir(
@@ -605,3 +615,29 @@ class TestWHO:
                 assert showcase == {
                     "name": "who-data-for-afghanistan-showcase"
                 }
+
+    def test_showcase_for_nonexistent_url(self, configuration):
+        with temp_dir(
+            "TestWHO",
+            delete_on_success=True,
+            delete_on_failure=False,
+        ) as tempdir:
+            with Download(user_agent="test") as downloader:
+                retriever = Retrieve(
+                    downloader,
+                    tempdir,
+                    tempdir,
+                    tempdir,
+                    save=False,
+                    use_saved=False,
+                )
+                showcase = WHO.get_showcase(
+                    retriever,
+                    "ABC",
+                    "Afghanistan",
+                    "who-data-for-afghanistan",
+                    ["hxl", "indicators"],
+                )
+                assert showcase == Showcase(
+                    {"name": "who-data-for-afghanistan-showcase"}
+                )

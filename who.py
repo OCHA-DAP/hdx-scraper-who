@@ -13,6 +13,7 @@ from datetime import datetime
 from urllib.parse import quote
 
 from hdx.data.dataset import Dataset
+from hdx.data.hdxobject import HDXError
 from hdx.data.showcase import Showcase
 from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
@@ -21,7 +22,6 @@ from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 from sqlalchemy import insert
-from hdx.data.hdxobject import HDXError
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -163,7 +163,7 @@ class WHO:
         category_result = self._retriever.download_json(category_url)["value"]
 
         # Loop through categories and add to category DB table, also
-        # add the category to the indicator
+        # add indicator URL to indicator.
         for category_row in category_result:
             # Some indicator codes have "\t" in them on the category page
             # which isn't present in the indicator page, such as RADON_Q602,
@@ -173,16 +173,14 @@ class WHO:
             category_title = category_row["THEME_TITLE"]
 
             # Add the category to the table
-            category_already_exists = (
-                self._session.query(DBCategories)
-                .filter(DBCategories.title == category_title)
-                .first()
+            # Categories can repeat but should be unique in combination with
+            # the indicator code, together the title and indicator code make the PK
+            db_categories_row = DBCategories(
+                title=category_title, indicator_code=indicator_code
             )
-            if not category_already_exists:
-                db_categories_row = DBCategories(title=category_title)
-                self._session.add(db_categories_row)
-                self._session.commit()
-            # Add category and URL to indicator
+            self._session.add(db_categories_row)
+            self._session.commit()
+            # Add URL to indicator
             indicator_row = (
                 self._session.query(DBIndicators)
                 .filter(DBIndicators.code == indicator_code)
@@ -195,7 +193,6 @@ class WHO:
                 )
                 continue
             indicator_row.url = indicator_url
-            indicator_row.category_title = category_title
             self._session.commit()
 
     def _create_tags(self):
@@ -319,19 +316,22 @@ class WHO:
         logger.info(f"Creating dataset: {title}")
         slugified_name = slugify(f"WHO data for {country_name}").lower()
 
+        # Get unique category names
         category_names = [
-            row.title for row in self._session.query(DBCategories).all()
+            row.title
+            for row in self._session.query(DBCategories.title).distinct().all()
         ]
+        print(category_names)
         cat_str = ", ".join(category_names)
         dataset = Dataset(
             {
                 "name": slugified_name,
                 "notes": f"This dataset contains data from WHO's "
-                         f"[data portal](https://www.who.int/gho/en/) covering "
-                         f"the following categories:  \n  \n"
-                         f"{cat_str}.  \n  \nFor links to individual indicator "
-                         f"metadata, see resource descriptions.",
-                "title": title
+                f"[data portal](https://www.who.int/gho/en/) covering "
+                f"the following categories:  \n  \n"
+                f"{cat_str}.  \n  \nFor links to individual indicator "
+                f"metadata, see resource descriptions.",
+                "title": title,
             }
         )
         dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
@@ -351,28 +351,35 @@ class WHO:
 
         for category_name in category_names:
             logger.info(f"Category: {category_name}")
-            all_category_rows = (
+
+            # TODO: maybe this can be split up to before the for loop
+            all_indicator_data_rows = (
                 self._session.query(DBIndicatorData)
                 .join(
                     DBIndicators,
-                    DBIndicatorData.indicator_code == DBIndicators.code,
+                    DBIndicators.code == DBIndicatorData.indicator_code,
                 )
                 .join(
                     DBCategories,
-                    DBIndicators.category_title == DBCategories.title,
+                    DBCategories.indicator_code == DBIndicators.code,
                 )
-                .filter(DBIndicatorData.country_code == country_iso3)
                 .filter(DBCategories.title == category_name)
+                .filter(DBIndicatorData.country_code == country_iso3)
                 .all()
             )
 
             category_data = [
-                _parse_indicator_row(row) for row in all_category_rows
+                _parse_indicator_row(row) for row in all_indicator_data_rows
             ]
             indicator_links = [
                 f"[{row.title}]({row.url})"
-                for row in self._session.query(DBIndicators).filter(
-                    DBIndicators.category_title == category_name
+                for row in (
+                    self._session.query(DBIndicators)
+                    .join(
+                        DBCategories,
+                        DBCategories.indicator_code == DBIndicators.code,
+                    )
+                    .filter(DBCategories.title == category_name)
                 )
             ]
 
