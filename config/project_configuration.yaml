@@ -15,5 +15,5 @@ qc_indicators:
   - code: 'WSH_SANITATION_BASIC'
     title: "Sanitation Services"
     unit: "Percent"
-    description: "Population using at least basic sanitation services"
+    description: "Percentage population using at least basic sanitation services"
     aggregate_col: "#dimension+name"
