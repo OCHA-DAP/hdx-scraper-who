@@ -102,8 +102,21 @@ class WHO:
         ]
         for dimensions_row in dimensions_result:
             dimension_code = dimensions_row["Code"]
+            dimension_title = dimensions_row["Title"]
+
+            dimension_exists = (
+                self._session.query(DBDimensions)
+                .filter_by(code=dimension_code)
+                .first()
+            )
+            if dimension_exists:
+                logger.warning(
+                    f"Dimension {dimension_code}:{dimension_title} already exists, skipping"
+                )
+                continue
+
             db_dimensions_row = DBDimensions(
-                code=dimension_code, title=dimensions_row["Title"]
+                code=dimension_code, title=dimension_title
             )
             self._session.add(db_dimensions_row)
             self._session.commit()
@@ -175,6 +188,17 @@ class WHO:
             # Add the category to the table
             # Categories can repeat but should be unique in combination with
             # the indicator code, together the title and indicator code make the PK
+            category_plus_indicator_exists = (
+                self._session.query(DBCategories)
+                .filter_by(title=category_title, indicator_code=indicator_code)
+                .first()
+            )
+            if category_plus_indicator_exists:
+                logger.warning(
+                    f"Category {category_title} with indicator {indicator_code} already exists, skipping"
+                )
+                continue
+
             db_categories_row = DBCategories(
                 title=category_title, indicator_code=indicator_code
             )
@@ -321,7 +345,6 @@ class WHO:
             row.title
             for row in self._session.query(DBCategories.title).distinct().all()
         ]
-        print(category_names)
         cat_str = ", ".join(category_names)
         dataset = Dataset(
             {
