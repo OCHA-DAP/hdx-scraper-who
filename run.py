@@ -35,7 +35,7 @@ lookup = "hdx-scraper-who"
 
 
 def main(
-    save: bool = False, use_saved: bool = True, populate_db: bool = True
+    save: bool = False, use_saved: bool = False, populate_db: bool = True
 ) -> None:
     """Generate datasets and create them in HDX
 
