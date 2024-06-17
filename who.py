@@ -104,17 +104,6 @@ class WHO:
             dimension_code = dimensions_row["Code"]
             dimension_title = dimensions_row["Title"]
 
-            dimension_exists = (
-                self._session.query(DBDimensions)
-                .filter_by(code=dimension_code)
-                .first()
-            )
-            if dimension_exists:
-                logger.warning(
-                    f"Dimension {dimension_code}:{dimension_title} already exists, skipping"
-                )
-                continue
-
             db_dimensions_row = DBDimensions(
                 code=dimension_code, title=dimension_title
             )
@@ -159,7 +148,7 @@ class WHO:
             "value"
         ]
 
-        # Loop through all indicators and add to table
+        # Loop through all indicators and add to table, checking for duplicates
         for indicator_row in indicator_result:
             db_indicators_row = DBIndicators(
                 code=indicator_row["IndicatorCode"],

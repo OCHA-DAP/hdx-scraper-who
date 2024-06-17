@@ -7,6 +7,7 @@ script then creates in HDX.
 
 import logging
 from os.path import expanduser, join
+from pathlib import Path
 
 from hdx.api.configuration import Configuration
 from hdx.data.hdxobject import HDXError
@@ -53,6 +54,10 @@ def main(
             "dialect": "sqlite",
             "database": f"/{folder}/who_gho.sqlite",
         }
+        # Remove sqlite file if re-populating
+        if populate_db:
+            logger.warning("Populating DB, removing sqlite file if it exists")
+            Path(params["database"]).unlink(missing_ok=True)
         with Database(**params) as session:
             with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
                 retriever = Retrieve(
@@ -79,7 +84,7 @@ def main(
                 }
 
                 who = WHO(configuration, retriever, folder, session)
-                # This takes a long time to run
+
                 who.populate_db(populate_db=populate_db)
                 countries = who.get_countries()
 
