@@ -13,7 +13,7 @@ class DBIndicatorData(NoTZBase):
     end_year: Mapped[int] = mapped_column()
     region_code: Mapped[str] = mapped_column(nullable=True)
     region_display: Mapped[str] = mapped_column(nullable=True)
-    country_code: Mapped[str] = mapped_column()
+    country_code: Mapped[str] = mapped_column(index=True)
     country_display: Mapped[str] = mapped_column(nullable=True)
     dimension_type: Mapped[str] = mapped_column(nullable=True)
     dimension_code: Mapped[str] = mapped_column(nullable=True)

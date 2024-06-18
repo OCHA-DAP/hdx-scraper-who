@@ -21,7 +21,7 @@ from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
-from sqlalchemy import insert
+from sqlalchemy import false, insert
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -136,6 +136,7 @@ class WHO:
         results = self._session.query(DBDimensionValues).filter(
             DBDimensionValues.dimension_code == "COUNTRY"
         )
+
         self._countries_dict = {
             row.code: Country.get_country_name_from_iso3(row.code)
             for row in results
@@ -204,8 +205,9 @@ class WHO:
                     f"Indicator code {indicator_code} was not found on the "
                     f"indicators page"
                 )
-                continue
-            indicator_row.url = indicator_url
+                indicator_row.to_archive = True
+            else:
+                indicator_row.url = indicator_url
             self._session.commit()
 
     def _create_tags(self):
@@ -236,10 +238,7 @@ class WHO:
             indicator_name = db_row.title
             indicator_url = db_row.url
             indicator_code = db_row.code
-            # TODO: put indicators without category into archived dataset
-            # Skip indicators without a category
-            if indicator_url is None:
-                continue
+
             logger.info(f"Downloading file for indicator {indicator_name}")
             base_url = self._configuration["base_url"]
             url = f"{base_url}api/{indicator_code}"
@@ -323,7 +322,7 @@ class WHO:
     def generate_dataset_and_showcase(self, country, quickcharts):
         # Setup the dataset information
         country_iso3 = country["Code"]
-        country_name = Country.get_country_name_from_iso3(country_iso3)
+        country_name = self._countries_dict[country_iso3]
         title = f"{country_name} - Health Indicators"
 
         logger.info(f"Creating dataset: {title}")
@@ -395,7 +394,6 @@ class WHO:
         for category_name in category_names:
             logger.info(f"Category: {category_name}")
 
-            # TODO: maybe this can be split up to before the for loop
             all_indicator_data_rows = (
                 self._session.query(DBIndicatorData)
                 .join(
@@ -408,6 +406,8 @@ class WHO:
                 )
                 .filter(DBCategories.title == category_name)
                 .filter(DBIndicatorData.country_code == country_iso3)
+                # Create the archived dataset later
+                .filter(DBIndicators.to_archive.is_(false()))
                 .all()
             )
 

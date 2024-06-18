@@ -7,3 +7,4 @@ class DBIndicators(NoTZBase):
     code: Mapped[str] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column()
     url: Mapped[str] = mapped_column(nullable=True)
+    to_archive: Mapped[bool] = mapped_column(default=False, index=True)
