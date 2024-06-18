@@ -21,7 +21,7 @@ from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
-from sqlalchemy import false, insert
+from sqlalchemy import false, insert, true
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -63,7 +63,7 @@ class WHO:
         self._dimension_value_names_dict = dict()
         self._tags = list()
 
-    def populate_db(self, populate_db: bool = True):
+    def populate_db(self, populate_db: bool, create_archived_datasets: bool):
         """Populate the database and create convenience dictionaries and
         lists
 
@@ -80,7 +80,7 @@ class WHO:
         self._create_countries_dict()
         if populate_db:
             self._populate_categories_and_indicators_db()
-            self._populate_indicator_data_db()
+            self._populate_indicator_data_db(create_archived_datasets)
         self._create_tags()
 
     def get_countries(self):
@@ -205,9 +205,10 @@ class WHO:
                     f"Indicator code {indicator_code} was not found on the "
                     f"indicators page"
                 )
-                indicator_row.to_archive = True
+                continue
             else:
                 indicator_row.url = indicator_url
+                indicator_row.to_archive = False
             self._session.commit()
 
     def _create_tags(self):
@@ -233,11 +234,18 @@ class WHO:
 
         self._tags = tags
 
-    def _populate_indicator_data_db(self):
+    def _populate_indicator_data_db(self, create_archived_datasets: bool):
         for db_row in self._session.query(DBIndicators).all():
             indicator_name = db_row.title
             indicator_url = db_row.url
             indicator_code = db_row.code
+            to_archive = db_row.to_archive
+
+            # If we're not creating the archived datasets,
+            # save time by not downloading and populating
+            # the outdated indicators (there are thousands)
+            if not create_archived_datasets and not to_archive:
+                continue
 
             logger.info(f"Downloading file for indicator {indicator_name}")
             base_url = self._configuration["base_url"]
@@ -329,6 +337,7 @@ class WHO:
         slugified_name = slugify(f"WHO data for {country_name}").lower()
 
         # Get unique category names
+
         category_names = [
             row.title
             for row in self._session.query(DBCategories.title).distinct().all()
@@ -369,6 +378,7 @@ class WHO:
         all_rows = (
             self._session.query(DBIndicatorData)
             .filter(DBIndicatorData.country_code == country_iso3)
+            .filter(DBIndicators.to_archive.is_(false()))
             .all()
         )
         all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
@@ -463,6 +473,74 @@ class WHO:
             alltags,
         )
         return dataset, showcase, bites_disabled
+
+    def generate_archived_dataset(self, country):
+        # Setup the dataset information
+        country_iso3 = country["Code"]
+        country_name = self._countries_dict[country_iso3]
+        title = f"{country_name} - Historical Health Indicators"
+
+        logger.info(f"Creating dataset: {title}")
+        slugified_name = slugify(
+            f"WHO historical data for {country_iso3}"
+        ).lower()
+
+        # Get unique category names
+        dataset = Dataset(
+            {
+                "name": slugified_name,
+                "notes": "This dataset contains historical data from WHO's "
+                "[data portal](https://www.who.int/gho/en/).",
+                "title": title,
+            }
+        )
+        dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
+        dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
+        dataset.set_expected_update_frequency("Never")
+        dataset.set_subnational(False)
+        try:
+            dataset.add_country_location(country_iso3)
+        except HDXError:
+            logger.error(f"Couldn't find country {country_iso3}, skipping")
+            return None
+        alltags = ["hxl", "indicators"]
+        alltags.extend(self._tags)
+        dataset.add_tags(alltags)
+
+        # Create the dataset with all indicators
+
+        filename = f"historical_health_indicators_{country_iso3.lower()}.csv"
+        resourcedata = {
+            "name": f"All Historical Health Indicators for {country_name}",
+            "description": "Historical health indicators no longer updated by WHO",
+        }
+        all_rows = (
+            self._session.query(DBIndicatorData)
+            .filter(DBIndicatorData.country_code == country_iso3)
+            .filter(DBIndicators.to_archive.is_(true()))
+            .all()
+        )
+        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
+
+        success_all_indicators, results_all_indicators = (
+            dataset.generate_resource_from_iterable(
+                list(self.hxltags.keys()),
+                all_indicators_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=None,
+            )
+        )
+
+        if not success_all_indicators:
+            logger.error(f"{country_name} has no data!")
+            return None
+
+        dataset.archived = True
+
+        return dataset
 
 
 def _parse_indicator_row(row):
