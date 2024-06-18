@@ -359,8 +359,39 @@ class WHO:
         alltags.extend(self._tags)
         dataset.add_tags(alltags)
 
-        # Loop through categories and generate resource for each
+        # Create the dataset with all indicators
 
+        filename = f"health_indicators_{country_iso3.lower()}.csv"
+        resourcedata = {
+            "name": f"All Health Indicators for {country_name}",
+            "description": "See resource descriptions below for links "
+            "to indicator metadata",
+        }
+        all_rows = (
+            self._session.query(DBIndicatorData)
+            .filter(DBIndicatorData.country_code == country_iso3)
+            .all()
+        )
+        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
+
+        success_all_indicators, results_all_indicators = (
+            dataset.generate_resource_from_iterable(
+                list(self.hxltags.keys()),
+                all_indicators_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=None,
+                quickcharts=quickcharts,
+            )
+        )
+
+        if not success_all_indicators:
+            logger.error(f"{country_name} has no data!")
+            return None, None, None
+
+        # Loop through categories and generate resource for each
         for category_name in category_names:
             logger.info(f"Category: {category_name}")
 
@@ -422,41 +453,7 @@ class WHO:
                     f"{results}"
                 )
 
-        # Create the final dataset with all indicators
-        filename = f"health_indicators_{country_iso3.lower()}.csv"
-        resourcedata = {
-            "name": f"All Health Indicators for {country_name}",
-            "description": "See resource descriptions below for links "
-            "to indicator metadata",
-        }
-        all_rows = (
-            self._session.query(DBIndicatorData)
-            .filter(DBIndicatorData.country_code == country_iso3)
-            .all()
-        )
-        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
-
-        success, results = dataset.generate_resource_from_iterable(
-            list(self.hxltags.keys()),
-            all_indicators_data,
-            self.hxltags,
-            self._folder,
-            filename,
-            resourcedata,
-            date_function=None,
-            quickcharts=quickcharts,
-        )
-
-        if not success:
-            logger.error(f"{country_name} has no data!")
-            return None, None, None
-
-        # Move the "all data" resource to the beginning
-        # TODO: this doesn't appear to work on dev
-        resources = dataset.get_resources()
-        resources.insert(0, resources.pop(-2))
-
-        bites_disabled = results["bites_disabled"]
+        bites_disabled = results_all_indicators["bites_disabled"]
 
         showcase = self.get_showcase(
             self._retriever,
