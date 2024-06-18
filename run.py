@@ -37,8 +37,8 @@ lookup = "hdx-scraper-who"
 
 def main(
     save: bool = False,
-    use_saved: bool = True,
-    populate_db: bool = False,
+    use_saved: bool = False,
+    populate_db: bool = True,
     create_archived_datasets: bool = True,
 ) -> None:
     """Generate datasets and create them in HDX
@@ -169,6 +169,7 @@ def upload_archived_dataset(who, country, info):
         return
 
     logger.info(f"Uploading archived dataset for {country['Code']}")
+    archived_dataset.update_from_yaml()
     archived_dataset.create_in_hdx(
         remove_additional_resources=True,
         match_resource_order=False,

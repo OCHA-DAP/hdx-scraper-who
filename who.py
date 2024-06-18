@@ -485,13 +485,13 @@ class WHO:
             f"WHO historical data for {country_iso3}"
         ).lower()
 
-        # Get unique category names
         dataset = Dataset(
             {
                 "name": slugified_name,
                 "notes": "This dataset contains historical data from WHO's "
                 "[data portal](https://www.who.int/gho/en/).",
                 "title": title,
+                "archived": True,
             }
         )
         dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
@@ -530,15 +530,13 @@ class WHO:
                 self._folder,
                 filename,
                 resourcedata,
-                date_function=None,
+                date_function=_yearcol_function,
             )
         )
 
         if not success_all_indicators:
             logger.error(f"{country_name} has no data!")
             return None
-
-        dataset.archived = True
 
         return dataset
 
