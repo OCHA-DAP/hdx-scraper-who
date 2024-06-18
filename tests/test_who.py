@@ -424,7 +424,7 @@ class TestWHO:
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as session:
             who = WHO(configuration, retriever, tmp_path, session)
-            who.populate_db()
+            who.populate_db(populate_db=True, create_archived_datasets=False)
             countriesdata = who.get_countries()
             assert countriesdata == [{"Code": "AFG"}]
 
@@ -436,7 +436,7 @@ class TestWHO:
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as session:
             who = WHO(configuration, retriever, tmp_path, session)
-            who.populate_db()
+            who.populate_db(populate_db=True, create_archived_datasets=False)
             qc_indicators = configuration["qc_indicators"]
             quickcharts = {
                 "hashtag": "#indicator+code",
