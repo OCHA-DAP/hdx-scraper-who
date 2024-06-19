@@ -765,7 +765,7 @@ class TestWHO:
             assert dataset == {
                 "archived": True,
                 "data_update_frequency": "-1",
-                "dataset_date": "[1992-01-01T00:00:00 TO 2019-12-31T23:59:59]",
+                "dataset_date": "[2014-01-01T00:00:00 TO 2016-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-historical-data-for-afg",
