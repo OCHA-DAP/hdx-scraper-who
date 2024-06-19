@@ -11,6 +11,7 @@ import pytest
 from hdx.api.configuration import Configuration
 from hdx.data.showcase import Showcase
 from hdx.database import Database
+from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.downloader import Download
 from hdx.utilities.path import temp_dir
@@ -45,6 +46,11 @@ class MockRetrieve:
                     {
                         "IndicatorCode": "TB_1",
                         "IndicatorName": "Tuberculosis treatment coverage",
+                    },
+                    # This indicator has no data
+                    {
+                        "IndicatorCode": "NO_DATA",
+                        "IndicatorName": "Fake indicator with no data",
                     },
                 ]
             }
@@ -187,6 +193,12 @@ class MockRetrieve:
                         "TimeDimensionValue": "2019",
                         "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
                         "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                    },
+                    # Extra entry to test wrong spatial dim type
+                    {
+                        "Id": 4989839,
+                        "IndicatorCode": "WHOSIS_000001",
+                        "SpatialDimType": "NONSENSE",
                     },
                 ]
             }
@@ -449,6 +461,8 @@ class MockRetrieve:
                     },
                 ]
             }
+        elif url == "https://papa/api/NO_DATA":
+            raise DownloadError
 
     @staticmethod
     def hxl_row(headers, hxltags, dict_form):
