@@ -440,10 +440,15 @@ class WHO:
         }
         all_rows = (
             self._session.query(DBIndicatorData)
+            .join(
+                DBIndicators,
+                DBIndicatorData.indicator_code == DBIndicators.code,
+            )
             .filter(DBIndicatorData.country_code == country_iso3)
             .filter(DBIndicators.to_archive.is_(false()))
             .all()
         )
+
         all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
 
         success_all_indicators, results_all_indicators = (
@@ -519,8 +524,13 @@ class WHO:
             "name": f"All Historical Health Indicators for {country_name}",
             "description": "Historical health indicators no longer updated by WHO",
         }
+
         all_rows = (
             self._session.query(DBIndicatorData)
+            .join(
+                DBIndicators,
+                DBIndicatorData.indicator_code == DBIndicators.code,
+            )
             .filter(DBIndicatorData.country_code == country_iso3)
             .filter(DBIndicators.to_archive.is_(true()))
             .all()
@@ -572,16 +582,7 @@ def _yearcol_function(row):
     result = dict()
     year = row["YEAR (DISPLAY)"]
     if year:
-        year = str(year)
-        if len(year) == 9:
-            startyear = year[:4]
-            endyear = year[5:]
-            result["startdate"], _ = parse_date_range(
-                startyear, date_format="%Y"
-            )
-            _, result["enddate"] = parse_date_range(endyear, date_format="%Y")
-        else:
-            result["startdate"], result["enddate"] = parse_date_range(
-                year, date_format="%Y"
-            )
+        result["startdate"], result["enddate"] = parse_date_range(
+            str(year), date_format="%Y"
+        )
     return result
