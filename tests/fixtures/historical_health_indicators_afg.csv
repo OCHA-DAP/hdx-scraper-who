@@ -1,0 +1,5 @@
+GHO (CODE),GHO (DISPLAY),GHO (URL),YEAR (DISPLAY),STARTYEAR,ENDYEAR,REGION (CODE),REGION (DISPLAY),COUNTRY (CODE),COUNTRY (DISPLAY),DIMENSION (TYPE),DIMENSION (CODE),DIMENSION (NAME),Numeric,Value,Low,High
+#indicator+code,#indicator+name,#indicator+url,#date+year,#date+year+start,#date+year+end,#region+code,#region+name,#country+code,#country+name,#dimension+type,#dimension+code,#dimension+name,#indicator+value+num,#indicator+value,#indicator+value+low,#indicator+value+high
+TB_1,Tuberculosis treatment coverage,,2014,2014,2014,EMR,Eastern Mediterranean,AFG,Afghanistan,,,,51.0,51 [36-79],36,79
+TB_1,Tuberculosis treatment coverage,,2015,2015,2015,EMR,Eastern Mediterranean,AFG,Afghanistan,,,,52.0,51 [36-79],36,79
+TB_1,Tuberculosis treatment coverage,,2016,2016,2016,EMR,Eastern Mediterranean,AFG,Afghanistan,,,,53.0,51 [36-79],36,79

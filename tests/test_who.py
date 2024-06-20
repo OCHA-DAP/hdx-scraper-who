@@ -11,6 +11,7 @@ import pytest
 from hdx.api.configuration import Configuration
 from hdx.data.showcase import Showcase
 from hdx.database import Database
+from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.compare import assert_files_same
 from hdx.utilities.downloader import Download
 from hdx.utilities.path import temp_dir
@@ -40,6 +41,16 @@ class MockRetrieve:
                     {
                         "IndicatorCode": "WSH_SANITATION_BASIC",
                         "IndicatorName": "Population using at least basic sanitation services( %)",
+                    },
+                    # This indicator doesn't have an associated category, to test archiving
+                    {
+                        "IndicatorCode": "TB_1",
+                        "IndicatorName": "Tuberculosis treatment coverage",
+                    },
+                    # This indicator has no data
+                    {
+                        "IndicatorCode": "NO_DATA",
+                        "IndicatorName": "Fake indicator with no data",
                     },
                 ]
             }
@@ -182,6 +193,12 @@ class MockRetrieve:
                         "TimeDimensionValue": "2019",
                         "TimeDimensionBegin": "2019-01-01T00:00:00+01:00",
                         "TimeDimensionEnd": "2019-12-31T00:00:00+01:00",
+                    },
+                    # Extra entry to test wrong spatial dim type
+                    {
+                        "Id": 4989839,
+                        "IndicatorCode": "WHOSIS_000001",
+                        "SpatialDimType": "NONSENSE",
                     },
                 ]
             }
@@ -358,6 +375,95 @@ class MockRetrieve:
                 ]
             }
 
+        elif url == "https://papa/api/TB_1":
+            return {
+                "value": [
+                    {
+                        "Id": 137943,
+                        "IndicatorCode": "TB_1",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": None,
+                        "Dim1": None,
+                        "TimeDim": 2014,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "51 [36-79]",
+                        "NumericValue": 51,
+                        "Low": 36,
+                        "High": 79,
+                        "Comments": None,
+                        "Date": "2023-10-25T09:27:14+02:00",
+                        "TimeDimensionValue": "2014",
+                        "TimeDimensionBegin": "2014-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2014-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 137944,
+                        "IndicatorCode": "TB_1",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": None,
+                        "Dim1": None,
+                        "TimeDim": 2015,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "51 [36-79]",
+                        "NumericValue": 52,
+                        "Low": 36,
+                        "High": 79,
+                        "Comments": None,
+                        "Date": "2023-10-25T09:27:14+02:00",
+                        "TimeDimensionValue": "2014",
+                        "TimeDimensionBegin": "2015-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2015-12-31T00:00:00+01:00",
+                    },
+                    {
+                        "Id": 137945,
+                        "IndicatorCode": "TB_1",
+                        "SpatialDimType": "COUNTRY",
+                        "SpatialDim": "AFG",
+                        "TimeDimType": "YEAR",
+                        "ParentLocationCode": "EMR",
+                        "ParentLocation": "Eastern Mediterranean",
+                        "Dim1Type": None,
+                        "Dim1": None,
+                        "TimeDim": 2016,
+                        "Dim2Type": None,
+                        "Dim2": None,
+                        "Dim3Type": None,
+                        "Dim3": None,
+                        "DataSourceDimType": None,
+                        "DataSourceDim": None,
+                        "Value": "51 [36-79]",
+                        "NumericValue": 53,
+                        "Low": 36,
+                        "High": 79,
+                        "Comments": None,
+                        "Date": "2023-10-25T09:27:14+02:00",
+                        "TimeDimensionValue": "2016",
+                        "TimeDimensionBegin": "2016-01-01T00:00:00+01:00",
+                        "TimeDimensionEnd": "2016-12-31T00:00:00+01:00",
+                    },
+                ]
+            }
+        elif url == "https://papa/api/NO_DATA":
+            raise DownloadError
+
     @staticmethod
     def hxl_row(headers, hxltags, dict_form):
         return {header: hxltags.get(header, "") for header in headers}
@@ -376,6 +482,10 @@ class TestWHO:
         WSH_SANITATION_BASIC={
             "indicator_name": "Population using at least basic sanitation services( %)",
             "indicator_url": "https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-using-at-least-basic-sanitation-services( %)",
+        },
+        TB_1={
+            "indicator_name": "Tuberculosis treatment coverage",
+            "indicator_url": None,
         },
     )
     tags = ["disability"]
@@ -424,7 +534,7 @@ class TestWHO:
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as session:
             who = WHO(configuration, retriever, tmp_path, session)
-            who.populate_db()
+            who.populate_db(populate_db=True, create_archived_datasets=False)
             countriesdata = who.get_countries()
             assert countriesdata == [{"Code": "AFG"}]
 
@@ -436,7 +546,7 @@ class TestWHO:
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as session:
             who = WHO(configuration, retriever, tmp_path, session)
-            who.populate_db()
+            who.populate_db(populate_db=True, create_archived_datasets=False)
             qc_indicators = configuration["qc_indicators"]
             quickcharts = {
                 "hashtag": "#indicator+code",
@@ -641,3 +751,57 @@ class TestWHO:
                 assert showcase == Showcase(
                     {"name": "who-data-for-afghanistan-showcase"}
                 )
+
+    def test_generate_archived_dataset(
+        self, configuration, retriever, tmp_path
+    ):
+        configuration = Configuration.read()
+        with Database(
+            dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
+        ) as session:
+            who = WHO(configuration, retriever, tmp_path, session)
+            who.populate_db(populate_db=True, create_archived_datasets=True)
+            dataset = who.generate_archived_dataset(TestWHO.country)
+            assert dataset == {
+                "archived": True,
+                "data_update_frequency": "-1",
+                "dataset_date": "[2014-01-01T00:00:00 TO 2016-12-31T23:59:59]",
+                "groups": [{"name": "afg"}],
+                "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
+                "name": "who-historical-data-for-afg",
+                "notes": "This dataset contains historical data from WHO's [data "
+                "portal](https://www.who.int/gho/en/).",
+                "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
+                "subnational": "0",
+                "tags": [
+                    {
+                        "name": "hxl",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                    },
+                    {
+                        "name": "indicators",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                    },
+                    {
+                        "name": "disability",
+                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
+                    },
+                ],
+                "title": "Afghanistan - Historical Health Indicators",
+            }
+
+            resources = dataset.get_resources()
+            assert resources == [
+                {
+                    "description": "Historical health indicators no longer updated by WHO",
+                    "format": "csv",
+                    "name": "All Historical Health Indicators for Afghanistan",
+                    "resource_type": "file.upload",
+                    "url_type": "upload",
+                }
+            ]
+
+            filename = "historical_health_indicators_afg.csv"
+            assert_files_same(
+                join("tests", "fixtures", filename), join(tmp_path, filename)
+            )
