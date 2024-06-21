@@ -145,7 +145,7 @@ def upload_dataset(who, country, quickcharts, qc_indicators, info):
     )
     dataset.create_in_hdx(
         remove_additional_resources=True,
-        match_resource_order=True,
+        match_resource_order=False,
         hxl_update=False,
         updated_by_script="HDX Scraper: WHO",
         batch=info["batch"],
