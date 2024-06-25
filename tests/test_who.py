@@ -488,7 +488,6 @@ class TestWHO:
             "indicator_url": None,
         },
     )
-    tags = ["disability"]
     categories = OrderedDict(
         [
             (
@@ -565,7 +564,7 @@ class TestWHO:
             )
             assert dataset == {
                 "data_update_frequency": "30",
-                "dataset_date": "[2005-01-01T00:00:00 TO 2019-12-31T23:59:59]",
+                "dataset_date": "[1992-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-data-for-afghanistan",
@@ -780,10 +779,6 @@ class TestWHO:
                     },
                     {
                         "name": "indicators",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "disability",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],
