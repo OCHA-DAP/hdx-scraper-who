@@ -432,7 +432,7 @@ class WHO:
                 self._folder,
                 filename,
                 resourcedata,
-                date_function=_yearcol_function,
+                date_function=None,
                 quickcharts=None,
             )
 
@@ -471,7 +471,7 @@ class WHO:
                 self._folder,
                 filename,
                 resourcedata,
-                date_function=None,
+                date_function=_yearcol_function,
                 quickcharts=quickcharts,
             )
         )
