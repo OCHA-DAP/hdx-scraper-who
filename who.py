@@ -334,7 +334,7 @@ class WHO:
         title = f"{country_name} - Health Indicators"
 
         logger.info(f"Creating dataset: {title}")
-        slugified_name = slugify(f"WHO data for {country_name}").lower()
+        slugified_name = slugify(f"WHO data for {country_iso3}").lower()
 
         # Get unique category names
 
