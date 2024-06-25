@@ -107,7 +107,7 @@ def generate_dataset_and_showcase(
         return None, None, None
     title = f"{countryname} - Health Indicators"
     logger.info(f"Creating dataset: {title}")
-    slugified_name = slugify(f"WHO data for {countryname}").lower()
+    slugified_name = slugify(f"WHO data for {countryiso}").lower()
     cat_str = ", ".join(indicators)
     dataset = Dataset(
         {
