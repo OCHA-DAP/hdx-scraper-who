@@ -22,7 +22,6 @@ from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 from sqlalchemy import false, insert, true
-from sqlalchemy.sql.elements import False_, True_
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -210,42 +209,54 @@ class WHO:
                 indicator_row.to_archive = False
             self._session.commit()
 
-    def _create_tags(self, country_iso3: str, to_archive: [True_, False_]):
+    def _create_tags(self, country_iso3: str, to_archive: bool):
         """Use category titles to create tags"""
+        base_tags = ["hxl", "indicators"]
+        if to_archive:
+            return base_tags
         tags = []
         replacements = {"(": "", ")": "", "/": "", ",": ""}
 
-        result = (
-            self._session.query(DBCategories.title)
-            .join(
-                DBIndicators,
-                DBIndicators.code == DBCategories.indicator_code,
+        # This is done in a roundabout way for speed, doing it as a single sql
+        # query is very slow
+        country_category_names = []
+        all_category_names = [
+            row.title
+            for row in self._session.query(DBCategories.title).distinct().all()
+        ]
+        for category_name in all_category_names:
+            data_exists = (
+                self._session.query(DBIndicatorData)
+                .join(
+                    DBIndicators,
+                    DBIndicators.code == DBIndicatorData.indicator_code,
+                )
+                .join(
+                    DBCategories,
+                    DBCategories.indicator_code == DBIndicators.code,
+                )
+                .filter(DBCategories.title == category_name)
+                .filter(DBIndicatorData.country_code == country_iso3)
+                .filter(DBIndicators.to_archive.is_(false()))
+                .first()
             )
-            .join(
-                DBIndicatorData,
-                DBIndicatorData.indicator_code == DBIndicators.code,
-            )
-            .filter(DBIndicatorData.country_code == country_iso3)
-            .filter(DBIndicators.to_archive.is_(False))
-            .distinct()
-            .all()
-        )
-        for category_row in result:
-            category_title = category_row.title
-            if " and " in category_title:
-                tag_names = category_title.split(" and ")
+            if data_exists:
+                country_category_names.append(category_name)
+        for category_name in country_category_names:
+            if " and " in category_name:
+                tag_names = category_name.split(" and ")
                 for tag_name in tag_names:
                     tags.append(
                         multiple_replace(tag_name.strip(), replacements)
                     )
             else:
                 tags.append(
-                    multiple_replace(category_title.strip(), replacements)
+                    multiple_replace(category_name.strip(), replacements)
                 )
 
         tags = list(OrderedDict.fromkeys(tags).keys())
         tags, _ = Vocabulary.get_mapped_tags(tags)
-        tags = ["hxl", "indicators"] + tags
+        tags = base_tags + tags
         return tags
 
     def _populate_indicator_data_db(self, create_archived_datasets: bool):
@@ -376,14 +387,14 @@ class WHO:
         except HDXError:
             logger.error(f"Couldn't find country {country_iso3}, skipping")
             return None, None, None
-        tags = self._create_tags(country_iso3=country_iso3, to_archive=false())
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=False)
         dataset.add_tags(tags)
 
         # Loop through categories and generate resource for each
         for category_name in category_names:
             logger.info(f"Category: {category_name}")
 
-            all_indicator_data_rows = (
+            all_rows_for_category = (
                 self._session.query(DBIndicatorData)
                 .join(
                     DBIndicators,
@@ -401,7 +412,7 @@ class WHO:
             )
 
             category_data = [
-                _parse_indicator_row(row) for row in all_indicator_data_rows
+                _parse_indicator_row(row) for row in all_rows_for_category
             ]
             indicator_links = [
                 f"[{row.title}]({row.url})"
@@ -525,7 +536,7 @@ class WHO:
         except HDXError:
             logger.error(f"Couldn't find country {country_iso3}, skipping")
             return None
-        tags = self._create_tags(country_iso3=country_iso3, to_archive=true())
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=True)
         dataset.add_tags(tags)
 
         # Create the dataset with all indicators
