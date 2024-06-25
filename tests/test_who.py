@@ -488,7 +488,6 @@ class TestWHO:
             "indicator_url": None,
         },
     )
-    tags = ["disability"]
     categories = OrderedDict(
         [
             (

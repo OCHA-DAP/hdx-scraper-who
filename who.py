@@ -22,6 +22,7 @@ from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
 from sqlalchemy import false, insert, true
+from sqlalchemy.sql.elements import False_, True_
 
 from database.db_categories import DBCategories
 from database.db_dimension_values import DBDimensionValues
@@ -61,7 +62,6 @@ class WHO:
         self._folder = folder
         self._session = session
         self._dimension_value_names_dict = dict()
-        self._tags = list()
 
     def populate_db(self, populate_db: bool, create_archived_datasets: bool):
         """Populate the database and create convenience dictionaries and
@@ -81,7 +81,6 @@ class WHO:
         if populate_db:
             self._populate_categories_and_indicators_db()
             self._populate_indicator_data_db(create_archived_datasets)
-        self._create_tags()
 
     def get_countries(self):
         """Public method that returns countries in the format required
@@ -211,11 +210,26 @@ class WHO:
                 indicator_row.to_archive = False
             self._session.commit()
 
-    def _create_tags(self):
+    def _create_tags(self, country_iso3: str, to_archive: [True_, False_]):
         """Use category titles to create tags"""
         tags = []
         replacements = {"(": "", ")": "", "/": "", ",": ""}
-        result = self._session.query(DBCategories).all()
+
+        result = (
+            self._session.query(DBCategories.title)
+            .join(
+                DBIndicators,
+                DBIndicators.code == DBCategories.indicator_code,
+            )
+            .join(
+                DBIndicatorData,
+                DBIndicatorData.indicator_code == DBIndicators.code,
+            )
+            .filter(DBIndicatorData.country_code == country_iso3)
+            .filter(DBIndicators.to_archive.is_(False))
+            .distinct()
+            .all()
+        )
         for category_row in result:
             category_title = category_row.title
             if " and " in category_title:
@@ -231,8 +245,8 @@ class WHO:
 
         tags = list(OrderedDict.fromkeys(tags).keys())
         tags, _ = Vocabulary.get_mapped_tags(tags)
-
-        self._tags = tags
+        tags = ["hxl", "indicators"] + tags
+        return tags
 
     def _populate_indicator_data_db(self, create_archived_datasets: bool):
         for db_row in self._session.query(DBIndicators).all():
@@ -337,7 +351,6 @@ class WHO:
         slugified_name = slugify(f"WHO data for {country_name}").lower()
 
         # Get unique category names
-
         category_names = [
             row.title
             for row in self._session.query(DBCategories.title).distinct().all()
@@ -363,9 +376,8 @@ class WHO:
         except HDXError:
             logger.error(f"Couldn't find country {country_iso3}, skipping")
             return None, None, None
-        alltags = ["hxl", "indicators"]
-        alltags.extend(self._tags)
-        dataset.add_tags(alltags)
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=false())
+        dataset.add_tags(tags)
 
         # Loop through categories and generate resource for each
         for category_name in category_names:
@@ -480,7 +492,7 @@ class WHO:
             country_iso3,
             country_name,
             slugified_name,
-            alltags,
+            tags,
         )
         return dataset, showcase, bites_disabled
 
@@ -513,9 +525,8 @@ class WHO:
         except HDXError:
             logger.error(f"Couldn't find country {country_iso3}, skipping")
             return None
-        alltags = ["hxl", "indicators"]
-        alltags.extend(self._tags)
-        dataset.add_tags(alltags)
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=true())
+        dataset.add_tags(tags)
 
         # Create the dataset with all indicators
 
