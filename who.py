@@ -6,9 +6,11 @@ WHO:
 Reads WHO API and creates datasets
 
 """
+
 import logging
 from collections import OrderedDict
-from time import sleep
+from datetime import datetime
+from urllib.parse import quote
 
 from hdx.data.dataset import Dataset
 from hdx.data.hdxobject import HDXError
@@ -17,291 +19,592 @@ from hdx.data.vocabulary import Vocabulary
 from hdx.location.country import Country
 from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
-from hdx.utilities.dictandlist import dict_of_lists_add
 from hdx.utilities.text import multiple_replace
 from slugify import slugify
+from sqlalchemy import false, insert, true
+
+from database.db_categories import DBCategories
+from database.db_dimension_values import DBDimensionValues
+from database.db_dimensions import DBDimensions
+from database.db_indicator_data import DBIndicatorData
+from database.db_indicators import DBIndicators
 
 logger = logging.getLogger(__name__)
 
-hxlate = "&header-row=1&tagger-match-all=on&tagger-01-header=gho+%28code%29&tagger-01-tag=%23indicator%2Bcode&tagger-02-header=gho+%28display%29&tagger-02-tag=%23indicator%2Bname&tagger-03-header=gho+%28url%29&tagger-03-tag=%23indicator%2Burl&tagger-05-header=datasource+%28display%29&tagger-05-tag=%23meta%2Bsource&tagger-07-header=publishstate+%28code%29&tagger-07-tag=%23status%2Bcode&tagger-08-header=publishstate+%28display%29&tagger-08-tag=%23status%2Bname&tagger-11-header=year+%28display%29&tagger-11-tag=%23date%2Byear&tagger-13-header=region+%28code%29&tagger-13-tag=%23region%2Bcode&tagger-14-header=region+%28display%29&tagger-14-tag=%23region%2Bname&tagger-16-header=country+%28code%29&tagger-16-tag=%23country%2Bcode&tagger-17-header=country+%28display%29&tagger-17-tag=%23country%2Bname&tagger-19-header=sex+%28code%29&tagger-19-tag=%23sex%2Bcode&tagger-20-header=sex+%28display%29&tagger-20-tag=%23sex%2Bname&tagger-23-header=numeric&tagger-23-tag=%23indicator%2Bvalue%2Bnum&filter01=sort&sort-tags01=%23indicator%2Bcode%2C%23date%2Byear%2C%23sex%2Bcode"
-hxltags = {
-    "GHO (CODE)": "#indicator+code",
-    "GHO (DISPLAY)": "#indicator+name",
-    "GHO (URL)": "#indicator+url",
-    "DATASOURCE (DISPLAY)": "#meta+source",
-    "PUBLISHSTATE (CODE)": "#status+code",
-    "PUBLISHSTATE (DISPLAY)": "#status+name",
-    "YEAR (DISPLAY)": "#date+year",
-    "STARTYEAR": "#date+year+start",
-    "ENDYEAR": "#date+year+end",
-    "REGION (CODE)": "#region+code",
-    "REGION (DISPLAY)": "#region+name",
-    "COUNTRY (CODE)": "#country+code",
-    "COUNTRY (DISPLAY)": "#country+name",
-    "SEX (CODE)": "#sex+code",
-    "SEX (DISPLAY)": "#sex+name",
-    "Numeric": "#indicator+value+num",
-}
-indicator_limit = 200
+_BATCH_SIZE = 1000
 
 
-def get_indicators_and_tags(base_url, retriever):
-    indicators = OrderedDict()
-    tags = list()
-    json = retriever.download_json(f"{base_url}api/GHO?format=json")
-    result = json["dimension"][0]["code"]
-
-    replacements = {"(": "", ")": "", "/": ""}
-    for indicator in result:
-        indicator_code = indicator["label"]
-        if indicator_code[-9:] == "_ARCHIVED":
-            continue
-        category = None
-        for attr in indicator["attr"]:
-            if attr["category"] == "CATEGORY":
-                category = attr["value"]
-        if category is None:
-            continue
-        dict_of_lists_add(
-            indicators,
-            category,
-            (indicator_code, indicator["display"], indicator["url"]),
-        )
-        if " and " in category:
-            tag_names = category.split(" and ")
-            for tag_name in tag_names:
-                tags.append(multiple_replace(tag_name.strip(), replacements))
-        else:
-            tags.append(multiple_replace(category.strip(), replacements))
-    for category in indicators:
-        indicators[category] = list(OrderedDict.fromkeys(indicators[category]).keys())
-    tags = list(OrderedDict.fromkeys(tags).keys())
-    tags, _ = Vocabulary.get_mapped_tags(tags)
-    return indicators, tags
-
-
-def get_countries(base_url, retriever):
-    json = retriever.download_json(f"{base_url}api/COUNTRY?format=json")
-    return json["dimension"][0]["code"]
-
-
-class RowError(Exception):
-    pass
-
-
-def generate_dataset_and_showcase(
-    base_url, folder, country, indicators, tags, qc_indicators, retriever
-):
-    """
-    http://apps.who.int/gho/athena/api/GHO/WHOSIS_000001.csv?filter=COUNTRY:BWA&profile=verbose
-    """
-    countryiso = country["label"]
-    for attr in country["attr"]:
-        if attr["category"] == "ISO":
-            countryiso = attr["value"]
-    countryname = Country.get_country_name_from_iso3(countryiso)
-    if countryname is None:
-        logger.warning(
-            f"Ignoring ISO3 {country['display']} (WHO name: {countryiso}) for which HDX country name not found!"
-        )
-        return None, None, None
-    title = f"{countryname} - Health Indicators"
-    logger.info(f"Creating dataset: {title}")
-    slugified_name = slugify(f"WHO data for {countryname}").lower()
-    cat_str = ", ".join(indicators)
-    dataset = Dataset(
-        {
-            "name": slugified_name,
-            "notes": "Contains data from World Health Organization's [data portal](https://www.who.int/gho/en/) covering the following categories:  \n"
-            f"{cat_str}  \n  \nFor links to individual indicator metadata, see resource descriptions.",
-            "title": title,
-        }
-    )
-    try:
-        dataset.add_country_location(countryiso)
-    except HDXError as e:
-        logger.exception(f"{countryname} has a problem! {e}")
-        return None, None, None
-    dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
-    dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
-    dataset.set_expected_update_frequency("Every month")
-    dataset.set_subnational(False)
-    alltags = ["hxl", "indicators"]
-    alltags.extend(tags)
-    dataset.add_tags(alltags)
-
-    def process_row(_, row):
-        if "PUBLISHSTATE (CODE)" not in row:
-            raise RowError("No PUBLISHSTATE (CODE)!")
-        publishstate = row["PUBLISHSTATE (CODE)"]
-        if publishstate is None:
-            return None
-        if "VOID" in publishstate:
-            return None
-        return row
-
-    def process_date(row):
-        year = row["YEAR (DISPLAY)"]
-        result = dict()
-        if not year:
-            return result
-        if "-" in year:
-            yearrange = year.split("-")
-            startyear = yearrange[0]
-            endyear = yearrange[1]
-            startdate, _ = parse_date_range(startyear)
-            _, enddate = parse_date_range(endyear)
-            row["STARTYEAR"] = int(startyear)
-            row["ENDYEAR"] = int(endyear)
-        else:
-            startdate, enddate = parse_date_range(year)
-            year = int(year)
-            row["STARTYEAR"] = year
-            row["ENDYEAR"] = year
-        result["startdate"] = startdate
-        result["enddate"] = enddate
-        return result
-
-    all_rows = list()
-    qc_all_rows = list()
-    insertions = [(13, "ENDYEAR"), (13, "STARTYEAR")]
-    values = [x["code"] for x in qc_indicators]
-    quickcharts = {
-        "hashtag": "#indicator+code",
-        "values": values,
-        "numeric_hashtag": "#indicator+value+num",
-        "cutdown": 1,
-        "cutdownhashtags": [
-            "#indicator+code",
-            "#country+code",
-            "#date+year+end",
-            "#sex+name",
-        ],
+class WHO:
+    hxltags = {
+        "GHO (CODE)": "#indicator+code",
+        "GHO (DISPLAY)": "#indicator+name",
+        "GHO (URL)": "#indicator+url",
+        "YEAR (DISPLAY)": "#date+year",
+        "STARTYEAR": "#date+year+start",
+        "ENDYEAR": "#date+year+end",
+        "REGION (CODE)": "#region+code",
+        "REGION (DISPLAY)": "#region+name",
+        "COUNTRY (CODE)": "#country+code",
+        "COUNTRY (DISPLAY)": "#country+name",
+        "DIMENSION (TYPE)": "#dimension+type",
+        "DIMENSION (CODE)": "#dimension+code",
+        "DIMENSION (NAME)": "#dimension+name",
+        "Numeric": "#indicator+value+num",
+        "Value": "#indicator+value",
+        "Low": "#indicator+value+low",
+        "High": "#indicator+value+high",
     }
-    headers = None
-    qcheaders = None
-    bites_disabled = [True, True, True]
-    for category in indicators:
-        logger.info(f"Category: {category}")
-        indicator_codes = list()
-        indicator_links = list()
-        for indicator_code, indicator_name, indicator_url in indicators[category]:
-            indicator_codes.append(indicator_code)
-            indicator_links.append(f"[{indicator_name}]({indicator_url})")
-        category_link = f"*{category}:*\n{', '.join(indicator_links)}"
-        slugified_category = slugify(category, separator="_")
-        filename = f"{slugified_category}_indicators_{countryiso}.csv"
-        resourcedata = {
-            "name": f"{category} Indicators for {countryname}",
-            "description": category_link,
+
+    def __init__(self, configuration, retriever, folder, session):
+        self._configuration = configuration
+        self._retriever = retriever
+        self._folder = folder
+        self._session = session
+        self._dimension_value_names_dict = dict()
+
+    def populate_db(self, populate_db: bool, create_archived_datasets: bool):
+        """Populate the database and create convenience dictionaries and
+        lists
+
+        Args:
+            populate_db (bool): populate the database
+
+        Returns:
+            None
+        """
+        if populate_db:
+            self._populate_dimensions_db()
+        # This dictionary is needed for populating the other DBs
+        self._create_dimension_value_names_dict()
+        self._create_countries_dict()
+        if populate_db:
+            self._populate_categories_and_indicators_db()
+            self._populate_indicator_data_db(create_archived_datasets)
+
+    def get_countries(self):
+        """Public method that returns countries in the format required
+        for progress_starting_folder"""
+        return [
+            {"Code": country_iso3}
+            for country_iso3 in self._countries_dict.keys()
+        ]
+
+    def _populate_dimensions_db(self):
+        """The main API only provides the dimension codes. This method
+        queries the dimensions in the API to get their names, that can
+        be used for quickcharts, etc."""
+        logger.info("Populating dimensions DB")
+        dimensions_url = f"{self._configuration['base_url']}api/dimension"
+        dimensions_result = self._retriever.download_json(dimensions_url)[
+            "value"
+        ]
+        for dimensions_row in dimensions_result:
+            dimension_code = dimensions_row["Code"]
+            dimension_title = dimensions_row["Title"]
+
+            db_dimensions_row = DBDimensions(
+                code=dimension_code, title=dimension_title
+            )
+            self._session.add(db_dimensions_row)
+            self._session.commit()
+            dimension_values_url = (
+                f"{self._configuration['base_url']}api/DIMENSION/"
+                f"{dimension_code}/DimensionValues"
+            )
+            dimension_values_result = self._retriever.download_json(
+                dimension_values_url
+            )["value"]
+            for dimension_values_row in dimension_values_result:
+                db_dimension_values_row = DBDimensionValues(
+                    code=dimension_values_row["Code"],
+                    title=dimension_values_row["Title"],
+                    dimension_code=dimension_code,
+                )
+                self._session.add(db_dimension_values_row)
+            self._session.commit()
+        logger.info("Done populating dimensions DB")
+
+    def _create_dimension_value_names_dict(self):
+        results = self._session.query(DBDimensionValues).all()
+        self._dimension_value_names_dict = {
+            row.code: row.title for row in results
         }
-        indicator_list_len = len(indicator_codes)
-        tries = 0
-        error = False
-        while tries < 5:
-            i = 0
-            rows = []
-            while i < indicator_list_len:
-                ie = min(i + indicator_limit, indicator_list_len)
-                ic_str = ",".join(indicator_codes[i:ie])
-                url = f"{base_url}data/data-verbose.csv?target=GHO/{ic_str}&filter=COUNTRY:{countryiso}&profile=verbose"
-                ind_filename = filename.replace(".csv", f"_{i}.csv")
-                fileheaders, iterator = retriever.get_tabular_rows(
-                    url,
-                    dict_form=True,
-                    filename=ind_filename,
-                    header_insertions=insertions,
-                    row_function=process_row,
-                    format="csv",
-                    encoding="utf-8",
+
+    def _create_countries_dict(self):
+        results = self._session.query(DBDimensionValues).filter(
+            DBDimensionValues.dimension_code == "COUNTRY"
+        )
+
+        self._countries_dict = {
+            row.code: Country.get_country_name_from_iso3(row.code)
+            for row in results
+        }
+
+    def _populate_categories_and_indicators_db(self):
+        # Get the indicator results
+        indicator_url = f"{self._configuration['base_url']}api/indicator"
+        indicator_result = self._retriever.download_json(indicator_url)[
+            "value"
+        ]
+
+        # Loop through all indicators and add to table, checking for duplicates
+        for indicator_row in indicator_result:
+            db_indicators_row = DBIndicators(
+                code=indicator_row["IndicatorCode"],
+                title=indicator_row["IndicatorName"],
+            )
+            self._session.add(db_indicators_row)
+        self._session.commit()
+
+        # Get the category results
+        category_url = (
+            f"{self._configuration['category_url']}"
+            f"GHO_MODEL/SF_HIERARCHY_INDICATORS"
+        )
+        category_result = self._retriever.download_json(category_url)["value"]
+
+        # Loop through categories and add to category DB table, also
+        # add indicator URL to indicator.
+        for category_row in category_result:
+            # Some indicator codes have "\t" in them on the category page
+            # which isn't present in the indicator page, such as RADON_Q602,
+            # so need to .strip()
+            indicator_code = category_row["INDICATOR_CODE"].strip()
+            indicator_url = f"https://www.who.int/data/gho/data/indicators/indicator-details/GHO/{quote(category_row['INDICATOR_URL_NAME'])}"
+            category_title = category_row["THEME_TITLE"]
+
+            # Add the category to the table
+            # Categories can repeat but should be unique in combination with
+            # the indicator code, together the title and indicator code make the PK
+            category_plus_indicator_exists = (
+                self._session.query(DBCategories)
+                .filter_by(title=category_title, indicator_code=indicator_code)
+                .first()
+            )
+            if category_plus_indicator_exists:
+                logger.warning(
+                    f"Category {category_title} with indicator {indicator_code} already exists, skipping"
                 )
-                rows.extend(list(iterator))
-                i += indicator_limit
-            try:
-                success, results = dataset.generate_resource_from_iterator(
-                    fileheaders,
-                    rows,
-                    hxltags,
-                    folder,
-                    filename,
-                    resourcedata,
-                    date_function=process_date,
-                    quickcharts=quickcharts,
+                continue
+
+            db_categories_row = DBCategories(
+                title=category_title, indicator_code=indicator_code
+            )
+            self._session.add(db_categories_row)
+            self._session.commit()
+            # Add URL to indicator
+            indicator_row = (
+                self._session.query(DBIndicators)
+                .filter(DBIndicators.code == indicator_code)
+                .first()
+            )
+            if not indicator_row:
+                logger.warning(
+                    f"Indicator code {indicator_code} was not found on the "
+                    f"indicators page"
                 )
-                error = False
-                break
-            except RowError:
-                logger.warning("No PUBLISHSTATE (CODE)!")
-                error = True
-                sleep(600)
-        if error is True:
-            raise HDXError("WHO API has a problem!")
-        if success is True:
-            if len(all_rows) == 0:
-                headers = fileheaders
-                qcheaders = results["qcheaders"]
-                all_rows.extend(results["rows"])
-                qc_all_rows.extend(results["qcrows"])
+                continue
             else:
-                all_rows.extend(results["rows"][1:])
-                qc_all_rows.extend(results["qcrows"][1:])
-            for i, bite_disabled in enumerate(results["bites_disabled"]):
-                if bite_disabled is False:
-                    bites_disabled[i] = False
-    if len(all_rows) == 0:
-        logger.error(f"{countryname} has no data!")
-        return None, None, None
+                indicator_row.url = indicator_url
+                indicator_row.to_archive = False
+            self._session.commit()
 
-    filename = f"health_indicators_{countryiso}.csv"
-    resourcedata = {
-        "name": f"All Health Indicators for {countryname}",
-        "description": "See resource descriptions below for links to indicator metadata",
-    }
-    dataset.generate_resource_from_rows(
-        folder, filename, all_rows, resourcedata, headers
-    )
+    def _create_tags(self, country_iso3: str, to_archive: bool):
+        """Use category titles to create tags"""
+        base_tags = ["hxl", "indicators"]
+        if to_archive:
+            return base_tags
+        tags = []
+        replacements = {"(": "", ")": "", "/": "", ",": ""}
 
-    resources = dataset.get_resources()
-    resources.insert(0, resources.pop())
+        # This is done in a roundabout way for speed, doing it as a single sql
+        # query is very slow
+        country_category_names = []
+        all_category_names = [
+            row.title
+            for row in self._session.query(DBCategories.title).distinct().all()
+        ]
+        for category_name in all_category_names:
+            data_exists = (
+                self._session.query(DBIndicatorData)
+                .join(
+                    DBIndicators,
+                    DBIndicators.code == DBIndicatorData.indicator_code,
+                )
+                .join(
+                    DBCategories,
+                    DBCategories.indicator_code == DBIndicators.code,
+                )
+                .filter(DBCategories.title == category_name)
+                .filter(DBIndicatorData.country_code == country_iso3)
+                .filter(DBIndicators.to_archive.is_(false()))
+                .first()
+            )
+            if data_exists:
+                country_category_names.append(category_name)
+        for category_name in country_category_names:
+            if " and " in category_name:
+                tag_names = category_name.split(" and ")
+                for tag_name in tag_names:
+                    tags.append(
+                        multiple_replace(tag_name.strip(), replacements)
+                    )
+            else:
+                tags.append(
+                    multiple_replace(category_name.strip(), replacements)
+                )
 
-    filename = f"qc_health_indicators_{countryiso}.csv"
-    resourcedata = {
-        "name": f"QuickCharts Indicators for {countryname}",
-        "description": "Cut down data for QuickCharts",
-    }
-    dataset.generate_resource_from_rows(
-        folder, filename, qc_all_rows, resourcedata, qcheaders
-    )
+        tags = list(OrderedDict.fromkeys(tags).keys())
+        tags, _ = Vocabulary.get_mapped_tags(tags)
+        tags = base_tags + tags
+        return tags
 
-    isolower = countryiso.lower()
+    def _populate_indicator_data_db(self, create_archived_datasets: bool):
+        for db_row in self._session.query(DBIndicators).all():
+            indicator_name = db_row.title
+            indicator_url = db_row.url
+            indicator_code = db_row.code
+            to_archive = db_row.to_archive
 
-    showcase = get_showcase(
-        retriever,
-        isolower,
-        countryname,
-        slugified_name,
-        alltags,
-    )
-    return dataset, showcase, bites_disabled
+            # If we're not creating the archived datasets,
+            # save time by not downloading and populating
+            # the outdated indicators (there are thousands)
+            if to_archive and not create_archived_datasets:
+                continue
 
+            logger.info(f"Downloading file for indicator {indicator_name}")
+            base_url = self._configuration["base_url"]
+            url = f"{base_url}api/{indicator_code}"
+            try:
+                indicator_json = self._retriever.download_json(url)
+            except (DownloadError, FileNotFoundError):
+                logger.warning(f"{url} has no data")
+                continue
+            logger.info(f"Populating DB for indicator {indicator_name}")
 
-def get_showcase(retriever, country_iso3, country_name, slugified_name, alltags):
-    try:
-        lower_iso3 = country_iso3.lower()
-        url = f"https://www.who.int/countries/{lower_iso3}/en/"
-        retriever.download_file(url)
-        showcase = Showcase(
+            batch = []
+            irow = 0
+            for row in indicator_json["value"]:
+                if row["SpatialDimType"] != "COUNTRY":
+                    continue
+                country_iso3 = row["SpatialDim"]
+                country_name = self._countries_dict[country_iso3]
+                startyear = datetime.fromisoformat(
+                    row["TimeDimensionBegin"]
+                ).strftime("%Y")
+                endyear = datetime.fromisoformat(
+                    row["TimeDimensionEnd"]
+                ).strftime("%Y")
+                db_indicators_row = dict(
+                    id=row["Id"],
+                    indicator_code=indicator_code,
+                    indicator_name=indicator_name,
+                    indicator_url=indicator_url,
+                    year=row["TimeDim"],
+                    start_year=startyear,
+                    end_year=endyear,
+                    region_code=row["ParentLocationCode"],
+                    region_display=row["ParentLocation"],
+                    country_code=country_iso3,
+                    country_display=country_name,
+                    dimension_type=row["Dim1Type"],
+                    dimension_code=row["Dim1"],
+                    dimension_name=self._dimension_value_names_dict.get(
+                        row["Dim1"]
+                    ),
+                    numeric=row["NumericValue"],
+                    value=row["Value"],
+                    low=row["Low"],
+                    high=row["High"],
+                )
+                batch.append(db_indicators_row)
+                irow += 1
+                if len(batch) >= _BATCH_SIZE:
+                    logger.info(f"Added {irow} rows")
+                    self._session.execute(insert(DBIndicatorData), batch)
+                    batch = []
+            if batch:
+                self._session.execute(insert(DBIndicatorData), batch)
+            self._session.commit()
+            logger.info(f"Done indicator {indicator_name}")
+
+    @staticmethod
+    def get_showcase(
+        retriever, country_iso3, country_name, slugified_name, alltags
+    ):
+        try:
+            lower_iso3 = country_iso3.lower()
+            url = f"https://www.who.int/countries/{lower_iso3}/en/"
+            retriever.download_file(url)
+            showcase = Showcase(
+                {
+                    "name": f"{slugified_name}-showcase",
+                    "title": f"Indicators for {country_name}",
+                    "notes": f"Health indicators for {country_name}",
+                    "url": url,
+                    "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/{lower_iso3}.jpg",
+                }
+            )
+            showcase.add_tags(alltags)
+            return showcase
+        except DownloadError:
+            # If the showcase URL doesn't exist, only return the showcase id
+            # so that it can be deleted if needed
+            return Showcase({"name": f"{slugified_name}-showcase"})
+
+    def generate_dataset_and_showcase(self, country, quickcharts):
+        # Setup the dataset information
+        country_iso3 = country["Code"]
+        country_name = self._countries_dict[country_iso3]
+        title = f"{country_name} - Health Indicators"
+
+        logger.info(f"Creating dataset: {title}")
+        slugified_name = slugify(f"WHO data for {country_name}").lower()
+
+        # Get unique category names
+        category_names = [
+            row.title
+            for row in self._session.query(DBCategories.title).distinct().all()
+        ]
+        cat_str = ", ".join(category_names)
+        dataset = Dataset(
             {
-                "name": f"{slugified_name}-showcase",
-                "title": f"Indicators for {country_name}",
-                "notes": f"Health indicators for {country_name}",
-                "url": url,
-                "image_url": f"https://cdn.who.int/media/images/default-source/countries-overview/flags/{lower_iso3}.jpg"
+                "name": slugified_name,
+                "notes": f"This dataset contains data from WHO's "
+                f"[data portal](https://www.who.int/gho/en/) covering "
+                f"the following categories:  \n  \n"
+                f"{cat_str}.  \n  \nFor links to individual indicator "
+                f"metadata, see resource descriptions.",
+                "title": title,
             }
         )
-        showcase.add_tags(alltags)
-        return showcase
-    except DownloadError:
-        # If the showcase URL doesn't exist, only return the showcase id
-        # so that it can be deleted if needed
-        return Showcase({"name": f"{slugified_name}-showcase"})
+        dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
+        dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
+        dataset.set_expected_update_frequency("Every month")
+        dataset.set_subnational(False)
+        try:
+            dataset.add_country_location(country_iso3)
+        except HDXError:
+            logger.error(f"Couldn't find country {country_iso3}, skipping")
+            return None, None, None
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=False)
+        dataset.add_tags(tags)
+
+        # Loop through categories and generate resource for each
+        for category_name in category_names:
+            logger.info(f"Category: {category_name}")
+
+            all_rows_for_category = (
+                self._session.query(DBIndicatorData)
+                .join(
+                    DBIndicators,
+                    DBIndicators.code == DBIndicatorData.indicator_code,
+                )
+                .join(
+                    DBCategories,
+                    DBCategories.indicator_code == DBIndicators.code,
+                )
+                .filter(DBCategories.title == category_name)
+                .filter(DBIndicatorData.country_code == country_iso3)
+                # Create the archived dataset later
+                .filter(DBIndicators.to_archive.is_(false()))
+                .all()
+            )
+
+            category_data = [
+                _parse_indicator_row(row) for row in all_rows_for_category
+            ]
+            indicator_links = [
+                f"[{row.title}]({row.url})"
+                for row in (
+                    self._session.query(DBIndicators)
+                    .join(
+                        DBCategories,
+                        DBCategories.indicator_code == DBIndicators.code,
+                    )
+                    .filter(DBCategories.title == category_name)
+                )
+            ]
+
+            category_link = f"*{category_name}:*\n{', '.join(indicator_links)}"
+            slugified_category = slugify(category_name, separator="_")
+            filename = (
+                f"{slugified_category}_indicators_{country_iso3.lower()}.csv"
+            )
+            resourcedata = {
+                "name": f"{category_name} Indicators for {country_name}",
+                "description": category_link,
+            }
+
+            success, results = dataset.generate_resource_from_iterable(
+                list(self.hxltags.keys()),
+                category_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=None,
+                quickcharts=None,
+            )
+
+            if not success:
+                logger.error(
+                    f"Resource for category {category_name} failed:"
+                    f"{results}"
+                )
+
+        # Create the dataset with all indicators
+
+        filename = f"health_indicators_{country_iso3.lower()}.csv"
+        resourcedata = {
+            "name": f"All Health Indicators for {country_name}",
+            "description": "See resource descriptions below for links "
+            "to indicator metadata",
+        }
+        all_rows = (
+            self._session.query(DBIndicatorData)
+            .join(
+                DBIndicators,
+                DBIndicatorData.indicator_code == DBIndicators.code,
+            )
+            .filter(DBIndicatorData.country_code == country_iso3)
+            .filter(DBIndicators.to_archive.is_(false()))
+            .all()
+        )
+
+        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
+
+        success_all_indicators, results_all_indicators = (
+            dataset.generate_resource_from_iterable(
+                list(self.hxltags.keys()),
+                all_indicators_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=_yearcol_function,
+                quickcharts=quickcharts,
+            )
+        )
+
+        if not success_all_indicators:
+            logger.error(f"{country_name} has no data!")
+            return None, None, None
+
+        # Move the "all data" resource to the beginning
+        # TODO: this doesn't appear to work on dev
+        resources = dataset.get_resources()
+        resources.insert(0, resources.pop(-2))
+
+        bites_disabled = results_all_indicators["bites_disabled"]
+
+        showcase = self.get_showcase(
+            self._retriever,
+            country_iso3,
+            country_name,
+            slugified_name,
+            tags,
+        )
+        return dataset, showcase, bites_disabled
+
+    def generate_archived_dataset(self, country):
+        # Setup the dataset information
+        country_iso3 = country["Code"]
+        country_name = self._countries_dict[country_iso3]
+        title = f"{country_name} - Historical Health Indicators"
+
+        logger.info(f"Creating dataset: {title}")
+        slugified_name = slugify(
+            f"WHO historical data for {country_iso3}"
+        ).lower()
+
+        dataset = Dataset(
+            {
+                "name": slugified_name,
+                "notes": "This dataset contains historical data from WHO's "
+                "[data portal](https://www.who.int/gho/en/).",
+                "title": title,
+                "archived": True,
+            }
+        )
+        dataset.set_maintainer("35f7bb2c-4ab6-4796-8334-525b30a94c89")
+        dataset.set_organization("c021f6be-3598-418e-8f7f-c7a799194dba")
+        dataset.set_expected_update_frequency("Never")
+        dataset.set_subnational(False)
+        try:
+            dataset.add_country_location(country_iso3)
+        except HDXError:
+            logger.error(f"Couldn't find country {country_iso3}, skipping")
+            return None
+        tags = self._create_tags(country_iso3=country_iso3, to_archive=True)
+        dataset.add_tags(tags)
+
+        # Create the dataset with all indicators
+
+        filename = f"historical_health_indicators_{country_iso3.lower()}.csv"
+        resourcedata = {
+            "name": f"All Historical Health Indicators for {country_name}",
+            "description": "Historical health indicators no longer updated by WHO",
+        }
+
+        all_rows = (
+            self._session.query(DBIndicatorData)
+            .join(
+                DBIndicators,
+                DBIndicatorData.indicator_code == DBIndicators.code,
+            )
+            .filter(DBIndicatorData.country_code == country_iso3)
+            .filter(DBIndicators.to_archive.is_(true()))
+            .all()
+        )
+        all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
+
+        success_all_indicators, results_all_indicators = (
+            dataset.generate_resource_from_iterable(
+                list(self.hxltags.keys()),
+                all_indicators_data,
+                self.hxltags,
+                self._folder,
+                filename,
+                resourcedata,
+                date_function=_yearcol_function,
+            )
+        )
+
+        if not success_all_indicators:
+            logger.error(f"{country_name} has no data!")
+            return None
+
+        return dataset
+
+
+def _parse_indicator_row(row):
+    return {
+        "GHO (CODE)": row.indicator_code,
+        "GHO (DISPLAY)": row.indicator_name,
+        "GHO (URL)": row.indicator_url,
+        "YEAR (DISPLAY)": row.year,
+        "STARTYEAR": row.start_year,
+        "ENDYEAR": row.end_year,
+        "REGION (CODE)": row.region_code,
+        "REGION (DISPLAY)": row.region_display,
+        "COUNTRY (CODE)": row.country_code,
+        "COUNTRY (DISPLAY)": row.country_display,
+        "DIMENSION (TYPE)": row.dimension_type,
+        "DIMENSION (CODE)": row.dimension_code,
+        "DIMENSION (NAME)": row.dimension_name,
+        "Numeric": row.numeric,
+        "Value": row.value,
+        "Low": row.low,
+        "High": row.high,
+    }
+
+
+def _yearcol_function(row):
+    result = dict()
+    year = row["YEAR (DISPLAY)"]
+    if year:
+        result["startdate"], result["enddate"] = parse_date_range(
+            str(year), date_format="%Y"
+        )
+    return result
