@@ -567,7 +567,7 @@ class TestWHO:
                 "dataset_date": "[1992-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
                 "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
-                "name": "who-data-for-afghanistan",
+                "name": "who-data-for-afg",
                 "notes": "This dataset contains data from WHO's [data "
                 "portal](https://www.who.int/gho/en/) covering the following "
                 "categories:  \n"
@@ -642,7 +642,7 @@ class TestWHO:
 
             assert showcase == {
                 "image_url": "https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
-                "name": "who-data-for-afghanistan-showcase",
+                "name": "who-data-for-afg-showcase",
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
@@ -694,12 +694,12 @@ class TestWHO:
                     retriever,
                     "AFG",
                     "Afghanistan",
-                    "who-data-for-afghanistan",
+                    "who-data-for-afg",
                     ["hxl", "indicators"],
                 )
                 assert showcase == {
                     "image_url": "https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
-                    "name": "who-data-for-afghanistan-showcase",
+                    "name": "who-data-for-afg-showcase",
                     "notes": "Health indicators for Afghanistan",
                     "tags": [
                         {
@@ -718,12 +718,10 @@ class TestWHO:
                     retriever,
                     "ABC",
                     "Afghanistan",
-                    "who-data-for-afghanistan",
+                    "who-data-for-afg",
                     ["hxl", "indicators"],
                 )
-                assert showcase == {
-                    "name": "who-data-for-afghanistan-showcase"
-                }
+                assert showcase == {"name": "who-data-for-afg-showcase"}
 
     def test_showcase_for_nonexistent_url(self, configuration):
         with temp_dir(
@@ -744,11 +742,11 @@ class TestWHO:
                     retriever,
                     "ABC",
                     "Afghanistan",
-                    "who-data-for-afghanistan",
+                    "who-data-for-afg",
                     ["hxl", "indicators"],
                 )
                 assert showcase == Showcase(
-                    {"name": "who-data-for-afghanistan-showcase"}
+                    {"name": "who-data-for-afg-showcase"}
                 )
 
     def test_generate_archived_dataset(
