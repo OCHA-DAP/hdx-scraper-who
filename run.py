@@ -62,7 +62,8 @@ def main(
         if populate_db:
             logger.warning("Populating DB, removing sqlite file if it exists")
             Path(params["database"]).unlink(missing_ok=True)
-        with Database(**params) as session:
+        with Database(**params) as database:
+            session = database.get_session()
             with Download(rate_limit={"calls": 1, "period": 1}) as downloader:
                 retriever = Retrieve(
                     downloader,

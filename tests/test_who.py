@@ -531,7 +531,8 @@ class TestWHO:
         configuration = Configuration.read()
         with Database(
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
-        ) as session:
+        ) as database:
+            session = database.get_session()
             who = WHO(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=False)
             countriesdata = who.get_countries()
@@ -543,7 +544,8 @@ class TestWHO:
         configuration = Configuration.read()
         with Database(
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
-        ) as session:
+        ) as database:
+            session = database.get_session()
             who = WHO(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=False)
             qc_indicators = configuration["qc_indicators"]
@@ -755,7 +757,8 @@ class TestWHO:
         configuration = Configuration.read()
         with Database(
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
-        ) as session:
+        ) as database:
+            session = database.get_session()
             who = WHO(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=True)
             dataset = who.generate_archived_dataset(TestWHO.country)
