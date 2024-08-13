@@ -1,5 +1,6 @@
 ### Collector for WHO's Datasets
-[![Build Status](https://github.com/OCHA-DAP/hdx-scraper-who/workflows/build/badge.svg)](https://github.com/OCHA-DAP/hdx-scraper-who/actions?query=workflow%3Abuild) [![Coverage Status](https://coveralls.io/repos/github/OCHA-DAP/hdx-scraper-who/badge.svg?branch=main&ts=1)](https://coveralls.io/github/OCHA-DAP/hdx-scraper-who?branch=main)
+[![Run tests](https://github.com/OCHA-DAP/hdx-scraper-who/actions/workflows/run-python-tests.yml/badge.svg)](https://github.com/OCHA-DAP/hdx-scraper-who/actions/workflows/run-python-tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/OCHA-DAP/hdx-scraper-who/badge.svg?branch=main&ts=1)](https://coveralls.io/github/OCHA-DAP/hdx-scraper-who?branch=main)
 
 This script connects to the [World Health Organization](http://apps.who.int/gho/data/node.resources.api) and extracts data country by country creating a dataset per country in HDX. It makes around 32000 reads from WHO and then 1000 read/writes (API calls) to HDX in a one hour period. It creates a temporary file of less than 1Mb per country. It runs every month.
 
