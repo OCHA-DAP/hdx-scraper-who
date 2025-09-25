@@ -1,0 +1,3 @@
+# Collector specific configuration
+base_url: "https://ghoapi.azureedge.net/"
+category_url: "https://xmart-api-public.who.int/"

@@ -1,8 +1,8 @@
-from hdx.database import NoTZBase
+from hdx.database.no_timezone import Base as NoTZBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.db_dimensions import DBDimensions  # noqa: F401
+from .db_dimensions import DBDimensions  # noqa: F401
 
 
 class DBDimensionValues(NoTZBase):
