@@ -122,7 +122,9 @@ def upload_dataset(who, country, info):
         return
 
     logger.info(f"Uploading dataset for {country['Code']}")
-    dataset.update_from_yaml()
+    dataset.update_from_yaml(
+        script_dir_plus_file(join("config", "hdx_dataset_static.yaml"), main)
+    )
     dataset.create_in_hdx(
         remove_additional_resources=True,
         match_resource_order=False,
@@ -149,7 +151,9 @@ def upload_archived_dataset(who, country, info):
         return
 
     logger.info(f"Uploading archived dataset for {country['Code']}")
-    archived_dataset.update_from_yaml()
+    archived_dataset.update_from_yaml(
+        script_dir_plus_file(join("config", "hdx_dataset_static.yaml"), main)
+    )
     archived_dataset.create_in_hdx(
         remove_additional_resources=True,
         match_resource_order=False,
