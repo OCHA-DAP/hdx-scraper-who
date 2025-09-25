@@ -1,4 +1,4 @@
-from hdx.database import NoTZBase
+from hdx.database.no_timezone import Base as NoTZBase
 from sqlalchemy.orm import Mapped, mapped_column
 
 

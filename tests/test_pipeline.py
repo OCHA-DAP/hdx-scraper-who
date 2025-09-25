@@ -1,11 +1,11 @@
 #!/usr/bin/python
 """
 Unit tests for WHO.
-
 """
 
 from collections import OrderedDict
 from os.path import join
+from urllib.parse import urlparse
 
 import pytest
 from hdx.api.configuration import Configuration
@@ -17,7 +17,7 @@ from hdx.utilities.downloader import Download
 from hdx.utilities.path import temp_dir
 from hdx.utilities.retriever import Retrieve
 
-from who import WHO
+from hdx.scraper.who.pipeline import Pipeline
 
 
 class MockRetrieve:
@@ -27,7 +27,12 @@ class MockRetrieve:
 
     @staticmethod
     def download_json(url):
-        if url == "https://papa/api/indicator":
+        path = urlparse(url).path.strip("/")
+        if path.lower().startswith("api/"):
+            path = path[4:]  # strip leading 'api/' for azureedge base
+        key = path  # keep original case for comparisons below
+
+        if key == "indicator" or key == "INDICATOR":
             return {
                 "value": [
                     {
@@ -54,7 +59,7 @@ class MockRetrieve:
                     },
                 ]
             }
-        if url == "https://lala/GHO_MODEL/SF_HIERARCHY_INDICATORS":
+        if key == "GHO_MODEL/SF_HIERARCHY_INDICATORS":
             return {
                 "value": [
                     {
@@ -79,9 +84,7 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/DIMENSION/COUNTRY/DimensionValues":
-            return {"value": [TestWHO.country]}
-        elif url == "https://papa/api/dimension":
+        if key == "dimension" or key == "DIMENSION":
             return {
                 "value": [
                     {"Code": "SEX", "Title": "Sex"},
@@ -92,7 +95,9 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/DIMENSION/SEX/DimensionValues":
+        if key == "DIMENSION/COUNTRY/DimensionValues":
+            return {"value": [TestPipeline.country]}
+        if key == "DIMENSION/SEX/DimensionValues":
             return {
                 "value": [
                     {"Code": "SEX_BTSX", "Title": "Both sexes"},
@@ -100,17 +105,14 @@ class MockRetrieve:
                     {"Code": "SEX_MLE", "Title": "Male"},
                 ]
             }
-        elif (
-            url
-            == "https://papa/api/DIMENSION/RESIDENCEAREATYPE/DimensionValues"
-        ):
+        if key == "DIMENSION/RESIDENCEAREATYPE/DimensionValues":
             return {
                 "value": [
                     {"Code": "RESIDENCEAREATYPE_URB", "Title": "Urban"},
                     {"Code": "RESIDENCEAREATYPE_RUR", "Title": "Urban"},
                 ]
             }
-        elif url == "https://papa/api/WHOSIS_000001":
+        if key == "WHOSIS_000001":
             return {
                 "value": [
                     {
@@ -202,7 +204,7 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/MDG_0000000001":
+        if key == "MDG_0000000001":
             return {
                 "value": [
                     {
@@ -288,7 +290,7 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/WSH_SANITATION_BASIC":
+        if key == "WSH_SANITATION_BASIC":
             return {
                 "value": [
                     {
@@ -375,7 +377,7 @@ class MockRetrieve:
                 ]
             }
 
-        elif url == "https://papa/api/TB_1":
+        if key == "TB_1":
             return {
                 "value": [
                     {
@@ -461,15 +463,18 @@ class MockRetrieve:
                     },
                 ]
             }
-        elif url == "https://papa/api/NO_DATA":
+        if key == "NO_DATA":
             raise DownloadError
+
+        # default: no match
+        return None
 
     @staticmethod
     def hxl_row(headers, hxltags, dict_form):
         return {header: hxltags.get(header, "") for header in headers}
 
 
-class TestWHO:
+class TestPipeline:
     indicators = OrderedDict(
         WHOSIS_000001={
             "indicator_name": "Life expectancy at birth (years)",
@@ -497,9 +502,7 @@ class TestWHO:
             ),
             (
                 "World Health Statistics",
-                OrderedDict(
-                    {"WHOSIS_000001": None, "WSH_SANITATION_BASIC": None}
-                ),
+                OrderedDict({"WHOSIS_000001": None, "WSH_SANITATION_BASIC": None}),
             ),
         ]
     )
@@ -513,17 +516,7 @@ class TestWHO:
         "Title": "Afghanistan",
     }
 
-    @pytest.fixture(scope="function")
-    def configuration(self):
-        Configuration._create(
-            hdx_read_only=True,
-            user_agent="test",
-            project_config_yaml=join(
-                "tests", "config", "project_configuration.yaml"
-            ),
-        )
-
-    @pytest.fixture(scope="function")
+    @pytest.fixture
     def retriever(self):
         return MockRetrieve()
 
@@ -533,42 +526,23 @@ class TestWHO:
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as database:
             session = database.get_session()
-            who = WHO(configuration, retriever, tmp_path, session)
+            who = Pipeline(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=False)
             countriesdata = who.get_countries()
             assert countriesdata == [{"Code": "AFG"}]
 
-    def test_generate_dataset_and_showcase(
-        self, configuration, retriever, tmp_path
-    ):
+    def test_generate_dataset_and_showcase(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
         with Database(
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as database:
             session = database.get_session()
-            who = WHO(configuration, retriever, tmp_path, session)
+            who = Pipeline(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=False)
-            qc_indicators = configuration["qc_indicators"]
-            quickcharts = {
-                "hashtag": "#indicator+code",
-                "values": [x["code"] for x in qc_indicators],
-                "numeric_hashtag": "#indicator+value+num",
-                "cutdown": 2,
-                "cutdownhashtags": [
-                    "#indicator+code",
-                    "#country+code",
-                    "#date+year+end",
-                    "#dimension+name",
-                ],
-            }
-            dataset, showcase, bites_disabled = (
-                who.generate_dataset_and_showcase(TestWHO.country, quickcharts)
-            )
+            dataset, showcase = who.generate_dataset_and_showcase(TestPipeline.country)
             assert dataset == {
-                "data_update_frequency": "30",
                 "dataset_date": "[1992-01-01T00:00:00 TO 2019-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
-                "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-data-for-afg",
                 "notes": "This dataset contains data from WHO's [data "
                 "portal](https://www.who.int/gho/en/) covering the following "
@@ -579,21 +553,12 @@ class TestWHO:
                 "  \n"
                 "For links to individual indicator metadata, see resource "
                 "descriptions.",
-                "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
                 "subnational": "0",
                 "tags": [
                     {
                         "name": "hxl",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "indicators",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "disability",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
+                    }
                 ],
                 "title": "Afghanistan - Health Indicators",
             }
@@ -601,12 +566,13 @@ class TestWHO:
             resources = dataset.get_resources()
             assert resources == [
                 {
-                    "description": "See resource descriptions below for links to indicator "
-                    "metadata",
+                    "description": "*World Health Statistics:*\n"
+                    "[Life expectancy at birth "
+                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29), "
+                    "[Population using at least basic sanitation services( "
+                    "%)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-using-at-least-basic-sanitation-services-%28-%29)",
                     "format": "csv",
-                    "name": "All Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
+                    "name": "World Health Statistics Indicators for Afghanistan",
                 },
                 {
                     "description": "*Global Health Estimates: Life expectancy and leading causes "
@@ -619,26 +585,12 @@ class TestWHO:
                     "format": "csv",
                     "name": "Global Health Estimates: Life expectancy and leading causes of "
                     "death and disability Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
                 },
                 {
-                    "description": "*World Health Statistics:*\n"
-                    "[Life expectancy at birth "
-                    "(years)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/life-expectancy-at-birth-%28years%29), "
-                    "[Population using at least basic sanitation services( "
-                    "%)](https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-using-at-least-basic-sanitation-services-%28-%29)",
+                    "description": "See resource descriptions below for links to indicator "
+                    "metadata",
                     "format": "csv",
-                    "name": "World Health Statistics Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
-                },
-                {
-                    "description": "Cut down data for QuickCharts",
-                    "format": "csv",
-                    "name": "QuickCharts-All Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
+                    "name": "All Health Indicators for Afghanistan",
                 },
             ]
 
@@ -651,24 +603,14 @@ class TestWHO:
                         "name": "hxl",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
-                    {
-                        "name": "indicators",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "disability",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
                 ],
                 "title": "Indicators for Afghanistan",
                 "url": "https://www.who.int/countries/afg/en/",
             }
 
-            assert bites_disabled == [False, False, False]
             filename_list = [
                 "global_health_estimates_life_expectancy_and_leading_causes_of_death_and_disability_indicators_afg.csv",
                 "health_indicators_afg.csv",
-                "qc_health_indicators_afg.csv",
                 "world_health_statistics_indicators_afg.csv",
             ]
             for filename in filename_list:
@@ -679,7 +621,7 @@ class TestWHO:
 
     def test_showcase(self, configuration):
         with temp_dir(
-            "TestWHO",
+            "TestWho",
             delete_on_success=True,
             delete_on_failure=False,
         ) as tempdir:
@@ -692,7 +634,7 @@ class TestWHO:
                     save=False,
                     use_saved=False,
                 )
-                showcase = WHO.get_showcase(
+                showcase = Pipeline.get_showcase(
                     retriever,
                     "AFG",
                     "Afghanistan",
@@ -707,16 +649,12 @@ class TestWHO:
                         {
                             "name": "hxl",
                             "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                        },
-                        {
-                            "name": "indicators",
-                            "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                        },
+                        }
                     ],
                     "title": "Indicators for Afghanistan",
                     "url": "https://www.who.int/countries/afg/en/",
                 }
-                showcase = WHO.get_showcase(
+                showcase = Pipeline.get_showcase(
                     retriever,
                     "ABC",
                     "Afghanistan",
@@ -727,7 +665,7 @@ class TestWHO:
 
     def test_showcase_for_nonexistent_url(self, configuration):
         with temp_dir(
-            "TestWHO",
+            "TestWho",
             delete_on_success=True,
             delete_on_failure=False,
         ) as tempdir:
@@ -740,46 +678,36 @@ class TestWHO:
                     save=False,
                     use_saved=False,
                 )
-                showcase = WHO.get_showcase(
+                showcase = Pipeline.get_showcase(
                     retriever,
                     "ABC",
                     "Afghanistan",
                     "who-data-for-afg",
                     ["hxl", "indicators"],
                 )
-                assert showcase == Showcase(
-                    {"name": "who-data-for-afg-showcase"}
-                )
+                assert showcase == Showcase({"name": "who-data-for-afg-showcase"})
 
-    def test_generate_archived_dataset(
-        self, configuration, retriever, tmp_path
-    ):
+    def test_generate_archived_dataset(self, configuration, retriever, tmp_path):
         configuration = Configuration.read()
         with Database(
             dialect="sqlite", database=str(tmp_path / "test_who.sqlite")
         ) as database:
             session = database.get_session()
-            who = WHO(configuration, retriever, tmp_path, session)
+            who = Pipeline(configuration, retriever, tmp_path, session)
             who.populate_db(populate_db=True, create_archived_datasets=True)
-            dataset = who.generate_archived_dataset(TestWHO.country)
+            dataset = who.generate_archived_dataset(TestPipeline.country)
             assert dataset == {
                 "archived": True,
                 "data_update_frequency": "-1",
                 "dataset_date": "[2014-01-01T00:00:00 TO 2016-12-31T23:59:59]",
                 "groups": [{"name": "afg"}],
-                "maintainer": "35f7bb2c-4ab6-4796-8334-525b30a94c89",
                 "name": "who-historical-data-for-afg",
                 "notes": "This dataset contains historical data from WHO's [data "
                 "portal](https://www.who.int/gho/en/).",
-                "owner_org": "c021f6be-3598-418e-8f7f-c7a799194dba",
                 "subnational": "0",
                 "tags": [
                     {
                         "name": "hxl",
-                        "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
-                    },
-                    {
-                        "name": "indicators",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],
@@ -792,8 +720,6 @@ class TestWHO:
                     "description": "Historical health indicators no longer updated by WHO",
                     "format": "csv",
                     "name": "All Historical Health Indicators for Afghanistan",
-                    "resource_type": "file.upload",
-                    "url_type": "upload",
                 }
             ]
 

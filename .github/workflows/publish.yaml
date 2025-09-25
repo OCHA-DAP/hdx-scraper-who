@@ -1,9 +1,8 @@
-name: Build Docker Image
+name: Publish Docker Image
 
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -20,15 +19,12 @@ jobs:
       - name: Tag Info
         id: tag_info
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            export IMAGE_TAG=$(git rev-parse --short HEAD)
-          else
-            export IMAGE_TAG="${GITHUB_REF#refs/*/}"
-            export IMAGE_TAG=${IMAGE_TAG//[^[:alnum:].-]/-}
-          fi
-          echo "Image Tag: ${IMAGE_TAG}"
+          export IMAGE_TAG="${GITHUB_REF#refs/*/}"
+          export IMAGE_TAG=${IMAGE_TAG//[^[:alnum:].-]/-}
           echo ::set-output name=IMAGE_TAG::${IMAGE_TAG}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -48,5 +44,6 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         uses: docker/build-push-action@v6
         with:
+          context: .
           push: true
           tags: public.ecr.aws/unocha/hdx-scraper-who:${{ steps.tag_info.outputs.IMAGE_TAG }}

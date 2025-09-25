@@ -1,0 +1,14 @@
+license_id: "hdx-other"
+license_other: >
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Intergovernmental
+  Organization (CC BY-NC-SA 3.0 IGO). Click
+  [here](https://www.who.int/about/policies/publishing/copyright)
+  for more information.
+methodology: "Registry"
+caveats: "More details about the indicators are available in the links in the dataset description."
+dataset_source: "World Health Organization"
+package_creator: HDX Data Systems Team
+private: False
+maintainer: "35f7bb2c-4ab6-4796-8334-525b30a94c89"
+owner_org: "c021f6be-3598-418e-8f7f-c7a799194dba"
+data_update_frequency: 30
