@@ -42,8 +42,8 @@ _UPDATED_BY_SCRIPT = "HDX Scraper: Who"
 
 def main(
     save: bool = False,
-    use_saved: bool = True,
-    populate_db: bool = False,
+    use_saved: bool = False,
+    populate_db: bool = True,
     create_archived_datasets: bool = False,
 ) -> None:
     """Generate datasets and create them in HDX
