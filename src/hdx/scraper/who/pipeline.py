@@ -17,7 +17,8 @@ from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.retriever import Retrieve
 from slugify import slugify
-from sqlalchemy import false, insert, true
+from sqlalchemy import false, true
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from .database.db_categories import DBCategories
 from .database.db_dimension_values import DBDimensionValues
@@ -306,12 +307,61 @@ class Pipeline:
                 )
                 batch.append(db_indicators_row)
                 irow += 1
+
                 if len(batch) >= _BATCH_SIZE:
                     logger.info(f"Added {irow} rows")
-                    self._session.execute(insert(DBIndicatorData), batch)
+                    stmt = sqlite_insert(DBIndicatorData).values(batch)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["id"],
+                        set_={
+                            "indicator_code": stmt.excluded.indicator_code,
+                            "indicator_name": stmt.excluded.indicator_name,
+                            "indicator_url": stmt.excluded.indicator_url,
+                            "year": stmt.excluded.year,
+                            "start_year": stmt.excluded.start_year,
+                            "end_year": stmt.excluded.end_year,
+                            "region_code": stmt.excluded.region_code,
+                            "region_display": stmt.excluded.region_display,
+                            "country_code": stmt.excluded.country_code,
+                            "country_display": stmt.excluded.country_display,
+                            "dimension_type": stmt.excluded.dimension_type,
+                            "dimension_code": stmt.excluded.dimension_code,
+                            "dimension_name": stmt.excluded.dimension_name,
+                            "numeric": stmt.excluded.numeric,
+                            "value": stmt.excluded.value,
+                            "low": stmt.excluded.low,
+                            "high": stmt.excluded.high,
+                        },
+                    )
+                    self._session.execute(stmt)
                     batch = []
+
             if batch:
-                self._session.execute(insert(DBIndicatorData), batch)
+                stmt = sqlite_insert(DBIndicatorData).values(batch)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={
+                        "indicator_code": stmt.excluded.indicator_code,
+                        "indicator_name": stmt.excluded.indicator_name,
+                        "indicator_url": stmt.excluded.indicator_url,
+                        "year": stmt.excluded.year,
+                        "start_year": stmt.excluded.start_year,
+                        "end_year": stmt.excluded.end_year,
+                        "region_code": stmt.excluded.region_code,
+                        "region_display": stmt.excluded.region_display,
+                        "country_code": stmt.excluded.country_code,
+                        "country_display": stmt.excluded.country_display,
+                        "dimension_type": stmt.excluded.dimension_type,
+                        "dimension_code": stmt.excluded.dimension_code,
+                        "dimension_name": stmt.excluded.dimension_name,
+                        "numeric": stmt.excluded.numeric,
+                        "value": stmt.excluded.value,
+                        "low": stmt.excluded.low,
+                        "high": stmt.excluded.high,
+                    },
+                )
+                self._session.execute(stmt)
+
             self._session.commit()
             logger.info(f"Done indicator {indicator_name}")
 

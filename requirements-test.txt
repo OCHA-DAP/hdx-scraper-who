@@ -223,7 +223,7 @@ python-slugify==8.0.4
     #   -c requirements.txt
     #   ckanapi
     #   frictionless
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   -c requirements.txt
     #   frictionless
@@ -286,7 +286,7 @@ simpleeval==1.0.3
     # via
     #   -c requirements.txt
     #   frictionless
-simplejson==3.20.1
+simplejson==3.20.2
     # via
     #   -c requirements.txt
     #   ckanapi
