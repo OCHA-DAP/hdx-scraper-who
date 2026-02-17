@@ -1,5 +1,4 @@
 GHO (CODE),ENDYEAR,COUNTRY (CODE),DIMENSION (NAME),Numeric
-#indicator+code,#date+year+end,#country+code,#dimension+name,#indicator+value+num
 WSH_SANITATION_BASIC,2005,AFG,Urban,36.95171
 WSH_SANITATION_BASIC,2006,AFG,Urban,36.95171
 WSH_SANITATION_BASIC,2007,AFG,Urban,36.95171

@@ -469,10 +469,6 @@ class MockRetrieve:
         # default: no match
         return None
 
-    @staticmethod
-    def hxl_row(headers, hxltags, dict_form):
-        return {header: hxltags.get(header, "") for header in headers}
-
 
 class TestPipeline:
     indicators = OrderedDict(
@@ -556,7 +552,7 @@ class TestPipeline:
                 "subnational": "0",
                 "tags": [
                     {
-                        "name": "hxl",
+                        "name": "indicators",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     }
                 ],
@@ -600,7 +596,7 @@ class TestPipeline:
                 "notes": "Health indicators for Afghanistan",
                 "tags": [
                     {
-                        "name": "hxl",
+                        "name": "indicators",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],
@@ -639,7 +635,7 @@ class TestPipeline:
                     "AFG",
                     "Afghanistan",
                     "who-data-for-afg",
-                    ["hxl", "indicators"],
+                    ["indicators"],
                 )
                 assert showcase == {
                     "image_url": "https://cdn.who.int/media/images/default-source/countries-overview/flags/afg.jpg",
@@ -647,7 +643,7 @@ class TestPipeline:
                     "notes": "Health indicators for Afghanistan",
                     "tags": [
                         {
-                            "name": "hxl",
+                            "name": "indicators",
                             "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                         }
                     ],
@@ -659,7 +655,7 @@ class TestPipeline:
                     "ABC",
                     "Afghanistan",
                     "who-data-for-afg",
-                    ["hxl", "indicators"],
+                    ["indicators"],
                 )
                 assert showcase == {"name": "who-data-for-afg-showcase"}
 
@@ -683,7 +679,7 @@ class TestPipeline:
                     "ABC",
                     "Afghanistan",
                     "who-data-for-afg",
-                    ["hxl", "indicators"],
+                    ["indicators"],
                 )
                 assert showcase == Showcase({"name": "who-data-for-afg-showcase"})
 
@@ -707,7 +703,7 @@ class TestPipeline:
                 "subnational": "0",
                 "tags": [
                     {
-                        "name": "hxl",
+                        "name": "indicators",
                         "vocabulary_id": "b891512e-9516-4bf5-962a-7a289772a2a1",
                     },
                 ],

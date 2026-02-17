@@ -16,9 +16,17 @@ from hdx.location.country import Country
 from hdx.utilities.base_downloader import DownloadError
 from hdx.utilities.dateparse import parse_date_range
 from hdx.utilities.retriever import Retrieve
+from requests import JSONDecodeError
 from slugify import slugify
 from sqlalchemy import false, true
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from tenacity import (
+    after_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from .database.db_categories import DBCategories
 from .database.db_dimension_values import DBDimensionValues
@@ -53,25 +61,7 @@ class Pipeline:
         self._tempdir = tempdir
         self._session = session
         self._dimension_value_names_dict = dict()
-        self._hxltags = {
-            "GHO (CODE)": "#indicator+code",
-            "GHO (DISPLAY)": "#indicator+name",
-            "GHO (URL)": "#indicator+url",
-            "YEAR (DISPLAY)": "#date+year",
-            "STARTYEAR": "#date+year+start",
-            "ENDYEAR": "#date+year+end",
-            "REGION (CODE)": "#region+code",
-            "REGION (DISPLAY)": "#region+name",
-            "COUNTRY (CODE)": "#country+code",
-            "COUNTRY (DISPLAY)": "#country+name",
-            "DIMENSION (TYPE)": "#dimension+type",
-            "DIMENSION (CODE)": "#dimension+code",
-            "DIMENSION (NAME)": "#dimension+name",
-            "Numeric": "#indicator+value+num",
-            "Value": "#indicator+value",
-            "Low": "#indicator+value+low",
-            "High": "#indicator+value+high",
-        }
+        self._headers = configuration["headers"]
 
     def populate_db(self, populate_db: bool, create_archived_datasets: bool):
         """Populate the database and create convenience dictionaries and
@@ -97,35 +87,43 @@ class Pipeline:
         for progress_starting_folder"""
         return [{"Code": country_iso3} for country_iso3 in self._countries_dict.keys()]
 
+    @retry(
+        retry=retry_if_exception_type(JSONDecodeError),
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(3600),
+        after=after_log(logger, logging.INFO),
+    )
+    def _populate_dimensions_values(self, dimensions_row: dict):
+        dimension_code = dimensions_row["Code"]
+        dimension_title = dimensions_row["Title"]
+
+        db_dimensions_row = DBDimensions(code=dimension_code, title=dimension_title)
+        self._session.add(db_dimensions_row)
+        self._session.commit()
+        dimension_values_url = (
+            f"{self._configuration['base_url']}api/DIMENSION/"
+            f"{dimension_code}/DimensionValues"
+        )
+        dimension_values_result = self._retriever.download_json(dimension_values_url)[
+            "value"
+        ]
+        for dimension_values_row in dimension_values_result:
+            db_dimension_values_row = DBDimensionValues(
+                code=dimension_values_row["Code"],
+                title=dimension_values_row["Title"],
+                dimension_code=dimension_code,
+            )
+            self._session.add(db_dimension_values_row)
+        self._session.commit()
+
     def _populate_dimensions_db(self):
         """The main API only provides the dimension codes. This method
-        queries the dimensions in the API to get their names, that can
-        be used for quickcharts, etc."""
+        queries the dimensions in the API to get their names"""
         logger.info("Populating dimensions DB")
         dimensions_url = f"{self._configuration['base_url']}api/dimension"
         dimensions_result = self._retriever.download_json(dimensions_url)["value"]
         for dimensions_row in dimensions_result:
-            dimension_code = dimensions_row["Code"]
-            dimension_title = dimensions_row["Title"]
-
-            db_dimensions_row = DBDimensions(code=dimension_code, title=dimension_title)
-            self._session.add(db_dimensions_row)
-            self._session.commit()
-            dimension_values_url = (
-                f"{self._configuration['base_url']}api/DIMENSION/"
-                f"{dimension_code}/DimensionValues"
-            )
-            dimension_values_result = self._retriever.download_json(
-                dimension_values_url
-            )["value"]
-            for dimension_values_row in dimension_values_result:
-                db_dimension_values_row = DBDimensionValues(
-                    code=dimension_values_row["Code"],
-                    title=dimension_values_row["Title"],
-                    dimension_code=dimension_code,
-                )
-                self._session.add(db_dimension_values_row)
-            self._session.commit()
+            self._populate_dimensions_values(dimensions_row)
         logger.info("Done populating dimensions DB")
 
     def _create_dimension_value_names_dict(self):
@@ -209,7 +207,7 @@ class Pipeline:
 
     def _create_tags(self, country_iso3: str, to_archive: bool):
         """Use category titles to create tags"""
-        base_tags = ["hxl", "indicators"]
+        base_tags = ["indicators"]
         if to_archive:
             return base_tags
         tags = []
@@ -464,15 +462,12 @@ class Pipeline:
                 "description": category_link,
             }
 
-            success, results = dataset.generate_resource_from_iterable(
-                list(self._hxltags.keys()),
-                category_data,
-                self._hxltags,
+            success, results = dataset.generate_resource(
                 self._tempdir,
                 filename,
+                category_data,
                 resourcedata,
-                date_function=None,
-                quickcharts=None,
+                self._headers,
             )
 
             if not success:
@@ -499,19 +494,14 @@ class Pipeline:
 
         all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
 
-        success_all_indicators, results_all_indicators = (
-            dataset.generate_resource_from_iterable(
-                list(self._hxltags.keys()),
-                all_indicators_data,
-                self._hxltags,
-                self._tempdir,
-                filename,
-                resourcedata,
-                date_function=_yearcol_function,
-                quickcharts=None,
-            )
+        success_all_indicators, results_all_indicators = dataset.generate_resource(
+            self._tempdir,
+            filename,
+            all_indicators_data,
+            resourcedata,
+            self._headers,
+            date_function=_yearcol_function,
         )
-
         if not success_all_indicators:
             logger.error(f"{country_name} has no data!")
             return None, None
@@ -578,16 +568,13 @@ class Pipeline:
         )
         all_indicators_data = [_parse_indicator_row(row) for row in all_rows]
 
-        success_all_indicators, results_all_indicators = (
-            dataset.generate_resource_from_iterable(
-                list(self._hxltags.keys()),
-                all_indicators_data,
-                self._hxltags,
-                self._tempdir,
-                filename,
-                resourcedata,
-                date_function=_yearcol_function,
-            )
+        success_all_indicators, results_all_indicators = dataset.generate_resource(
+            self._tempdir,
+            filename,
+            all_indicators_data,
+            resourcedata,
+            self._headers,
+            date_function=_yearcol_function,
         )
 
         if not success_all_indicators:

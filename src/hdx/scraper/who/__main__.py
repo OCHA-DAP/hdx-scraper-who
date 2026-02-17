@@ -133,7 +133,6 @@ def upload_dataset(who, country, info):
     dataset.create_in_hdx(
         remove_additional_resources=True,
         match_resource_order=False,
-        hxl_update=False,
         updated_by_script="HDX Scraper: WHO",
         batch=info["batch"],
     )
@@ -162,7 +161,6 @@ def upload_archived_dataset(who, country, info):
     archived_dataset.create_in_hdx(
         remove_additional_resources=True,
         match_resource_order=False,
-        hxl_update=False,
         updated_by_script="HDX Scraper: WHO",
         batch=info["batch"],
     )
