@@ -80,7 +80,8 @@ class Pipeline:
         self._create_countries_dict()
         if populate_db:
             self._populate_categories_and_indicators_db()
-            self._populate_indicator_data_db(create_archived_datasets)
+            for db_row in self._session.query(DBIndicators).all():
+                self._populate_indicator_data_db(db_row, create_archived_datasets)
 
     def get_countries(self):
         """Public method that returns countries in the format required
@@ -90,7 +91,7 @@ class Pipeline:
     @retry(
         retry=retry_if_exception_type(JSONDecodeError),
         stop=stop_after_attempt(5),
-        wait=wait_fixed(3600),
+        wait=wait_fixed(600),
         after=after_log(logger, logging.INFO),
     )
     def _populate_dimensions_values(self, dimensions_row: dict):
@@ -249,92 +250,70 @@ class Pipeline:
         tags = base_tags + tags
         return tags
 
-    def _populate_indicator_data_db(self, create_archived_datasets: bool):
-        for db_row in self._session.query(DBIndicators).all():
-            indicator_name = db_row.title
-            indicator_url = db_row.url
-            indicator_code = db_row.code
-            to_archive = db_row.to_archive
+    @retry(
+        retry=retry_if_exception_type(JSONDecodeError),
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(600),
+        after=after_log(logger, logging.INFO),
+    )
+    def _populate_indicator_data_db(
+        self, db_row: DBIndicators, create_archived_datasets: bool
+    ) -> None:
+        indicator_name = db_row.title
+        indicator_url = db_row.url
+        indicator_code = db_row.code
+        to_archive = db_row.to_archive
 
-            # If we're not creating the archived datasets,
-            # save time by not downloading and populating
-            # the outdated indicators (there are thousands)
-            if to_archive and not create_archived_datasets:
+        # If we're not creating the archived datasets,
+        # save time by not downloading and populating
+        # the outdated indicators (there are thousands)
+        if to_archive and not create_archived_datasets:
+            return
+
+        logger.info(f"Downloading file for indicator {indicator_name}")
+        base_url = self._configuration["base_url"]
+        url = f"{base_url}api/{indicator_code}"
+        try:
+            indicator_json = self._retriever.download_json(url)
+        except (DownloadError, FileNotFoundError):
+            logger.warning(f"{url} has no data")
+            return
+        logger.info(f"Populating DB for indicator {indicator_name}")
+
+        batch = []
+        irow = 0
+        for row in indicator_json["value"]:
+            if row["SpatialDimType"] != "COUNTRY":
                 continue
+            country_iso3 = row["SpatialDim"]
+            country_name = self._countries_dict[country_iso3]
+            startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime("%Y")
+            endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
+            db_indicators_row = dict(
+                id=row["Id"],
+                indicator_code=indicator_code,
+                indicator_name=indicator_name,
+                indicator_url=indicator_url,
+                year=row["TimeDim"],
+                start_year=startyear,
+                end_year=endyear,
+                region_code=row["ParentLocationCode"],
+                region_display=row["ParentLocation"],
+                country_code=country_iso3,
+                country_display=country_name,
+                dimension_type=row["Dim1Type"],
+                dimension_code=row["Dim1"],
+                dimension_name=self._dimension_value_names_dict.get(row["Dim1"]),
+                numeric=row["NumericValue"],
+                value=row["Value"],
+                low=row["Low"],
+                high=row["High"],
+            )
+            batch.append(db_indicators_row)
+            irow += 1
 
-            logger.info(f"Downloading file for indicator {indicator_name}")
-            base_url = self._configuration["base_url"]
-            url = f"{base_url}api/{indicator_code}"
-            try:
-                indicator_json = self._retriever.download_json(url)
-            except (DownloadError, FileNotFoundError):
-                logger.warning(f"{url} has no data")
-                continue
-            logger.info(f"Populating DB for indicator {indicator_name}")
-
-            batch = []
-            irow = 0
-            for row in indicator_json["value"]:
-                if row["SpatialDimType"] != "COUNTRY":
-                    continue
-                country_iso3 = row["SpatialDim"]
-                country_name = self._countries_dict[country_iso3]
-                startyear = datetime.fromisoformat(row["TimeDimensionBegin"]).strftime(
-                    "%Y"
-                )
-                endyear = datetime.fromisoformat(row["TimeDimensionEnd"]).strftime("%Y")
-                db_indicators_row = dict(
-                    id=row["Id"],
-                    indicator_code=indicator_code,
-                    indicator_name=indicator_name,
-                    indicator_url=indicator_url,
-                    year=row["TimeDim"],
-                    start_year=startyear,
-                    end_year=endyear,
-                    region_code=row["ParentLocationCode"],
-                    region_display=row["ParentLocation"],
-                    country_code=country_iso3,
-                    country_display=country_name,
-                    dimension_type=row["Dim1Type"],
-                    dimension_code=row["Dim1"],
-                    dimension_name=self._dimension_value_names_dict.get(row["Dim1"]),
-                    numeric=row["NumericValue"],
-                    value=row["Value"],
-                    low=row["Low"],
-                    high=row["High"],
-                )
-                batch.append(db_indicators_row)
-                irow += 1
-
-                if len(batch) >= _BATCH_SIZE:
-                    logger.info(f"Added {irow} rows")
-                    stmt = sqlite_insert(DBIndicatorData).values(batch)
-                    stmt = stmt.on_conflict_do_update(
-                        index_elements=["id"],
-                        set_={
-                            "indicator_code": stmt.excluded.indicator_code,
-                            "indicator_name": stmt.excluded.indicator_name,
-                            "indicator_url": stmt.excluded.indicator_url,
-                            "year": stmt.excluded.year,
-                            "start_year": stmt.excluded.start_year,
-                            "end_year": stmt.excluded.end_year,
-                            "region_code": stmt.excluded.region_code,
-                            "region_display": stmt.excluded.region_display,
-                            "country_code": stmt.excluded.country_code,
-                            "country_display": stmt.excluded.country_display,
-                            "dimension_type": stmt.excluded.dimension_type,
-                            "dimension_code": stmt.excluded.dimension_code,
-                            "dimension_name": stmt.excluded.dimension_name,
-                            "numeric": stmt.excluded.numeric,
-                            "value": stmt.excluded.value,
-                            "low": stmt.excluded.low,
-                            "high": stmt.excluded.high,
-                        },
-                    )
-                    self._session.execute(stmt)
-                    batch = []
-
-            if batch:
+            if len(batch) >= _BATCH_SIZE:
+                logger.info(f"Added {irow} rows")
                 stmt = sqlite_insert(DBIndicatorData).values(batch)
                 stmt = stmt.on_conflict_do_update(
                     index_elements=["id"],
@@ -359,9 +338,36 @@ class Pipeline:
                     },
                 )
                 self._session.execute(stmt)
+                batch = []
 
-            self._session.commit()
-            logger.info(f"Done indicator {indicator_name}")
+        if batch:
+            stmt = sqlite_insert(DBIndicatorData).values(batch)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "indicator_code": stmt.excluded.indicator_code,
+                    "indicator_name": stmt.excluded.indicator_name,
+                    "indicator_url": stmt.excluded.indicator_url,
+                    "year": stmt.excluded.year,
+                    "start_year": stmt.excluded.start_year,
+                    "end_year": stmt.excluded.end_year,
+                    "region_code": stmt.excluded.region_code,
+                    "region_display": stmt.excluded.region_display,
+                    "country_code": stmt.excluded.country_code,
+                    "country_display": stmt.excluded.country_display,
+                    "dimension_type": stmt.excluded.dimension_type,
+                    "dimension_code": stmt.excluded.dimension_code,
+                    "dimension_name": stmt.excluded.dimension_name,
+                    "numeric": stmt.excluded.numeric,
+                    "value": stmt.excluded.value,
+                    "low": stmt.excluded.low,
+                    "high": stmt.excluded.high,
+                },
+            )
+            self._session.execute(stmt)
+
+        self._session.commit()
+        logger.info(f"Done indicator {indicator_name}")
 
     @staticmethod
     def get_showcase(retriever, country_iso3, country_name, slugified_name, alltags):
